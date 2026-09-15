@@ -1,4 +1,7 @@
 import type { Settings } from "./storage";
+import { youtubeClient } from "./youtubeClient";
+
+const staticMode = import.meta.env.VITE_STATIC === "1";
 
 export type YoutubeChannel = {
   id: string;
@@ -85,25 +88,46 @@ async function getJson<T>(url: string, settings: Settings): Promise<T> {
 export const api = {
   health: () => getJson<{ ok: boolean; youtubeConfigured: boolean }>("/api/health", defaultLike()),
   youtubeTrending: (settings: Settings, categoryId = "") =>
-    getJson<{ items: YoutubeVideo[]; error?: string }>(
-      `/api/youtube/trending?region=${encodeURIComponent(settings.youtubeRegion)}&categoryId=${encodeURIComponent(categoryId)}`,
-      settings
-    ),
+    staticMode
+      ? youtubeClient.trending(settings, categoryId)
+      : getJson<{ items: YoutubeVideo[]; error?: string }>(
+          `/api/youtube/trending?region=${encodeURIComponent(settings.youtubeRegion)}&categoryId=${encodeURIComponent(categoryId)}`,
+          settings
+        ),
   youtubeSearch: (settings: Settings, q: string) =>
-    getJson<{ items: YoutubeVideo[]; error?: string }>(
-      `/api/youtube/search?q=${encodeURIComponent(q)}&region=${encodeURIComponent(settings.youtubeRegion)}`,
-      settings
-    ),
+    staticMode
+      ? youtubeClient.search(settings, q)
+      : getJson<{ items: YoutubeVideo[]; error?: string }>(
+          `/api/youtube/search?q=${encodeURIComponent(q)}&region=${encodeURIComponent(settings.youtubeRegion)}`,
+          settings
+        ),
   youtubeVideos: (settings: Settings, id: string) =>
-    getJson<{ items: YoutubeVideo[] }>(`/api/youtube/videos?id=${encodeURIComponent(id)}`, settings),
+    staticMode
+      ? youtubeClient.videos(settings, id)
+      : getJson<{ items: YoutubeVideo[] }>(`/api/youtube/videos?id=${encodeURIComponent(id)}`, settings),
   youtubeRelated: (settings: Settings, q: string) =>
-    getJson<{ items: YoutubeVideo[] }>(`/api/youtube/related?q=${encodeURIComponent(q)}`, settings),
+    staticMode
+      ? youtubeClient.related(settings, q)
+      : getJson<{ items: YoutubeVideo[] }>(`/api/youtube/related?q=${encodeURIComponent(q)}`, settings),
   youtubeLiked: (settings: Settings) =>
-    getJson<{ items: YoutubeVideo[]; error?: string }>("/api/youtube/liked", settings),
+    staticMode
+      ? youtubeClient.liked(settings)
+      : getJson<{ items: YoutubeVideo[]; error?: string }>("/api/youtube/liked", settings),
   youtubeSubscriptions: (settings: Settings) =>
-    getJson<{ items: YoutubeChannel[]; error?: string }>("/api/youtube/subscriptions", settings),
+    staticMode
+      ? youtubeClient.subscriptions(settings)
+      : getJson<{ items: YoutubeChannel[]; error?: string }>("/api/youtube/subscriptions", settings),
   youtubeFeed: (settings: Settings) =>
-    getJson<{ items: YoutubeVideo[]; error?: string }>("/api/youtube/feed", settings),
+    staticMode
+      ? youtubeClient.feed(settings)
+      : getJson<{ items: YoutubeVideo[]; error?: string }>("/api/youtube/feed", settings),
+  youtubeChannel: (settings: Settings, id: string) =>
+    staticMode
+      ? youtubeClient.channel(settings, id)
+      : getJson<{ items: YoutubeVideo[]; error?: string }>(
+          `/api/youtube/channel?id=${encodeURIComponent(id)}`,
+          settings
+        ),
   radioPopular: (settings: Settings, country = "DE") =>
     getJson<{ items: RadioStation[] }>(`/api/radio/popular?country=${encodeURIComponent(country)}`, settings),
   radioSearch: (settings: Settings, q: string) =>

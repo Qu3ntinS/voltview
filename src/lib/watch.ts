@@ -44,13 +44,25 @@ export async function startWatchSession(input: {
   title: string;
 }) {
   recordWatch({ source: input.source, id: input.contentId, title: input.title });
-  const res = await fetch("/api/watch/session", {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(input),
-  });
-  if (!res.ok) throw new Error("Watch session failed");
-  return (await res.json()) as WatchSession;
+  try {
+    const res = await fetch("/api/watch/session", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(input),
+    });
+    if (!res.ok) throw new Error("Watch session failed");
+    return (await res.json()) as WatchSession;
+  } catch {
+    return {
+      id: `local_${Date.now()}`,
+      source: input.source,
+      contentId: input.contentId,
+      title: input.title,
+      watchedSec: 0,
+      positionSec: 0,
+      durationSec: 0,
+    };
+  }
 }
 
 export async function heartbeatWatchSession(

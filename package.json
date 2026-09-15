@@ -8,6 +8,7 @@
     "dev:api": "bun --watch server/index.ts",
     "dev:web": "vite",
     "build": "vite build",
+    "build:pages": "VITE_STATIC=1 vite build",
     "start": "bun server/index.ts",
     "typecheck": "tsc --noEmit",
     "test": "bun test"

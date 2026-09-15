@@ -57,10 +57,16 @@ export function YouTubePage() {
       setSubs([]);
       return;
     }
+    const recover = (err: Error) => {
+      if (err.message === "NO_YOUTUBE_LOGIN" || /401/.test(err.message)) {
+        update({ youtubeAccessToken: "" });
+      }
+      return { items: [] };
+    };
     Promise.all([
-      api.youtubeLiked(settings).catch(() => ({ items: [] })),
-      api.youtubeFeed(settings).catch(() => ({ items: [] })),
-      api.youtubeSubscriptions(settings).catch(() => ({ items: [] })),
+      api.youtubeLiked(settings).catch(recover),
+      api.youtubeFeed(settings).catch(recover),
+      api.youtubeSubscriptions(settings).catch(recover),
     ]).then(([likes, personal, channels]) => {
       setLiked(likes.items || []);
       setFeed(personal.items || []);
@@ -135,6 +141,19 @@ export function YouTubePage() {
         </div>
       </div>
       {loginError ? <p className="mb-4 text-volt-2">{loginError}</p> : null}
+      {!settings.youtubeAccessToken ? (
+        <div className="mb-8 rounded-[28px] border border-white/10 bg-panel p-6 glow-ring">
+          <p className="text-xs uppercase tracking-[0.28em] text-volt-2">Wie bei TeslaPlay</p>
+          <h2 className="mt-2 font-display text-2xl font-bold">Dein YouTube</h2>
+          <p className="mt-3 max-w-2xl text-mist">
+            Mit Google anmelden — nur Lesezugriff (youtube.readonly). Danach siehst du neue Videos
+            deiner Abos, Likes und Kanäle. Key und OAuth-Client-ID stehen unter Setup.
+          </p>
+          <button type="button" onClick={signIn} className="mt-5 h-14 rounded-2xl bg-white px-6 font-semibold text-black">
+            Mit Google anmelden
+          </button>
+        </div>
+      ) : null}
 
       {feed.length ? (
         <Row title="Neu aus deinen Abos">
@@ -167,15 +186,27 @@ export function YouTubePage() {
       {subs.length ? (
         <Row title="Deine Kanäle">
           {subs.map((channel) => (
-            <div
+            <button
               key={channel.id}
-              className="flex h-24 w-64 shrink-0 items-center gap-3 rounded-2xl border border-white/5 bg-panel px-4"
+              type="button"
+              onClick={() => {
+                setLoading(true);
+                api
+                  .youtubeChannel(settings, channel.id)
+                  .then((data) => {
+                    setItems(data.items || []);
+                    setError(data.error || "");
+                  })
+                  .catch((err) => setError(err.message))
+                  .finally(() => setLoading(false));
+              }}
+              className="flex h-24 w-64 shrink-0 items-center gap-3 rounded-2xl border border-white/5 bg-panel px-4 text-left"
             >
               {channel.thumbnail ? (
                 <img src={channel.thumbnail} alt="" className="h-14 w-14 rounded-full object-cover" />
               ) : null}
               <p className="font-semibold">{channel.title}</p>
-            </div>
+            </button>
           ))}
         </Row>
       ) : null}

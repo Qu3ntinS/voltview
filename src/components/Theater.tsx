@@ -1,6 +1,7 @@
 import { ArrowLeft, Maximize2 } from "lucide-react";
 import { useEffect, type ReactNode } from "react";
 import { Link } from "react-router-dom";
+import { teslaFullscreen } from "../lib/tesla";
 
 export function Theater({
   backTo,
@@ -24,10 +25,7 @@ export function Theater({
   }, []);
 
   function enterFullscreen() {
-    const root = document.querySelector("[data-theater-stage]");
-    if (root && root.requestFullscreen) {
-      root.requestFullscreen().catch(() => undefined);
-    }
+    teslaFullscreen(window.location.href);
   }
 
   return (
@@ -47,7 +45,7 @@ export function Theater({
           className="inline-flex h-14 items-center gap-2 rounded-2xl bg-volt px-5 font-semibold"
         >
           <Maximize2 className="h-5 w-5" />
-          Vollbild
+          Tesla Vollbild
         </button>
       </div>
       <div className="grid min-h-0 flex-1 gap-4 px-5 pb-5 lg:grid-cols-[minmax(0,1fr)_320px]">

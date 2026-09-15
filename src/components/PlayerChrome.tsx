@@ -1,5 +1,6 @@
 import { Maximize2, Pause, Play } from "lucide-react";
 import type { ReactNode } from "react";
+import { teslaFullscreen } from "../lib/tesla";
 
 function clock(seconds: number) {
   const safe = Math.max(0, Math.floor(seconds || 0));
@@ -17,7 +18,6 @@ export function PlayerChrome({
   duration,
   onToggle,
   onSeek,
-  onFullscreen,
 }: {
   children: ReactNode;
   playing: boolean;
@@ -25,7 +25,7 @@ export function PlayerChrome({
   duration: number;
   onToggle: () => void;
   onSeek: (seconds: number) => void;
-  onFullscreen: () => void;
+  onFullscreen?: () => void;
 }) {
   const progress = duration > 0 ? Math.min(100, (current / duration) * 100) : 0;
 
@@ -56,11 +56,11 @@ export function PlayerChrome({
           <div className="hidden flex-1 text-sm text-mist md:block">{Math.round(progress)}%</div>
           <button
             type="button"
-            onClick={onFullscreen}
+            onClick={() => teslaFullscreen(window.location.href)}
             className="flex h-16 items-center gap-2 rounded-2xl bg-white/10 px-5"
           >
             <Maximize2 className="h-5 w-5" />
-            Vollbild
+            Tesla Vollbild
           </button>
         </div>
       </div>

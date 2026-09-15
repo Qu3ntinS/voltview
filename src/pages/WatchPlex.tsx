@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { PlayerChrome } from "../components/PlayerChrome";
+import { SafetyGate } from "../components/SafetyGate";
 import { Theater } from "../components/Theater";
 import { api, plexImage, plexStreamUrl } from "../lib/api";
 import { useSettings } from "../lib/settings";
@@ -89,6 +90,7 @@ export function WatchPlexPage() {
   }, [id, settings]);
 
   return (
+    <SafetyGate title="Plex nur im Stand">
     <Theater
       backTo="/plex"
       eyebrow="VoltView Player · eigenes UI · Plex"
@@ -113,10 +115,6 @@ export function WatchPlexPage() {
         onSeek={(seconds) => {
           if (videoRef.current) videoRef.current.currentTime = seconds;
         }}
-        onFullscreen={() => {
-          const root = document.querySelector("[data-theater-stage]");
-          if (root && root.requestFullscreen) root.requestFullscreen().catch(() => undefined);
-        }}
       >
         <video
           ref={videoRef}
@@ -139,5 +137,6 @@ export function WatchPlexPage() {
         />
       </PlayerChrome>
     </Theater>
+    </SafetyGate>
   );
 }

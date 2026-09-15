@@ -46,11 +46,19 @@ bun run build
 bun run start
 ```
 
+## GitHub Pages (ohne eigenen Server)
+
+```bash
+bun run build:pages
+```
+
+Oder Repo → Settings → Pages → GitHub Actions. Der Workflow baut mit `VITE_STATIC=1` nach `https://qu3ntins.github.io/voltview/`. YouTube und Apps laufen statisch im Browser; Plex-Proxy braucht weiter `bun run start`. Im Tesla-Browser VoltView zuerst über YouTube-Redirect öffnen: `https://www.youtube.com/redirect?q=https://qu3ntins.github.io/voltview/`
+
 Die API serviert dann `dist/` mit.
 
 ## Setup im UI
 
-1. **YouTube:** Google Cloud Console → YouTube Data API v3 aktivieren → Key unter *Setup* eintragen. Für Abos/Likes zusätzlich eine OAuth-Client-ID (Scope `youtube.readonly`) und auf YouTube *Mit Google anmelden*.
+1. **YouTube:** Google Cloud Console → YouTube Data API v3 aktivieren → Key unter *Setup* eintragen. Für Abos/Likes eine OAuth-Client-ID (Web, JS-Origin = deine VoltView-URL, Scope `youtube.readonly`) und auf YouTube *Mit Google anmelden*. Vor jedem Video erscheint eine Stand-Warnung. Tesla-Vollbild nutzt `youtube.com/redirect?q=…`.
 2. **Plex:** *Plex verbinden* → Code auf [plex.tv/link](https://plex.tv/link) freigeben → Server wählen. Token bleibt im `localStorage` dieses Browsers.
 3. **Tesla:** VoltView als Lesezeichen speichern. Netflix & Co. verlassen die Seite — zurück nur über das Bookmark.
 

@@ -236,4 +236,26 @@ export const youtubeRoutes = new Elysia({ prefix: "/api/youtube" })
       set.status = (error as Error).message === "NO_YOUTUBE_LOGIN" ? 401 : 502;
       return { error: (error as Error).message, items: [] };
     }
+  })
+  .get("/channel", async ({ request, query, set }) => {
+    try {
+      const auth = authOf(request);
+      const channelId = String(query.id || "");
+      if (!channelId) return { items: [] };
+      const data = await youtubeGet(
+        "search",
+        {
+          part: "snippet",
+          channelId,
+          type: "video",
+          order: "date",
+          maxResults: "24",
+        },
+        auth
+      );
+      return { items: (data.items || []).map(mapVideo) };
+    } catch (error) {
+      set.status = (error as Error).message === "NO_YOUTUBE_KEY" ? 400 : 502;
+      return { error: (error as Error).message, items: [] };
+    }
   });

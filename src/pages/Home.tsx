@@ -6,6 +6,7 @@ import { ServiceTile } from "../components/ServiceTile";
 import { featuredServices } from "../data/services";
 import { api, plexImage, type YoutubeVideo } from "../lib/api";
 import { useSettings } from "../lib/settings";
+import { teslaFullscreen } from "../lib/tesla";
 
 export function HomePage() {
   const { settings, recents } = useSettings();
@@ -72,6 +73,13 @@ export function HomePage() {
               >
                 Alle Apps
               </Link>
+              <button
+                type="button"
+                onClick={() => teslaFullscreen(window.location.href)}
+                className="inline-flex h-14 items-center rounded-2xl border border-volt/40 bg-volt/15 px-6 text-lg text-volt-2"
+              >
+                Tesla Vollbild
+              </button>
             </div>
             {ytError ? <p className="mt-4 text-sm text-volt-2">{ytError === "NO_YOUTUBE_KEY" ? "YouTube-Key in den Einstellungen ergänzen, dann erscheinen Trends hier." : ytError}</p> : null}
           </div>

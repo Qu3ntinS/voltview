@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { MediaCard } from "../components/MediaCard";
+import { SafetyGate } from "../components/SafetyGate";
 import { Theater } from "../components/Theater";
 import { YoutubeStage } from "../components/YoutubeStage";
 import { api, type YoutubeVideo } from "../lib/api";
@@ -65,6 +66,7 @@ export function WatchYouTubePage() {
   );
 
   return (
+    <SafetyGate title="YouTube nur im Stand">
     <Theater
       backTo="/youtube"
       eyebrow="VoltView Player · eigenes UI · YouTube"
@@ -98,5 +100,6 @@ export function WatchYouTubePage() {
     >
       <YoutubeStage videoId={id} onSnapshot={onSnapshot} />
     </Theater>
+    </SafetyGate>
   );
 }

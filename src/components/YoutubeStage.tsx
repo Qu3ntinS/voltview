@@ -122,10 +122,6 @@ export function YoutubeStage({
         else playerRef.current.playVideo();
       }}
       onSeek={(seconds) => playerRef.current?.seekTo(seconds, true)}
-      onFullscreen={() => {
-        const root = document.querySelector("[data-theater-stage]");
-        if (root && root.requestFullscreen) root.requestFullscreen().catch(() => undefined);
-      }}
     >
       <div ref={boxRef} className="absolute inset-0" />
     </PlayerChrome>
