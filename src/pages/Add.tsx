@@ -110,8 +110,7 @@ export function AddPage() {
       </button>
       {pin ? (
         <div className="card">
-          <p className="muted">Plex auf diesem Handy freigeben. Code {pin.code}</p>
-          <p className="pair-code">{pin.code}</p>
+          <p className="muted">Plex öffnen, einloggen, zurück hierher. Der Tesla übernimmt den Account.</p>
           <a className="btn btn-primary" href={pin.authUrl} target="_blank" rel="noreferrer">
             Plex öffnen
           </a>

@@ -43,7 +43,7 @@ export function SettingsPage() {
           <p className="ok mt-2">Google-Login auf dem Handy ist bereit.</p>
         ) : (
           <p className="warn mt-2">
-            Auf Vercel einmal `YOUTUBE_CLIENT_ID` setzen (OAuth Web-Client, nicht der AIza-Key).
+            Auf Vercel einmal YOUTUBE_CLIENT_ID setzen (OAuth Web-Client, nicht der AIza-Key).
           </p>
         )}
         <div className="row-gap mt-3">
