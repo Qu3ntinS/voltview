@@ -90,7 +90,7 @@ export function WatchPlexPage() {
   }, [id, settings]);
 
   return (
-    <SafetyGate title="Plex nur im Stand">
+    <SafetyGate title="Plex nur im Stand" resetKey={id}>
     <Theater
       backTo="/plex"
       eyebrow="VoltView Player · eigenes UI · Plex"

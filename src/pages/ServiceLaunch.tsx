@@ -1,33 +1,41 @@
 import { ArrowLeft } from "lucide-react";
+import { useState } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
+import { SafetyGate } from "../components/SafetyGate";
 import { ServiceTile } from "../components/ServiceTile";
 import { featuredServices, getService, services } from "../data/services";
 import { useSettings } from "../lib/settings";
+import { teslaFullscreen } from "../lib/tesla";
 import { startWatchSession } from "../lib/watch";
 
 export function ServiceLaunchPage() {
   const { id = "" } = useParams();
   const { settings } = useSettings();
+  const [warn, setWarn] = useState(false);
   const service = getService(id);
 
   if (!service) return <Navigate to="/apps" replace />;
+  const app = service;
 
-  const others = (service.category === "video" ? featuredServices() : services)
-    .filter((item) => item.id !== service.id)
+  const others = (app.category === "video" ? featuredServices() : services)
+    .filter((item) => item.id !== app.id)
     .slice(0, 6);
 
   function openOfficial() {
     startWatchSession({
       deviceId: settings.plexClientId || "voltview-web",
       source: "app",
-      contentId: service!.id,
-      title: service!.name,
+      contentId: app.id,
+      title: app.name,
     }).catch(() => undefined);
-    window.location.href = service!.url;
+    teslaFullscreen(app.url);
   }
 
   return (
     <div>
+      {warn ? (
+        <SafetyGate title={`${service.name} nur im Stand`} resetKey={service.id} onConfirm={openOfficial} />
+      ) : null}
       <Link to="/apps" className="mb-5 inline-flex h-12 items-center gap-2 rounded-2xl bg-white/5 px-4">
         <ArrowLeft className="h-4 w-4" />
         Alle Dienste
@@ -39,19 +47,18 @@ export function ServiceLaunchPage() {
         <p className="text-xs uppercase tracking-[0.28em] text-white/70">Streaming-Dienst</p>
         <h1 className="mt-3 font-display text-5xl font-extrabold">{service.name}</h1>
         <p className="mt-4 max-w-2xl text-lg text-white/80">
-          {service.blurb}. VoltView öffnet deinen eigenen {service.name}-Account — so wie Netflix,
-          Disney+ und Prime. Den Katalog spielt der offizielle Dienst, nicht wir.
+          {service.blurb}. VoltView öffnet {service.name} über den YouTube-Redirect — derselbe
+          Tesla-Theater-Trick wie TeslaPlay. Danach „Go to site“ tippen.
         </p>
         <button
           type="button"
-          onClick={openOfficial}
+          onClick={() => setWarn(true)}
           className="mt-8 inline-flex h-16 items-center rounded-2xl bg-white px-8 text-lg font-semibold text-black"
         >
-          {service.name} öffnen
+          {service.name} im Tesla-Theater
         </button>
         <p className="mt-4 text-sm text-white/65">
-          Eigenes Player-UI gibt es bei YouTube und Plex. Hier zählt VoltView den App-Start fürs
-          spätere Abo-Modell.
+          Vor dem Start kommt immer die Stand-Warnung. Den Katalog spielt der offizielle Account.
         </p>
       </section>
       {others.length ? (

@@ -1,11 +1,25 @@
 import { ShieldAlert } from "lucide-react";
 import type { ReactNode } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-export function SafetyGate({ children, title }: { children: ReactNode; title: string }) {
+export function SafetyGate({
+  children,
+  title,
+  resetKey,
+  onConfirm,
+}: {
+  children?: ReactNode;
+  title: string;
+  resetKey?: string;
+  onConfirm?: () => void;
+}) {
   const [accepted, setAccepted] = useState(false);
 
-  if (accepted) return <>{children}</>;
+  useEffect(() => {
+    setAccepted(false);
+  }, [resetKey]);
+
+  if (accepted) return children ? <>{children}</> : null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-void/95 p-6">
@@ -22,7 +36,10 @@ export function SafetyGate({ children, title }: { children: ReactNode; title: st
         </p>
         <button
           type="button"
-          onClick={() => setAccepted(true)}
+          onClick={() => {
+            setAccepted(true);
+            onConfirm?.();
+          }}
           className="mt-8 h-16 w-full rounded-2xl bg-volt text-lg font-semibold"
         >
           Verstanden, nur im Stand — weiter

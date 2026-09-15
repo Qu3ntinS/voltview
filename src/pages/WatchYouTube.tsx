@@ -66,7 +66,7 @@ export function WatchYouTubePage() {
   );
 
   return (
-    <SafetyGate title="YouTube nur im Stand">
+    <SafetyGate title="YouTube nur im Stand" resetKey={id}>
     <Theater
       backTo="/youtube"
       eyebrow="VoltView Player · eigenes UI · YouTube"

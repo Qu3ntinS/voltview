@@ -39,14 +39,19 @@ export function Theater({
           <p className="text-[11px] uppercase tracking-[0.28em] text-volt-2">{eyebrow}</p>
           <h1 className="truncate font-display text-2xl font-bold">{title}</h1>
         </div>
-        <button
-          type="button"
-          onClick={enterFullscreen}
-          className="inline-flex h-14 items-center gap-2 rounded-2xl bg-volt px-5 font-semibold"
-        >
-          <Maximize2 className="h-5 w-5" />
-          Tesla Vollbild
-        </button>
+        <div className="text-right">
+          <button
+            type="button"
+            onClick={enterFullscreen}
+            className="inline-flex h-14 items-center gap-2 rounded-2xl bg-volt px-5 font-semibold"
+          >
+            <Maximize2 className="h-5 w-5" />
+            Tesla Vollbild
+          </button>
+          <p className="mt-1 max-w-48 text-[10px] leading-tight text-mist">
+            youtube.com/redirect — im Auto „Go to site“ tippen
+          </p>
+        </div>
       </div>
       <div className="grid min-h-0 flex-1 gap-4 px-5 pb-5 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div

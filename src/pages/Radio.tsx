@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { SafetyGate } from "../components/SafetyGate";
 import { api, type RadioStation } from "../lib/api";
 import { useSettings } from "../lib/settings";
 import { useWatchSession } from "../lib/useWatchSession";
@@ -8,6 +9,7 @@ export function RadioPage() {
   const [items, setItems] = useState<RadioStation[]>([]);
   const [q, setQ] = useState("");
   const [current, setCurrent] = useState<RadioStation | null>(null);
+  const [pending, setPending] = useState<RadioStation | null>(null);
   const [error, setError] = useState("");
   const snapRef = useRef({ positionSec: 0, durationSec: 0, playing: true });
 
@@ -36,6 +38,16 @@ export function RadioPage() {
 
   return (
     <div>
+      {pending ? (
+        <SafetyGate
+          title="Radio nur im Stand"
+          resetKey={pending.id}
+          onConfirm={() => {
+            setCurrent(pending);
+            setPending(null);
+          }}
+        />
+      ) : null}
       <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <p className="text-xs uppercase tracking-[0.28em] text-volt-2">Radio Browser</p>
@@ -84,7 +96,7 @@ export function RadioPage() {
             type="button"
             onClick={() => {
               setError("");
-              setCurrent(station);
+              setPending(station);
             }}
             className="flex h-24 items-center gap-4 rounded-2xl border border-white/5 bg-panel px-4 text-left glow-ring"
           >
