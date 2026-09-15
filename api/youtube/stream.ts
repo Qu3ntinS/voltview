@@ -1,4 +1,4 @@
-import { friendlyPlaybackError, resolveYoutubePlayback } from "../src/lib/youtubePlayback";
+import { friendlyPlaybackError, resolveYoutubePlayback } from "../_lib/youtubePlayback";
 
 export default async function handler(
   req: { query?: { id?: string | string[] }; url?: string },
