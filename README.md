@@ -48,13 +48,15 @@ bun run start
 
 ## GitHub Pages (ohne eigenen Server)
 
-Nach dem Push auf `master`/`main`:
+Nach dem Push auf `master`/`main` schreibt der Workflow `dist/` auf den Branch `gh-pages`.
 
-1. Repo → **Settings → Pages → Source: GitHub Actions**
-2. Workflow `.github/workflows/pages.yml` läuft automatisch
-3. URL: https://qu3ntins.github.io/voltview/
-4. Tesla-Theater: `https://www.youtube.com/redirect?q=https://qu3ntins.github.io/voltview/`
-5. Google OAuth JS-Origin: `https://qu3ntins.github.io`
+Einmalig: Repo → **Settings → Pages → Build and deployment → Deploy from a branch** → Branch `gh-pages` / `/ (root)` → Save.
+
+Danach:
+
+1. URL: https://qu3ntins.github.io/voltview/
+2. Tesla-Theater: `https://www.youtube.com/redirect?q=https://qu3ntins.github.io/voltview/`
+3. Google OAuth JS-Origin: `https://qu3ntins.github.io`
 
 Lokal dasselbe Paket bauen: `bun run build:pages` (legt `404.html` und `.nojekyll` in `dist/`).
 
