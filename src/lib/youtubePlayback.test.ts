@@ -1,5 +1,12 @@
 import { describe, expect, test } from "bun:test";
-import { canCallInnertube, friendlyPlaybackError, pickPlayback, sanitizeVideoId } from "./youtubePlayback";
+import {
+  canCallInnertube,
+  embedCandidates,
+  friendlyPlaybackError,
+  pickPlayback,
+  playbackCandidates,
+  sanitizeVideoId,
+} from "./youtubePlayback";
 
 describe("youtube playback", () => {
   test("rejects bad ids", () => {
@@ -55,5 +62,19 @@ describe("youtube playback", () => {
   test("maps extractor codes to a Tesla-facing message", () => {
     expect(friendlyPlaybackError("INVIDIOUS_FAILED")).toContain("YouTube-IFrame");
     expect(friendlyPlaybackError("LOGIN_REQUIRED")).toContain("Bot-Check");
+  });
+
+  test("builds latest_version URLs the car can load without CORS", () => {
+    const list = playbackCandidates("jNQXAC9IVRw");
+    expect(list.length).toBeGreaterThan(4);
+    expect(list[0]?.url).toContain("/latest_version?id=jNQXAC9IVRw&itag=18");
+    expect(list.some((item) => item.url.includes("itag=22"))).toBe(true);
+    expect(list.some((item) => item.url.includes("local=true"))).toBe(true);
+  });
+
+  test("prefers an iframe-friendly Invidious embed over youtube.com", () => {
+    const list = embedCandidates("jNQXAC9IVRw");
+    expect(list[0]).toContain("invidious.tiekoetter.com/embed/jNQXAC9IVRw");
+    expect(list.every((url) => !/youtube\.com|youtube-nocookie/.test(url))).toBe(true);
   });
 });

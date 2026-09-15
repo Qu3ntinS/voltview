@@ -47,16 +47,26 @@ const INNERTUBE_CLIENTS = [
   },
 ] as const;
 
+/** Public frontends that still 302 `/latest_version` (Tesla <video> follows this itself). */
 const INVIDIOUS = [
+  "https://invidious.tiekoetter.com",
+  "https://yt.chocolatemoo53.com",
   "https://inv.nadeko.net",
   "https://invidious.nerdvpn.de",
   "https://yewtu.be",
+  "https://invidious.f5.si",
   "https://invidious.flokinet.to",
-  "https://iv.datura.network",
   "https://invidious.privacyredirect.com",
   "https://invidious.protokolla.fi",
   "https://inv.tux.pizza",
-  "https://yt.artemislena.eu",
+];
+
+/** Embed hosts that allow being framed (not youtube.com — Tesla strips that to audio). */
+const EMBED_HOSTS = [
+  "https://invidious.tiekoetter.com",
+  "https://invidious.nerdvpn.de",
+  "https://yewtu.be",
+  "https://piped.video",
 ];
 
 const PIPED = [
@@ -66,6 +76,11 @@ const PIPED = [
   "https://pipedapi.lunar.icu",
   "https://pipedapi.leptons.xyz",
 ];
+
+const ITAGS = [
+  { itag: 18, quality: "360p" },
+  { itag: 22, quality: "720p" },
+] as const;
 
 /** InnerTube has no CORS. Only call it from the API, never from the Tesla/browser tab. */
 export function canCallInnertube() {
@@ -235,23 +250,94 @@ export function friendlyPlaybackError(raw: string) {
     return "YouTube blockiert den Stream von diesem Netz (Bot-Check). Im Tesla nach dem Redirect neu laden — dort kommt die Anfrage von deiner IP.";
   }
   if (/INVIDIOUS|PIPED|NO_STREAM|INNERTUBE|NO_PROGRESSIVE|HLS_UNSUPPORTED/i.test(message)) {
-    return "Kein Stream gefunden. Tesla unterdrückt den YouTube-IFrame; VoltView holt den Stream selbst. Bitte im Auto neu laden.";
+    return "Kein Stream gefunden. Tesla unterdrückt den YouTube-IFrame; VoltView holt den Stream selbst.";
   }
   return message || "Stream nicht verfügbar.";
 }
 
+/**
+ * Direct media URLs the Tesla <video> element can load itself.
+ * Do not pre-resolve these on Vercel — googlevideo links are IP-locked
+ * and Invidious JSON APIs are CORS-disabled on public instances.
+ */
+export function playbackCandidates(rawId: string): PlaybackSource[] {
+  const videoId = sanitizeVideoId(rawId);
+  const out: PlaybackSource[] = [];
+  for (const base of INVIDIOUS) {
+    for (const { itag, quality } of ITAGS) {
+      out.push({
+        url: `${base}/latest_version?id=${videoId}&itag=${itag}`,
+        mime: "video/mp4",
+        quality,
+        kind: "progressive",
+      });
+      out.push({
+        url: `${base}/latest_version?id=${videoId}&itag=${itag}&local=true`,
+        mime: "video/mp4",
+        quality: `${quality}-proxy`,
+        kind: "progressive",
+      });
+    }
+  }
+  return out;
+}
+
+/** Third-party HTML5 embeds (not youtube.com / youtube-nocookie). */
+export function embedCandidates(rawId: string): string[] {
+  const videoId = sanitizeVideoId(rawId);
+  return EMBED_HOSTS.map(
+    (base) => `${base}/embed/${videoId}?autoplay=1&quality=hd720&player_style=youtube`,
+  );
+}
+
+async function firstLiveCandidate(candidates: PlaybackSource[]): Promise<PlaybackSource | null> {
+  for (const candidate of candidates.slice(0, 6)) {
+    try {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 4000);
+      const res = await fetch(candidate.url, {
+        method: "GET",
+        redirect: "manual",
+        headers: { Range: "bytes=0-0", accept: "*/*" },
+        signal: ctrl.signal,
+      });
+      clearTimeout(timer);
+      if (res.status >= 300 && res.status < 400) {
+        const loc = res.headers.get("location") || "";
+        if (/latest_version|companion|googlevideo|videoplayback/i.test(loc)) return candidate;
+      }
+      const type = res.headers.get("content-type") || "";
+      if (res.ok && /video|mpegurl|octet-stream/i.test(type)) return candidate;
+    } catch {
+      /* next */
+    }
+  }
+  return null;
+}
+
 export async function resolveYoutubePlayback(rawId: string): Promise<PlaybackSource> {
   const videoId = sanitizeVideoId(rawId);
+  const candidates = playbackCandidates(videoId);
   const errors: string[] = [];
-  const attempts = canCallInnertube()
-    ? [innertubePlayer, invidiousPlayback, pipedPlayback]
-    : [invidiousPlayback, pipedPlayback];
-  for (const attempt of attempts) {
+  if (canCallInnertube()) {
     try {
-      return await attempt(videoId);
+      return await innertubePlayer(videoId);
     } catch (error) {
       errors.push((error as Error).message);
     }
+    try {
+      return await invidiousPlayback(videoId);
+    } catch (error) {
+      errors.push((error as Error).message);
+    }
+    try {
+      return await pipedPlayback(videoId);
+    } catch (error) {
+      errors.push((error as Error).message);
+    }
+    const live = await firstLiveCandidate(candidates);
+    if (live) return live;
   }
+  if (candidates[0]) return candidates[0];
   throw new Error(friendlyPlaybackError(errors[0] || "NO_STREAM"));
 }
