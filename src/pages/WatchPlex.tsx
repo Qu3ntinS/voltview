@@ -1,14 +1,16 @@
-import { ArrowLeft } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
+import { Theater } from "../components/Theater";
 import { api, plexImage, plexStreamUrl } from "../lib/api";
 import { useSettings } from "../lib/settings";
+import { recordWatch } from "../lib/watch";
 
 export function WatchPlexPage() {
   const { id = "" } = useParams();
   const { settings, remember } = useSettings();
   const videoRef = useRef<HTMLVideoElement>(null);
   const [title, setTitle] = useState("Plex");
+  const [summary, setSummary] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -16,7 +18,11 @@ export function WatchPlexPage() {
       .plexMetadata(settings, id)
       .then((data) => {
         if (!data.item) return;
-        setTitle(data.item.grandparentTitle ? `${data.item.grandparentTitle} · ${data.item.title}` : data.item.title);
+        const nextTitle = data.item.grandparentTitle
+          ? `${data.item.grandparentTitle} · ${data.item.title}`
+          : data.item.title;
+        setTitle(nextTitle);
+        setSummary(data.item.summary || "");
         remember({
           kind: "plex",
           id,
@@ -24,6 +30,7 @@ export function WatchPlexPage() {
           subtitle: data.item.grandparentTitle,
           image: plexImage(settings, data.item.thumb),
         });
+        recordWatch({ source: "plex", id, title: nextTitle });
       })
       .catch(() => undefined);
   }, [id, remember, settings]);
@@ -70,18 +77,18 @@ export function WatchPlexPage() {
   }, [id, settings]);
 
   return (
-    <div>
-      <div className="mb-4 flex items-center gap-3">
-        <Link to="/plex" className="inline-flex h-14 items-center gap-2 rounded-2xl bg-white/5 px-5">
-          <ArrowLeft className="h-5 w-5" />
-          Zurück
-        </Link>
-        <h1 className="font-display text-2xl font-bold">{title}</h1>
-      </div>
-      <div className="overflow-hidden rounded-[28px] border border-white/5 bg-black glow-ring">
-        <video ref={videoRef} className="aspect-video w-full" controls autoPlay playsInline />
-      </div>
-      {error ? <p className="mt-4 text-volt-2">{error}</p> : null}
-    </div>
+    <Theater
+      backTo="/plex"
+      eyebrow="VoltView Player · Plex · eigene Mediathek"
+      title={title}
+      sidebar={
+        <div>
+          <p className="text-sm leading-relaxed text-mist">{summary || "Direkter Stream von deinem Plex-Server."}</p>
+          {error ? <p className="mt-4 text-volt-2">{error}</p> : null}
+        </div>
+      }
+    >
+      <video ref={videoRef} className="h-full min-h-[58vh] w-full bg-black" controls autoPlay playsInline />
+    </Theater>
   );
 }

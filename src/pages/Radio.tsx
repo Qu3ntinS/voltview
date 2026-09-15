@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api, type RadioStation } from "../lib/api";
 import { useSettings } from "../lib/settings";
+import { recordWatch } from "../lib/watch";
 
 export function RadioPage() {
   const { settings } = useSettings();
@@ -68,6 +69,7 @@ export function RadioPage() {
             onClick={() => {
               setError("");
               setCurrent(station);
+              recordWatch({ source: "radio", id: station.id, title: station.name });
             }}
             className="flex h-24 items-center gap-4 rounded-2xl border border-white/5 bg-panel px-4 text-left glow-ring"
           >
