@@ -285,7 +285,7 @@ export function playbackCandidates(rawId: string): PlaybackSource[] {
 export function embedCandidates(rawId: string): string[] {
   const videoId = sanitizeVideoId(rawId);
   return EMBED_HOSTS.map(
-    (base) => `${base}/embed/${videoId}?autoplay=1&quality=hd720&player_style=youtube`,
+    (base) => `${base}/embed/${videoId}?autoplay=1&quality=medium&player_style=youtube`,
   );
 }
 
