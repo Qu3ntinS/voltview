@@ -137,7 +137,7 @@ export function YouTubePage() {
       </div>
       {loginError ? <p className="mb-4 text-volt-2">{loginError}</p> : null}
       {!settings.youtubeAccessToken ? (
-        <div className="card mb-5">
+        <div className="card glow-ring mb-5">
           <p className="muted">Google-Login für Abos und Likes. Client-ID steht unter Setup (oder QR).</p>
           <button type="button" onClick={signIn} className="btn btn-primary mt-3">
             Google

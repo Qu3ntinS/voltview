@@ -27,7 +27,7 @@ export function AppsPage() {
       </div>
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {visible.map((service) => (
-          <ServiceTile key={service.id} service={service} />
+          <ServiceTile key={service.id} service={service} fill />
         ))}
       </div>
     </div>
