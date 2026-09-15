@@ -18,6 +18,10 @@ export default defineConfig({
         if (existsSync(index)) {
           copyFileSync(index, resolve("dist/404.html"));
         }
+        const nojekyll = resolve("public/.nojekyll");
+        if (existsSync(nojekyll)) {
+          copyFileSync(nojekyll, resolve("dist/.nojekyll"));
+        }
       },
     },
   ],

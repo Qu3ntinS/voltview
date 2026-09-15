@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { MediaCard } from "../components/MediaCard";
 import { Row } from "../components/Row";
 import { api, plexImage, type PlexItem } from "../lib/api";
+import { isStatic } from "../lib/env";
 import { useSettings } from "../lib/settings";
 
 export function PlexPage() {
@@ -27,6 +28,15 @@ export function PlexPage() {
       })
       .catch((err) => setError(err.message));
   }, [settings]);
+
+  if (isStatic) {
+    return (
+      <EmptyPlex
+        title="Plex braucht den Server"
+        body="GitHub Pages ist nur das Frontend. Plex-Login und HLS-Proxy laufen mit bun run start auf deinem Rechner oder NAS."
+      />
+    );
+  }
 
   if (!settings.plexToken) {
     return (

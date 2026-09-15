@@ -75,7 +75,7 @@ export function RadioPage() {
             className="mt-4 w-full"
             controls
             autoPlay
-            src={`/api/radio/play/${encodeURIComponent(current.id)}`}
+            src={current.url || `/api/radio/play/${encodeURIComponent(current.id)}`}
             onError={() => setError("Stream blockiert oder offline.")}
             onPlaying={() => setError("")}
             onTimeUpdate={(e) => {

@@ -48,13 +48,17 @@ bun run start
 
 ## GitHub Pages (ohne eigenen Server)
 
-```bash
-bun run build:pages
-```
+Nach dem Push auf `master`/`main`:
 
-Oder Repo → Settings → Pages → GitHub Actions. Der Workflow baut mit `VITE_STATIC=1` nach `https://qu3ntins.github.io/voltview/`. YouTube und Apps laufen statisch im Browser; Plex-Proxy braucht weiter `bun run start`. Im Tesla-Browser VoltView zuerst über YouTube-Redirect öffnen: `https://www.youtube.com/redirect?q=https://qu3ntins.github.io/voltview/`
+1. Repo → **Settings → Pages → Source: GitHub Actions**
+2. Workflow `.github/workflows/pages.yml` läuft automatisch
+3. URL: https://qu3ntins.github.io/voltview/
+4. Tesla-Theater: `https://www.youtube.com/redirect?q=https://qu3ntins.github.io/voltview/`
+5. Google OAuth JS-Origin: `https://qu3ntins.github.io`
 
-Die API serviert dann `dist/` mit.
+Lokal dasselbe Paket bauen: `bun run build:pages` (legt `404.html` und `.nojekyll` in `dist/`).
+
+Auf Pages laufen YouTube, Apps, Radio und Games ohne Backend. Plex nicht — dafür `bun run start`.
 
 ## Setup im UI
 
@@ -72,6 +76,7 @@ Nur im Stand nutzen. Blick auf den Bildschirm während der Fahrt ist gefährlich
 | --- | --- |
 | `bun run dev` | Vite + Elysia parallel |
 | `bun run build` | Frontend-Build |
+| `bun run build:pages` | Statischer Build für GitHub Pages |
 | `bun run start` | API + statisches UI |
 | `bun test` | API- und Helper-Tests |
 | `bun run typecheck` | TypeScript |

@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { api, type PlexServer } from "../lib/api";
+import { isStatic, pagesUrl } from "../lib/env";
 import { useSettings } from "../lib/settings";
+import { teslaRedirectUrl } from "../lib/tesla";
 import { fetchWatchStats } from "../lib/watch";
 
 export function SettingsPage() {
@@ -71,6 +73,17 @@ export function SettingsPage() {
 
   return (
     <div className="mx-auto grid max-w-4xl gap-6">
+      {isStatic ? (
+        <section className="rounded-[28px] border border-volt/30 bg-volt/10 p-6">
+          <p className="text-xs uppercase tracking-[0.28em] text-volt-2">GitHub Pages</p>
+          <h2 className="mt-2 font-display text-3xl font-bold">Kein eigener Server</h2>
+          <p className="mt-3 text-mist">
+            YouTube, Apps, Radio und Games laufen hier direkt. Plex braucht weiter
+            <code className="mx-1 text-volt-2">bun run start</code>. Im Tesla über YouTube-Redirect öffnen.
+          </p>
+          <p className="mt-3 break-all text-sm text-volt-2">{teslaRedirectUrl(pagesUrl)}</p>
+        </section>
+      ) : null}
       <section className="rounded-[28px] border border-white/5 bg-panel p-6 glow-ring">
         <p className="text-xs uppercase tracking-[0.28em] text-volt-2">YouTube</p>
         <h2 className="mt-2 font-display text-3xl font-bold">Data API Key</h2>

@@ -21,9 +21,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
-      - run: bun run build
-        env:
-          VITE_STATIC: "1"
+      - run: bun run build:pages
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

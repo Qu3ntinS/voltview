@@ -1,7 +1,7 @@
+import { isStatic } from "./env";
+import { radioClient } from "./radioClient";
 import type { Settings } from "./storage";
 import { youtubeClient } from "./youtubeClient";
-
-const staticMode = import.meta.env.VITE_STATIC === "1";
 
 export type YoutubeChannel = {
   id: string;
@@ -88,50 +88,54 @@ async function getJson<T>(url: string, settings: Settings): Promise<T> {
 export const api = {
   health: () => getJson<{ ok: boolean; youtubeConfigured: boolean }>("/api/health", defaultLike()),
   youtubeTrending: (settings: Settings, categoryId = "") =>
-    staticMode
+    isStatic
       ? youtubeClient.trending(settings, categoryId)
       : getJson<{ items: YoutubeVideo[]; error?: string }>(
           `/api/youtube/trending?region=${encodeURIComponent(settings.youtubeRegion)}&categoryId=${encodeURIComponent(categoryId)}`,
           settings
         ),
   youtubeSearch: (settings: Settings, q: string) =>
-    staticMode
+    isStatic
       ? youtubeClient.search(settings, q)
       : getJson<{ items: YoutubeVideo[]; error?: string }>(
           `/api/youtube/search?q=${encodeURIComponent(q)}&region=${encodeURIComponent(settings.youtubeRegion)}`,
           settings
         ),
   youtubeVideos: (settings: Settings, id: string) =>
-    staticMode
+    isStatic
       ? youtubeClient.videos(settings, id)
       : getJson<{ items: YoutubeVideo[] }>(`/api/youtube/videos?id=${encodeURIComponent(id)}`, settings),
   youtubeRelated: (settings: Settings, q: string) =>
-    staticMode
+    isStatic
       ? youtubeClient.related(settings, q)
       : getJson<{ items: YoutubeVideo[] }>(`/api/youtube/related?q=${encodeURIComponent(q)}`, settings),
   youtubeLiked: (settings: Settings) =>
-    staticMode
+    isStatic
       ? youtubeClient.liked(settings)
       : getJson<{ items: YoutubeVideo[]; error?: string }>("/api/youtube/liked", settings),
   youtubeSubscriptions: (settings: Settings) =>
-    staticMode
+    isStatic
       ? youtubeClient.subscriptions(settings)
       : getJson<{ items: YoutubeChannel[]; error?: string }>("/api/youtube/subscriptions", settings),
   youtubeFeed: (settings: Settings) =>
-    staticMode
+    isStatic
       ? youtubeClient.feed(settings)
       : getJson<{ items: YoutubeVideo[]; error?: string }>("/api/youtube/feed", settings),
   youtubeChannel: (settings: Settings, id: string) =>
-    staticMode
+    isStatic
       ? youtubeClient.channel(settings, id)
       : getJson<{ items: YoutubeVideo[]; error?: string }>(
           `/api/youtube/channel?id=${encodeURIComponent(id)}`,
           settings
         ),
   radioPopular: (settings: Settings, country = "DE") =>
-    getJson<{ items: RadioStation[] }>(`/api/radio/popular?country=${encodeURIComponent(country)}`, settings),
+    isStatic
+      ? radioClient.popular(country)
+      : getJson<{ items: RadioStation[] }>(`/api/radio/popular?country=${encodeURIComponent(country)}`, settings),
   radioSearch: (settings: Settings, q: string) =>
-    getJson<{ items: RadioStation[] }>(`/api/radio/search?q=${encodeURIComponent(q)}`, settings),
+    isStatic
+      ? radioClient.search(q)
+      : getJson<{ items: RadioStation[] }>(`/api/radio/search?q=${encodeURIComponent(q)}`, settings),
   plexPin: async (settings: Settings) => {
     const res = await fetch("/api/plex/pin", {
       method: "POST",
