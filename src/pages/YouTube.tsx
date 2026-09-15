@@ -1,9 +1,11 @@
 import { FormEvent, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { MediaCard } from "../components/MediaCard";
 import { Row } from "../components/Row";
 import { api, type YoutubeChannel, type YoutubeVideo } from "../lib/api";
 import { formatDuration } from "../lib/format";
-import { requestYoutubeToken } from "../lib/google";
+import { requestYoutubeToken, youtubeOauthClientId } from "../lib/google";
+import { isTeslaBrowser } from "../lib/tesla";
 import { useSettings } from "../lib/settings";
 
 const categories = [
@@ -90,12 +92,12 @@ export function YouTubePage() {
 
   async function signIn() {
     setLoginError("");
-    if (!settings.youtubeClientId) {
-      setLoginError("Google Client-ID unter Setup eintragen.");
+    if (isTeslaBrowser()) {
+      setLoginError("Im Tesla den QR unter Setup scannen und auf dem Handy bei Google anmelden.");
       return;
     }
     try {
-      const token = await requestYoutubeToken(settings.youtubeClientId);
+      const token = await requestYoutubeToken(youtubeOauthClientId(settings));
       update({ youtubeAccessToken: token });
     } catch (err) {
       setLoginError((err as Error).message);
@@ -117,6 +119,10 @@ export function YouTubePage() {
             >
               Trennen
             </button>
+          ) : isTeslaBrowser() ? (
+            <Link to="/settings" className="btn btn-primary">
+              QR · Handy
+            </Link>
           ) : (
             <button type="button" onClick={signIn} className="btn btn-primary">
               Google
@@ -138,10 +144,18 @@ export function YouTubePage() {
       {loginError ? <p className="mb-4 text-volt-2">{loginError}</p> : null}
       {!settings.youtubeAccessToken ? (
         <div className="card mb-5">
-          <p className="muted">Optional: Google-Login für Abos und Likes. Trends laufen mit dem Data-API-Key allein.</p>
-          <button type="button" onClick={signIn} className="btn mt-3">
-            Google
-          </button>
+          <p className="muted">
+            Abos und Likes: QR unter Setup, Google auf dem Handy. Trends laufen über den Server-Key — der bleibt geheim.
+          </p>
+          {isTeslaBrowser() ? (
+            <Link to="/settings" className="btn mt-3 btn-primary">
+              QR zeigen
+            </Link>
+          ) : (
+            <button type="button" onClick={signIn} className="btn mt-3">
+              Google
+            </button>
+          )}
         </div>
       ) : null}
 
@@ -218,7 +232,7 @@ export function YouTubePage() {
       {error ? (
         <div className="mb-6 rounded-2xl border border-volt/30 bg-volt/10 p-5 text-volt-2">
           {error === "NO_YOUTUBE_KEY"
-            ? "Kein API-Key. Unter Setup oder per QR nachtragen."
+            ? "Trends kommen vom Server. Für deine Liste: QR scannen und auf dem Handy bei Google anmelden."
             : error}
         </div>
       ) : null}

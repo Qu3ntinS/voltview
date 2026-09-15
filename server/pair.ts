@@ -2,7 +2,6 @@ import { Elysia, t } from "elysia";
 
 const TTL_MS = 10 * 60 * 1000;
 const SETTING_KEYS = [
-  "youtubeApiKey",
   "youtubeRegion",
   "youtubeClientId",
   "youtubeAccessToken",

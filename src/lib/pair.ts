@@ -58,7 +58,6 @@ export function decodeImportHash(hash: string): PairSettings | null {
 
 function pickSettings(input: Record<string, unknown>): PairSettings {
   const keys: (keyof Settings)[] = [
-    "youtubeApiKey",
     "youtubeRegion",
     "youtubeClientId",
     "youtubeAccessToken",

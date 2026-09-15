@@ -6,12 +6,13 @@ import tailwindcss from "@tailwindcss/vite";
 
 const staticMode = process.env.VITE_STATIC === "1";
 const base = process.env.VITE_BASE || (staticMode ? "/voltview/" : "/");
-process.env.VITE_YOUTUBE_API_KEY =
-  process.env.VITE_YOUTUBE_API_KEY || process.env.YOUTUBE_API_KEY || process.env.YOUTUBE_DATA_API_KEY || "";
-if (process.env.VITE_YOUTUBE_API_KEY) {
-  console.log("[voltview] YouTube Data API key present for this build");
+delete process.env.VITE_YOUTUBE_API_KEY;
+process.env.VITE_YOUTUBE_CLIENT_ID =
+  process.env.VITE_YOUTUBE_CLIENT_ID || process.env.YOUTUBE_CLIENT_ID || "";
+if (process.env.VITE_YOUTUBE_CLIENT_ID) {
+  console.log("[voltview] Google OAuth client id present for phone login");
 } else {
-  console.log("[voltview] No YOUTUBE_API_KEY / VITE_YOUTUBE_API_KEY in the environment");
+  console.log("[voltview] No YOUTUBE_CLIENT_ID — phone Google login needs it in Vercel env");
 }
 
 export default defineConfig({

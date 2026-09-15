@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import { MediaCard } from "../components/MediaCard";
 import { Row } from "../components/Row";
 import { api, plexImage, type PlexItem } from "../lib/api";
-import { isStatic } from "../lib/env";
 import { useSettings } from "../lib/settings";
 
 export function PlexPage() {
@@ -29,20 +28,11 @@ export function PlexPage() {
       .catch((err) => setError(err.message));
   }, [settings]);
 
-  if (isStatic) {
-    return (
-      <EmptyPlex
-        title="Plex braucht den Server"
-        body="Pages liefert nur das Frontend. Plex läuft mit bun run start."
-      />
-    );
-  }
-
   if (!settings.plexToken) {
     return (
       <EmptyPlex
-        title="Plex verbinden"
-        body="Melde dich über die offizielle Plex-PIN an. VoltView sieht nur deinen eigenen Server."
+        title="Plex auf dem Handy"
+        body="QR unter Setup scannen, auf dem Phone bei Plex anmelden. Der Tesla übernimmt Account und Server."
       />
     );
   }

@@ -16,6 +16,14 @@ declare global {
 
 const SCOPE = "https://www.googleapis.com/auth/youtube.readonly";
 
+export function bakedYoutubeClientId() {
+  return String(import.meta.env.VITE_YOUTUBE_CLIENT_ID || "").trim();
+}
+
+export function youtubeOauthClientId(settings?: { youtubeClientId?: string }) {
+  return String(settings?.youtubeClientId || bakedYoutubeClientId() || "").trim();
+}
+
 export function loadGoogleIdentity() {
   if (window.google?.accounts?.oauth2) return Promise.resolve();
   return new Promise<void>((resolve, reject) => {
@@ -34,14 +42,18 @@ export function loadGoogleIdentity() {
   });
 }
 
-export async function requestYoutubeToken(clientId: string) {
+export async function requestYoutubeToken(clientId = youtubeOauthClientId()) {
+  const id = clientId.trim();
+  if (!id) {
+    throw new Error("Google-Login ist nicht konfiguriert. Auf Vercel YOUTUBE_CLIENT_ID setzen.");
+  }
   await loadGoogleIdentity();
   if (!window.google?.accounts.oauth2) {
     throw new Error("Google Identity fehlt");
   }
   return new Promise<string>((resolve, reject) => {
     const client = window.google!.accounts.oauth2.initTokenClient({
-      client_id: clientId,
+      client_id: id,
       scope: SCOPE,
       callback: (response) => {
         if (response.access_token) resolve(response.access_token);
