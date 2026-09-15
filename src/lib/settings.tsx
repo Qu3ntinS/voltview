@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
-import { loadRecents, loadSettings, pushRecent, saveSettings, type RecentItem, type Settings } from "./storage";
+import { loadRecents, loadSettings, normalizeSettings, pushRecent, saveSettings, type RecentItem, type Settings } from "./storage";
 import { decodeImportHash } from "./pair";
 
 type SettingsContextValue = {
@@ -28,7 +28,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
   const update = useCallback((patch: Partial<Settings>) => {
     setSettings((prev) => {
-      const next = { ...prev, ...patch };
+      const next = normalizeSettings({ ...prev, ...patch });
       saveSettings(next);
       return next;
     });

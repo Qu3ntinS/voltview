@@ -92,20 +92,29 @@ export function SettingsPage() {
 
       <section className="card">
         <h2 className="text-lg font-semibold">YouTube</h2>
+        <p className="muted mt-1">
+          Data API Key hier einfügen (beginnt mit AIza). Den Key nur in der Google Cloud anzulegen reicht nicht — VoltView
+          liest ihn aus diesem Browser.
+        </p>
+        {settings.youtubeApiKey ? <p className="ok mt-2">Key ist in diesem Browser gespeichert.</p> : null}
         <label>
           Data API Key
           <input
             value={settings.youtubeApiKey}
             onChange={(e) => update({ youtubeApiKey: e.target.value.trim() })}
             placeholder="AIza…"
+            autoComplete="off"
+            spellCheck={false}
           />
         </label>
         <label>
-          OAuth Client-ID
+          OAuth Client-ID (optional, für Abos)
           <input
             value={settings.youtubeClientId}
             onChange={(e) => update({ youtubeClientId: e.target.value.trim() })}
             placeholder="….apps.googleusercontent.com"
+            autoComplete="off"
+            spellCheck={false}
           />
         </label>
         <label>

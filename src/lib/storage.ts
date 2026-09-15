@@ -29,6 +29,38 @@ function randomId() {
   return `volt-${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`;
 }
 
+export function isYoutubeApiKey(value: string) {
+  return value.trim().startsWith("AIza");
+}
+
+export function isGoogleClientId(value: string) {
+  return value.includes(".apps.googleusercontent.com");
+}
+
+export function bakedYoutubeApiKey() {
+  const value = import.meta.env?.VITE_YOUTUBE_API_KEY;
+  return typeof value === "string" ? value.trim() : "";
+}
+
+export function normalizeSettings(input: Settings): Settings {
+  const next: Settings = {
+    ...input,
+    youtubeApiKey: input.youtubeApiKey.trim(),
+    youtubeClientId: input.youtubeClientId.trim(),
+  };
+  if (isGoogleClientId(next.youtubeApiKey) && !isGoogleClientId(next.youtubeClientId)) {
+    const other = next.youtubeClientId;
+    next.youtubeClientId = next.youtubeApiKey;
+    next.youtubeApiKey = isYoutubeApiKey(other) ? other : "";
+  } else if (isYoutubeApiKey(next.youtubeClientId) && !isYoutubeApiKey(next.youtubeApiKey)) {
+    const other = next.youtubeApiKey;
+    next.youtubeApiKey = next.youtubeClientId;
+    next.youtubeClientId = isGoogleClientId(other) ? other : "";
+  }
+  if (!next.youtubeApiKey) next.youtubeApiKey = bakedYoutubeApiKey();
+  return next;
+}
+
 export const defaultSettings: Settings = {
   youtubeApiKey: "",
   youtubeRegion: "DE",
@@ -46,14 +78,14 @@ export function loadSettings(): Settings {
     const raw = localStorage.getItem(SETTINGS_KEY);
     const parsed = raw ? { ...defaultSettings, ...JSON.parse(raw) } : { ...defaultSettings };
     if (!parsed.plexClientId) parsed.plexClientId = randomId();
-    return parsed;
+    return normalizeSettings(parsed);
   } catch {
-    return { ...defaultSettings, plexClientId: randomId() };
+    return normalizeSettings({ ...defaultSettings, plexClientId: randomId() });
   }
 }
 
 export function saveSettings(settings: Settings) {
-  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(normalizeSettings(settings)));
 }
 
 export function loadRecents(): RecentItem[] {

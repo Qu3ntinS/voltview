@@ -6,6 +6,9 @@ import tailwindcss from "@tailwindcss/vite";
 
 const staticMode = process.env.VITE_STATIC === "1";
 const base = process.env.VITE_BASE || (staticMode ? "/voltview/" : "/");
+if (!process.env.VITE_YOUTUBE_API_KEY && process.env.YOUTUBE_API_KEY) {
+  process.env.VITE_YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
+}
 
 export default defineConfig({
   base,
