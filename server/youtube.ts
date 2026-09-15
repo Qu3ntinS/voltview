@@ -1,4 +1,5 @@
 import { Elysia } from "elysia";
+import { resolveYoutubePlayback } from "../src/lib/youtubePlayback";
 
 const YT = "https://www.googleapis.com/youtube/v3";
 
@@ -257,5 +258,14 @@ export const youtubeRoutes = new Elysia({ prefix: "/api/youtube" })
     } catch (error) {
       set.status = (error as Error).message === "NO_YOUTUBE_KEY" ? 400 : 502;
       return { error: (error as Error).message, items: [] };
+    }
+  })
+  .get("/stream", async ({ query, set }) => {
+    try {
+      return await resolveYoutubePlayback(String(query.id || ""));
+    } catch (error) {
+      const message = (error as Error).message;
+      set.status = message === "BAD_VIDEO_ID" ? 400 : 502;
+      return { error: message };
     }
   });

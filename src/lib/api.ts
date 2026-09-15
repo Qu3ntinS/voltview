@@ -128,6 +128,15 @@ export const api = {
           `/api/youtube/channel?id=${encodeURIComponent(id)}`,
           settings
         ),
+  youtubeStream: async (id: string) => {
+    const native = await fetch(`/api/youtube/stream?id=${encodeURIComponent(id)}`);
+    if (native.ok) {
+      const data = (await native.json()) as { url?: string; error?: string };
+      if (data.url) return data as { url: string; mime: string; quality: string; kind: "progressive" | "hls" };
+    }
+    const { resolveYoutubePlayback } = await import("./youtubePlayback");
+    return resolveYoutubePlayback(id);
+  },
   radioPopular: (settings: Settings, country = "DE") =>
     isStatic
       ? radioClient.popular(country)

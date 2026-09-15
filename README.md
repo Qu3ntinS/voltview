@@ -5,7 +5,7 @@ Persönliches Midnight-Purple Theater für den Browser — inkl. Tesla-Display. 
 VoltView ist **kein** Streaming-Anbieter. Es ist ein Hub:
 
 - **Apps** öffnen Netflix, Disney+, Prime, Max, Joyn, ARD, ZDF und andere **offizielle** Web-Apps mit deinem eigenen Account. Jeder Dienst hat eine eigene VoltView-Seite.
-- **YouTube** spielt über die offizielle IFrame-API in voller Länge. Trends und Suche nutzen die YouTube Data API v3.
+- **YouTube** läuft im eigenen HTML5-Player (kein YouTube-IFrame — den unterdrückt der Tesla-Browser). Trends und Suche nutzen die YouTube Data API v3.
 - **Plex** spricht die offizielle Plex-API an (PIN-Login, deine Libraries, HLS-Transcode).
 - **Radio** kommt aus dem öffentlichen Radio-Browser-Verzeichnis.
 - **Games** sind kleine Beifahrer-Pausen, kein Content-Katalog.
@@ -16,7 +16,7 @@ TeslaPlay begrenzt ohne Premium oft auf 20 Minuten. Das ist deren Produktlimit, 
 
 - Keine fremden IPTV-Listen, keine Xtream-Panels, keine geklauten Streams.
 - Kein Netflix-/Disney-Katalog im eigenen Player und kein DRM-Bypass.
-- Kein Scraping von YouTube. Nur offizielle APIs.
+- YouTube-Wiedergabe holt den Stream selbst (InnerTube / Invidious / Piped), weil Tesla den Original-IFrame nur als Ton durchlässt.
 
 Marken gehören ihren Inhabern. VoltView ist unabhängig von Tesla, Google, Netflix und Plex.
 
@@ -65,7 +65,7 @@ Der Key wird beim Build ins Frontend gebacken. In der Google Cloud HTTP-Referrer
 
 Google OAuth JS-Origin: deine `*.vercel.app`-URL (ohne Pfad). Tesla-Theater: `https://www.youtube.com/redirect?q=https://<projekt>.vercel.app/`
 
-Im Tesla-Browser leitet VoltView selbst über `youtube.com/redirect` weiter (Tesla-Play-Workaround), damit YouTube-Video nicht als schwarzes Bild mit Ton hängt. Die Stand-Warnung vor dem Player bleibt.
+Im Tesla-Browser leitet VoltView selbst über `youtube.com/redirect` weiter (Tesla-Play-Workaround), damit HTML5-Video erlaubt ist. Abspielen läuft danach im VoltView-Player (`<video>` + HLS), nicht im YouTube-IFrame. Die Stand-Warnung vor dem Player bleibt.
 
 ## GitHub Pages (ohne eigenen Server)
 

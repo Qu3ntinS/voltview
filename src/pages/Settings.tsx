@@ -85,8 +85,9 @@ export function SettingsPage() {
       <section className="card">
         <h2 className="text-lg font-semibold">Tesla-Link</h2>
         <p className="muted mt-2">
-          Diesen YouTube-Redirect als Lesezeichen speichern — wie Tesla Play. Dann darf der Browser Video, nicht nur Ton.
-          VoltView springt im Tesla selbst über youtube.com/redirect. Vor dem Player bleibt die Stand-Warnung.
+          Diesen YouTube-Redirect als Lesezeichen speichern — wie Tesla Play. Dann darf der Browser HTML5-Video.
+          VoltView spielt YouTube nicht im Original-IFrame (den unterdrückt Tesla), sondern im eigenen Player.
+          Im Auto springt die App selbst über youtube.com/redirect. Vor dem Player bleibt die Stand-Warnung.
         </p>
         <p className="mono wrap mt-2">{teslaRedirectUrl(publicSiteUrl())}</p>
       </section>

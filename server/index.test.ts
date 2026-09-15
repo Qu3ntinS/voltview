@@ -24,6 +24,13 @@ describe("VoltView API", () => {
     expect(body.error).toBe("NO_PLEX_TOKEN");
   });
 
+  test("youtube stream rejects bad ids", async () => {
+    const res = await app.handle(new Request("http://localhost/api/youtube/stream?id=nope"));
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error).toBe("BAD_VIDEO_ID");
+  });
+
   test("youtube liked feed requires Google login", async () => {
     const res = await app.handle(new Request("http://localhost/api/youtube/liked"));
     expect(res.status).toBe(401);

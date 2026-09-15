@@ -45,7 +45,7 @@ const pages: Record<string, SeoPage> = {
   },
   "/youtube": {
     title: "YouTube · VoltView",
-    description: "YouTube im VoltView-Player. Google-Login für Abos und Likes.",
+    description: "YouTube im eigenen VoltView-Player — ohne YouTube-IFrame, den der Tesla-Browser unterdrückt.",
     robots: INDEXABLE,
     type: "website",
   },
