@@ -67,6 +67,28 @@ describe("pair settings", () => {
     expect(room.id).toBe("K797");
   });
 
+  test("SPA 404 on /api/pair falls through to the mailbox", async () => {
+    mockFetch(async (input) => {
+      const url = String(input);
+      if (url.includes("/api/pair/")) {
+        return new Response("<!doctype html>", { status: 404, headers: { "content-type": "text/html" } });
+      }
+      if (url.includes("ntfy.sh") && url.includes("poll=1")) {
+        return new Response(
+          JSON.stringify({
+            event: "message",
+            message: JSON.stringify({ settings: { youtubeAccessToken: "ya29.mail" } }),
+          }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        );
+      }
+      return new Response("no", { status: 404 });
+    });
+    const status = await pair.status("K7Q9M2X4P1AB");
+    expect(status.ready).toBe(true);
+    expect(status.settings?.youtubeAccessToken).toBe("ya29.mail");
+  });
+
   test("submits through ntfy when /api/pair is missing", async () => {
     const posts: string[] = [];
     mockFetch(async (input, init) => {
