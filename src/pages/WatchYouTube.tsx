@@ -1,17 +1,19 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { MediaCard } from "../components/MediaCard";
 import { Theater } from "../components/Theater";
+import { YoutubeStage } from "../components/YoutubeStage";
 import { api, type YoutubeVideo } from "../lib/api";
 import { formatViews } from "../lib/format";
 import { useSettings } from "../lib/settings";
-import { recordWatch } from "../lib/watch";
+import { useWatchSession } from "../lib/useWatchSession";
 
 export function WatchYouTubePage() {
   const { id = "" } = useParams();
   const { settings, remember } = useSettings();
   const [video, setVideo] = useState<YoutubeVideo | null>(null);
   const [related, setRelated] = useState<YoutubeVideo[]>([]);
+  const snapRef = useRef({ positionSec: 0, durationSec: 0, playing: true });
 
   useEffect(() => {
     if (!id) return;
@@ -37,7 +39,6 @@ export function WatchYouTubePage() {
           subtitle: item.channel,
           image: item.thumbnail,
         });
-        recordWatch({ source: "youtube", id, title: item.title });
         if (item.title) {
           api
             .youtubeRelated(settings, item.title)
@@ -45,16 +46,28 @@ export function WatchYouTubePage() {
             .catch(() => undefined);
         }
       })
-      .catch(() => {
-        setVideo(fallback);
-        recordWatch({ source: "youtube", id, title: "YouTube" });
-      });
+      .catch(() => setVideo(fallback));
   }, [id, remember, settings]);
+
+  useWatchSession({
+    deviceId: settings.plexClientId || "voltview-web",
+    source: "youtube",
+    contentId: id,
+    title: video?.title || "YouTube",
+    getSnapshot: () => snapRef.current,
+  });
+
+  const onSnapshot = useCallback(
+    (snap: { positionSec: number; durationSec: number; playing: boolean }) => {
+      snapRef.current = snap;
+    },
+    []
+  );
 
   return (
     <Theater
       backTo="/youtube"
-      eyebrow="VoltView Player · YouTube · keine Zeitgrenze"
+      eyebrow="VoltView Player · eigenes UI · YouTube"
       title={video?.title || "YouTube"}
       sidebar={
         <div>
@@ -83,15 +96,7 @@ export function WatchYouTubePage() {
         </div>
       }
     >
-      <div className="relative h-full min-h-[58vh] w-full">
-        <iframe
-          title={video?.title || "YouTube"}
-          src={`https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0&modestbranding=1&playsinline=1&fs=1`}
-          className="absolute inset-0 h-full w-full"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-          allowFullScreen
-        />
-      </div>
+      <YoutubeStage videoId={id} onSnapshot={onSnapshot} />
     </Theater>
   );
 }

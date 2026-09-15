@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api, type RadioStation } from "../lib/api";
 import { useSettings } from "../lib/settings";
-import { recordWatch } from "../lib/watch";
+import { useWatchSession } from "../lib/useWatchSession";
 
 export function RadioPage() {
   const { settings } = useSettings();
@@ -9,6 +9,15 @@ export function RadioPage() {
   const [q, setQ] = useState("");
   const [current, setCurrent] = useState<RadioStation | null>(null);
   const [error, setError] = useState("");
+  const snapRef = useRef({ positionSec: 0, durationSec: 0, playing: true });
+
+  useWatchSession({
+    deviceId: settings.plexClientId || "voltview-web",
+    source: "radio",
+    contentId: current?.id || "",
+    title: current?.name || "",
+    getSnapshot: () => snapRef.current,
+  });
 
   useEffect(() => {
     api
@@ -57,6 +66,13 @@ export function RadioPage() {
             src={`/api/radio/play/${encodeURIComponent(current.id)}`}
             onError={() => setError("Stream blockiert oder offline.")}
             onPlaying={() => setError("")}
+            onTimeUpdate={(e) => {
+              snapRef.current = {
+                positionSec: e.currentTarget.currentTime || 0,
+                durationSec: e.currentTarget.duration || 0,
+                playing: !e.currentTarget.paused,
+              };
+            }}
           />
         </div>
       ) : null}
@@ -69,7 +85,6 @@ export function RadioPage() {
             onClick={() => {
               setError("");
               setCurrent(station);
-              recordWatch({ source: "radio", id: station.id, title: station.name });
             }}
             className="flex h-24 items-center gap-4 rounded-2xl border border-white/5 bg-panel px-4 text-left glow-ring"
           >

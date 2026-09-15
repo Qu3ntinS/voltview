@@ -23,4 +23,33 @@ describe("VoltView API", () => {
     const body = await res.json();
     expect(body.error).toBe("NO_PLEX_TOKEN");
   });
+
+  test("watch sessions start and accept heartbeats", async () => {
+    const created = await app.handle(
+      new Request("http://localhost/api/watch/session", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          deviceId: "test-device",
+          source: "youtube",
+          contentId: "abc",
+          title: "Test",
+        }),
+      })
+    );
+    expect(created.status).toBe(200);
+    const session = await created.json();
+    expect(session.id).toStartWith("sess_");
+
+    const beat = await app.handle(
+      new Request(`http://localhost/api/watch/session/${session.id}/heartbeat`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ positionSec: 12, durationSec: 120, playing: true }),
+      })
+    );
+    expect(beat.status).toBe(200);
+    const stats = await (await app.handle(new Request("http://localhost/api/watch/stats"))).json();
+    expect(stats.sessions).toBeGreaterThan(0);
+  });
 });

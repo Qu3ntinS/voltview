@@ -16,8 +16,9 @@ export function LeaveAppModal({
         <p className="text-xs uppercase tracking-[0.28em] text-volt-2">Offizieller Dienst</p>
         <h2 className="mt-3 font-display text-3xl font-bold">Zu {service.name} wechseln?</h2>
         <p className="mt-4 text-mist">
-          VoltView spielt Netflix und Co. nicht selbst ab. Du öffnest den offiziellen Account im
-          Browser. Speichere VoltView als Lesezeichen, um zurückzukommen.
+          Netflix, Disney+, Prime und die anderen großen Dienste lassen sich nicht legal in einem
+          eigenen Player abspielen. VoltView öffnet den offiziellen Account und zählt nur den
+          App-Start — nicht die Minuten dort. Lesezeichen speichern, um zurückzukommen.
         </p>
         <div className="mt-8 grid grid-cols-2 gap-3">
           <button

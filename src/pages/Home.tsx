@@ -7,6 +7,7 @@ import { ServiceTile } from "../components/ServiceTile";
 import { services } from "../data/services";
 import { api, plexImage, type YoutubeVideo } from "../lib/api";
 import { useSettings } from "../lib/settings";
+import { startWatchSession } from "../lib/watch";
 import type { Service } from "../data/services";
 
 export function HomePage() {
@@ -141,7 +142,14 @@ export function HomePage() {
         service={leaving}
         onCancel={() => setLeaving(null)}
         onConfirm={() => {
-          if (leaving) window.location.href = leaving.url;
+          if (!leaving) return;
+          startWatchSession({
+            deviceId: settings.plexClientId || "voltview-web",
+            source: "app",
+            contentId: leaving.id,
+            title: leaving.name,
+          }).catch(() => undefined);
+          window.location.href = leaving.url;
         }}
       />
     </div>

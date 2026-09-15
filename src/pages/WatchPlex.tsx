@@ -1,17 +1,22 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
+import { PlayerChrome } from "../components/PlayerChrome";
 import { Theater } from "../components/Theater";
 import { api, plexImage, plexStreamUrl } from "../lib/api";
 import { useSettings } from "../lib/settings";
-import { recordWatch } from "../lib/watch";
+import { useWatchSession } from "../lib/useWatchSession";
 
 export function WatchPlexPage() {
   const { id = "" } = useParams();
   const { settings, remember } = useSettings();
   const videoRef = useRef<HTMLVideoElement>(null);
+  const snapRef = useRef({ positionSec: 0, durationSec: 0, playing: true });
   const [title, setTitle] = useState("Plex");
   const [summary, setSummary] = useState("");
   const [error, setError] = useState("");
+  const [playing, setPlaying] = useState(true);
+  const [current, setCurrent] = useState(0);
+  const [duration, setDuration] = useState(0);
 
   useEffect(() => {
     api
@@ -30,10 +35,17 @@ export function WatchPlexPage() {
           subtitle: data.item.grandparentTitle,
           image: plexImage(settings, data.item.thumb),
         });
-        recordWatch({ source: "plex", id, title: nextTitle });
       })
       .catch(() => undefined);
   }, [id, remember, settings]);
+
+  useWatchSession({
+    deviceId: settings.plexClientId || "voltview-web",
+    source: "plex",
+    contentId: id,
+    title,
+    getSnapshot: () => snapRef.current,
+  });
 
   useEffect(() => {
     const video = videoRef.current;
@@ -79,7 +91,7 @@ export function WatchPlexPage() {
   return (
     <Theater
       backTo="/plex"
-      eyebrow="VoltView Player · Plex · eigene Mediathek"
+      eyebrow="VoltView Player · eigenes UI · Plex"
       title={title}
       sidebar={
         <div>
@@ -88,7 +100,44 @@ export function WatchPlexPage() {
         </div>
       }
     >
-      <video ref={videoRef} className="h-full min-h-[58vh] w-full bg-black" controls autoPlay playsInline />
+      <PlayerChrome
+        playing={playing}
+        current={current}
+        duration={duration}
+        onToggle={() => {
+          const video = videoRef.current;
+          if (!video) return;
+          if (video.paused) video.play();
+          else video.pause();
+        }}
+        onSeek={(seconds) => {
+          if (videoRef.current) videoRef.current.currentTime = seconds;
+        }}
+        onFullscreen={() => {
+          const root = document.querySelector("[data-theater-stage]");
+          if (root && root.requestFullscreen) root.requestFullscreen().catch(() => undefined);
+        }}
+      >
+        <video
+          ref={videoRef}
+          className="absolute inset-0 h-full w-full bg-black"
+          autoPlay
+          playsInline
+          onPlay={() => setPlaying(true)}
+          onPause={() => setPlaying(false)}
+          onTimeUpdate={(e) => {
+            const video = e.currentTarget;
+            const snap = {
+              positionSec: video.currentTime || 0,
+              durationSec: video.duration || 0,
+              playing: !video.paused,
+            };
+            snapRef.current = snap;
+            setCurrent(snap.positionSec);
+            setDuration(snap.durationSec);
+          }}
+        />
+      </PlayerChrome>
     </Theater>
   );
 }

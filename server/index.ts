@@ -4,6 +4,7 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { plexRoutes } from "./plex";
 import { radioRoutes } from "./radio";
+import { watchRoutes } from "./watch";
 import { youtubeRoutes } from "./youtube";
 
 const port = Number(process.env.PORT || 3001);
@@ -15,6 +16,7 @@ export const app = new Elysia()
   .use(youtubeRoutes)
   .use(radioRoutes)
   .use(plexRoutes)
+  .use(watchRoutes)
   .get("/api/health", () => ({
     ok: true,
     name: "voltview",

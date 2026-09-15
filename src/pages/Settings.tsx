@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api, type PlexServer } from "../lib/api";
 import { useSettings } from "../lib/settings";
+import { fetchWatchStats } from "../lib/watch";
 
 export function SettingsPage() {
   const { settings, update } = useSettings();
@@ -9,6 +10,15 @@ export function SettingsPage() {
   );
   const [servers, setServers] = useState<PlexServer[]>([]);
   const [status, setStatus] = useState("");
+  const [usage, setUsage] = useState<{ sessions: number; watchedSec: number; bySource: Record<string, number> }>({
+    sessions: 0,
+    watchedSec: 0,
+    bySource: {},
+  });
+
+  useEffect(() => {
+    fetchWatchStats().then(setUsage).catch(() => undefined);
+  }, []);
 
   useEffect(() => {
     if (!settings.plexToken) return;
@@ -150,6 +160,23 @@ export function SettingsPage() {
       </section>
 
       <section className="rounded-[28px] border border-white/5 bg-panel p-6 glow-ring">
+        <p className="text-xs uppercase tracking-[0.28em] text-volt-2">Abo-Grundlage</p>
+        <h2 className="mt-2 font-display text-3xl font-bold">Nutzung</h2>
+        <p className="mt-3 text-mist">
+          YouTube, Plex und Radio laufen im eigenen Player. Jede Session sendet Heartbeats — später
+          kannst du genau hier Limits und Abos anschließen. Netflix, Disney+ und Prime lassen sich
+          nur als App-Start zählen, nicht die Minuten im fremden Player.
+        </p>
+        <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-4">
+          <Stat label="Sessions" value={String(usage.sessions)} />
+          <Stat label="Minuten" value={String(Math.round(usage.watchedSec / 60))} />
+          {Object.entries(usage.bySource).map(([source, seconds]) => (
+            <Stat key={source} label={source} value={`${Math.round(seconds / 60)} min`} />
+          ))}
+        </div>
+      </section>
+
+      <section className="rounded-[28px] border border-white/5 bg-panel p-6 glow-ring">
         <h2 className="font-display text-3xl font-bold">Tesla-Tipp</h2>
         <p className="mt-3 text-mist">
           VoltView als Lesezeichen im Fahrzeugbrowser speichern. Apps wie Netflix verlassen die
@@ -157,6 +184,15 @@ export function SettingsPage() {
         </p>
         {status ? <p className="mt-4 text-volt-2">{status}</p> : null}
       </section>
+    </div>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl bg-ink px-4 py-4">
+      <p className="text-[11px] uppercase tracking-[0.2em] text-mist">{label}</p>
+      <p className="mt-2 font-display text-2xl font-bold">{value}</p>
     </div>
   );
 }
