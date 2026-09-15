@@ -51,7 +51,10 @@ bun run start
 Kein extra GitHub-Action nötig. Vercel hängt am Repo und deployed selbst:
 
 1. Einmalig: [vercel.com/new](https://vercel.com/new) → GitHub-Repo `Qu3ntinS/voltview` importieren → Deploy.
-2. Danach: Push auf `master` = Production, jeder PR bekommt eine Preview-URL.
+2. **Production Branch = `master`**, nicht `gh-pages`. `gh-pages` ist nur das fertige GitHub-Pages-Paket (kein `package.json`) — Vercel darf den nicht bauen.
+3. Danach: Push auf `master` = Production, jeder PR bekommt eine Preview-URL.
+
+In Vercel: Project → Settings → Git → Production Branch → `master`. Builds auf `gh-pages` werden übersprungen.
 
 Hobby-Plan reicht. Build nimmt `bun run build:vercel` (`vercel.json`, Bun 1.4.x). YouTube, Apps, Radio, Games und QR-Live-Sync laufen (Sync über jsonblob, weil Vercel hier kein `/api/pair` hat). Plex braucht weiter `bun run start`.
 

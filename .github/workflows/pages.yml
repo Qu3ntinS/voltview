@@ -1,3 +1,4 @@
+# Static export only. Do not point Vercel at gh-pages — that branch has no package.json.
 name: GitHub Pages
 
 on:
