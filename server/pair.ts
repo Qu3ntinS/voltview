@@ -1,18 +1,7 @@
 import { Elysia, t } from "elysia";
+import { PAIR_TTL_MS, pairCode, pickPairSettings, type PairSettings } from "../api/_lib/pairMailbox";
 
-const TTL_MS = 10 * 60 * 1000;
-const SETTING_KEYS = [
-  "youtubeRegion",
-  "youtubeClientId",
-  "youtubeAccessToken",
-  "plexToken",
-  "plexClientId",
-  "plexServerUri",
-  "plexServerToken",
-  "plexServerName",
-] as const;
-
-type PairSettings = Partial<Record<(typeof SETTING_KEYS)[number], string>>;
+export { pickPairSettings };
 
 type Room = {
   id: string;
@@ -25,23 +14,8 @@ const rooms = new Map<string, Room>();
 function purge() {
   const now = Date.now();
   for (const [id, room] of rooms) {
-    if (now - room.createdAt > TTL_MS) rooms.delete(id);
+    if (now - room.createdAt > PAIR_TTL_MS) rooms.delete(id);
   }
-}
-
-function pairCode() {
-  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  const bytes = crypto.getRandomValues(new Uint8Array(4));
-  return [...bytes].map((b) => alphabet[b % alphabet.length]).join("");
-}
-
-export function pickPairSettings(input: Record<string, unknown>): PairSettings {
-  const next: PairSettings = {};
-  for (const key of SETTING_KEYS) {
-    const value = input[key];
-    if (typeof value === "string") next[key] = value;
-  }
-  return next;
 }
 
 export const pairRoutes = new Elysia({ prefix: "/api/pair" })
@@ -50,7 +24,7 @@ export const pairRoutes = new Elysia({ prefix: "/api/pair" })
     let id = pairCode();
     while (rooms.has(id)) id = pairCode();
     rooms.set(id, { id, createdAt: Date.now(), settings: null });
-    return { id, expiresAt: Date.now() + TTL_MS };
+    return { id, expiresAt: Date.now() + PAIR_TTL_MS };
   })
   .get("/:id", ({ params, set }) => {
     purge();
@@ -63,7 +37,7 @@ export const pairRoutes = new Elysia({ prefix: "/api/pair" })
       id: room.id,
       ready: Boolean(room.settings),
       settings: room.settings,
-      expiresAt: room.createdAt + TTL_MS,
+      expiresAt: room.createdAt + PAIR_TTL_MS,
     };
   })
   .put(

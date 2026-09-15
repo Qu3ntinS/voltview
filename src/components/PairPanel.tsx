@@ -74,7 +74,7 @@ export function PairPanel({
             QR auf dem Tesla scannen. Google und Plex tippst du auf dem Phone — der Stand kommt zurück hierher.
             Den YouTube-API-Key hält nur der Server.
           </p>
-          {id && id.length <= 8 ? <p className="pair-code">{id}</p> : null}
+          {id && !id.includes("-") ? <p className="pair-code">{id}</p> : null}
           {url ? (
             <p className="mono muted wrap">
               {url.replace(/^https?:\/\//, "")}

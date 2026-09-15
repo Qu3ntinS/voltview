@@ -45,26 +45,14 @@ describe("pair settings", () => {
     expect(await nativePairAvailable()).toBe(false);
   });
 
-  test("falls back to jsonblob when /api/health is the SPA", async () => {
-    mockFetch(async (input, init) => {
-      const url = String(input);
-      if (url.includes("/api/health")) {
-        return new Response("<!doctype html>", { status: 200, headers: { "content-type": "text/html" } });
-      }
-      if (url.includes("jsonblob.com") && (init?.method || "GET") === "POST") {
-        return new Response("{}", {
-          status: 201,
-          headers: { Location: "https://jsonblob.com/api/jsonBlob/11111111-2222-3333-4444-555555555555" },
-        });
-      }
-      return new Response("no", { status: 404 });
-    });
+  test("creates a local mailbox room when /api/pair is missing", async () => {
+    mockFetch(async () => new Response("no", { status: 404 }));
     const room = await pair.create();
-    expect(room.id).toBe("11111111-2222-3333-4444-555555555555");
-    expect(room.addUrl).toContain("r=11111111-2222-3333-4444-555555555555");
+    expect(room.id).toMatch(/^[A-Z2-9]{12}$/);
+    expect(room.addUrl).toContain(`r=${room.id}`);
   });
 
-  test("uses native pair when health is VoltView JSON", async () => {
+  test("uses native pair when POST /api/pair returns an id", async () => {
     mockFetch(async (input, init) => {
       const url = String(input);
       if (url.endsWith("/api/health") || url.includes("/api/health")) {
@@ -77,5 +65,19 @@ describe("pair settings", () => {
     });
     const room = await pair.create();
     expect(room.id).toBe("K797");
+  });
+
+  test("submits through ntfy when /api/pair is missing", async () => {
+    const posts: string[] = [];
+    mockFetch(async (input, init) => {
+      const url = String(input);
+      if (url.includes("ntfy.sh") && (init?.method || "GET") === "POST") {
+        posts.push(await new Request(url, init).text());
+        return new Response("{}", { status: 200 });
+      }
+      return new Response("no", { status: 404 });
+    });
+    await pair.submit("K7Q9M2X4P1AB", { youtubeAccessToken: "ya29.from-phone" });
+    expect(posts[0]).toContain("ya29.from-phone");
   });
 });
