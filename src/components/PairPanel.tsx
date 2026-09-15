@@ -71,8 +71,8 @@ export function PairPanel({
           <p className="pair-kicker">Wie Tesla Play</p>
           <h2>Mit dem Handy einrichten</h2>
           <p className="muted">
-            QR auf dem Tesla scannen. YouTube-Key, Google-Login und Plex tippst du auf dem Phone — der Stand kommt
-            zurück hierher.
+            QR auf dem Tesla scannen. Google und Plex tippst du auf dem Phone — der Stand kommt zurück hierher.
+            Den YouTube-API-Key hält nur der Server.
           </p>
           {id && id.length <= 8 ? <p className="pair-code">{id}</p> : null}
           {url ? (

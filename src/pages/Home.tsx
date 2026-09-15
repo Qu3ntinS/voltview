@@ -29,26 +29,24 @@ export function HomePage() {
     };
   }, [settings]);
 
-  const needsYoutubeKey = !settings.youtubeApiKey;
+  const needsGoogle = !settings.youtubeAccessToken;
 
   return (
     <div>
-      {needsYoutubeKey ? (
+      {needsGoogle ? (
         <section className="card glow-ring mb-4 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="font-semibold">YouTube Data API Key fehlt</p>
-            <p className="muted">
-              Den Key mit AIza… unter Setup in diesem Browser eintragen. Nur in der Google Cloud anlegen reicht nicht.
-            </p>
+            <p className="font-semibold">Google auf dem Handy</p>
+            <p className="muted">QR unter Setup scannen, auf dem Phone anmelden. Dann kommen Abos und Likes hierher.</p>
           </div>
           <Link to="/settings" className="btn btn-primary">
-            Zu Setup
+            QR zeigen
           </Link>
         </section>
       ) : null}
 
       {ytError && ytError === "NO_YOUTUBE_KEY" ? (
-        <p className="muted mb-3">YouTube-Key fehlt — unter Setup oder per QR nachtragen.</p>
+        <p className="muted mb-3">Trends kommen vom Server-Key. Für deine Abos: QR scannen und Google auf dem Handy.</p>
       ) : ytError ? (
         <p className="warn mb-3">{ytError}</p>
       ) : null}

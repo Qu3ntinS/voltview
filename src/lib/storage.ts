@@ -38,25 +38,20 @@ export function isGoogleClientId(value: string) {
 }
 
 export function bakedYoutubeApiKey() {
-  return String(import.meta.env.VITE_YOUTUBE_API_KEY || "").trim();
+  return "";
 }
 
 export function normalizeSettings(input: Settings): Settings {
   const next: Settings = {
     ...input,
-    youtubeApiKey: input.youtubeApiKey.trim(),
+    youtubeApiKey: "",
     youtubeClientId: input.youtubeClientId.trim(),
   };
-  if (isGoogleClientId(next.youtubeApiKey) && !isGoogleClientId(next.youtubeClientId)) {
-    const other = next.youtubeClientId;
-    next.youtubeClientId = next.youtubeApiKey;
-    next.youtubeApiKey = isYoutubeApiKey(other) ? other : "";
-  } else if (isYoutubeApiKey(next.youtubeClientId) && !isYoutubeApiKey(next.youtubeApiKey)) {
-    const other = next.youtubeApiKey;
-    next.youtubeApiKey = next.youtubeClientId;
-    next.youtubeClientId = isGoogleClientId(other) ? other : "";
+  if (isGoogleClientId(input.youtubeApiKey) && !isGoogleClientId(next.youtubeClientId)) {
+    next.youtubeClientId = input.youtubeApiKey.trim();
+  } else if (isYoutubeApiKey(next.youtubeClientId)) {
+    next.youtubeClientId = "";
   }
-  if (!next.youtubeApiKey) next.youtubeApiKey = bakedYoutubeApiKey();
   return next;
 }
 

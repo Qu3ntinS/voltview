@@ -22,7 +22,7 @@ export function TopBar() {
     navigate(`/search?q=${encodeURIComponent(q.trim())}`);
   }
 
-  const yt = settings.youtubeApiKey ? "YT" : "YT aus";
+  const yt = settings.youtubeAccessToken ? "YT an" : "YT";
   const plex = settings.plexServerName || "Plex aus";
 
   return (

@@ -53,17 +53,16 @@ Kein extra GitHub-Action nötig. Vercel hängt am Repo und deployed selbst:
 1. Einmalig: [vercel.com/new](https://vercel.com/new) → GitHub-Repo `Qu3ntinS/voltview` importieren → Deploy.
 2. Danach: Push auf `master` = Production, jeder PR bekommt eine Preview-URL.
 
-Hobby-Plan reicht. Build nimmt `bun run build:vercel` (`vercel.json`, Bun 1.4.x). YouTube, Apps, Radio, Games und QR-Live-Sync laufen (Sync über jsonblob, weil Vercel hier kein `/api/pair` hat). Plex braucht weiter `bun run start`.
+Hobby-Plan reicht. Build nimmt `bun run build:vercel` (`vercel.json`, Bun 1.4.x). YouTube-Katalog, Plex-Link, Apps, Radio, Games und QR-Live-Sync laufen über `/api` plus jsonblob.
 
-YouTube-Key in Vercel: Project → Settings → Environment Variables
+YouTube in Vercel: Project → Settings → Environment Variables
 
-- Name: `YOUTUBE_API_KEY` (oder `VITE_YOUTUBE_API_KEY`)
-- Environments: Production (und Preview, wenn du Previews testest)
-- Danach **Redeploy**, sonst bleibt der alte Build ohne Key
+- `YOUTUBE_API_KEY` — **nur Server**, kommt nicht ins Frontend
+- `YOUTUBE_CLIENT_ID` — öffentliche OAuth-Web-Client-ID für Google-Login auf dem Handy (nicht der AIza-Key)
+- Environments: Production (und Preview)
+- Danach **Redeploy**
 
-Der Key wird beim Build ins Frontend gebacken. In der Google Cloud HTTP-Referrer auf `https://<projekt>.vercel.app/*` setzen.
-
-Google OAuth JS-Origin: deine `*.vercel.app`-URL (ohne Pfad). Tesla-Theater: `https://www.youtube.com/redirect?q=https://<projekt>.vercel.app/`
+Google Cloud: YouTube Data API v3 an. OAuth-Client Typ Web, JS-Origin = `https://<projekt>.vercel.app`. HTTP-Referrer für den API-Key auf dieselbe URL. Tesla-Theater: `https://www.youtube.com/redirect?q=https://<projekt>.vercel.app/`
 
 Im Tesla-Browser leitet VoltView selbst über `youtube.com/redirect` weiter (Tesla-Play-Workaround), damit HTML5-Video erlaubt ist. Abspielen läuft danach im VoltView-Player (`<video>` + HLS), nicht im YouTube-IFrame. Die Stand-Warnung vor dem Player bleibt.
 
@@ -81,13 +80,13 @@ Danach:
 
 Lokal dasselbe Paket bauen: `bun run build:pages` (legt `404.html` und `.nojekyll` in `dist/`).
 
-Auf Pages laufen YouTube, Apps, Radio und Games ohne Backend. Plex nicht — dafür `bun run start`.
+Auf Pages laufen YouTube-UI, Apps, Radio und Games. Plex-Link geht über plex.tv im Browser; Bibliothek/Stream braucht `/api/plex` (Vercel oder `bun run start`).
 
 ## Setup im UI
 
-1. **YouTube:** Google Cloud Console → YouTube Data API v3 aktivieren → Key unter *Setup* eintragen. Für Abos/Likes eine OAuth-Client-ID (Web, JS-Origin = deine VoltView-URL, Scope `youtube.readonly`) und auf YouTube *Mit Google anmelden*. Vor jedem Video erscheint eine Stand-Warnung. Tesla-Vollbild nutzt `youtube.com/redirect?q=…`.
-2. **Plex:** *Plex verbinden* → Code auf [plex.tv/link](https://plex.tv/link) freigeben → Server wählen. Token bleibt im `localStorage` dieses Browsers.
-3. **Tesla:** VoltView als Lesezeichen speichern. Netflix & Co. verlassen die Seite — zurück nur über das Bookmark.
+1. **Tesla:** QR unter Setup. Auf dem Handy Google anmelden — Abos und Likes kommen zurück ins Auto. Kein API-Key tippen.
+2. **Plex:** denselben QR, auf dem Handy Plex öffnen und Server tippen.
+3. **Lesezeichen:** VoltView als Bookmark. Netflix & Co. verlassen die Seite — zurück nur über das Bookmark.
 
 ## Sicherheit im Auto
 

@@ -51,7 +51,7 @@ describe("VoltView API", () => {
       new Request(`http://localhost/api/pair/${room.id}`, {
         method: "PUT",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ youtubeApiKey: "AIza-from-phone", extra: "drop" }),
+        body: JSON.stringify({ youtubeAccessToken: "ya29-from-phone", extra: "drop" }),
       })
     );
     expect(sent.status).toBe(200);
@@ -59,7 +59,7 @@ describe("VoltView API", () => {
     const ready = await app.handle(new Request(`http://localhost/api/pair/${room.id}`));
     const payload = await ready.json();
     expect(payload.ready).toBe(true);
-    expect(payload.settings.youtubeApiKey).toBe("AIza-from-phone");
+    expect(payload.settings.youtubeAccessToken).toBe("ya29-from-phone");
     expect(payload.settings.extra).toBeUndefined();
 
     const gone = await app.handle(new Request(`http://localhost/api/pair/${room.id}`, { method: "DELETE" }));

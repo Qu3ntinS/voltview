@@ -17,19 +17,22 @@ describe("pair settings", () => {
     const picked = pickPairSettings({
       youtubeApiKey: "AIza123",
       youtubeRegion: "DE",
+      youtubeAccessToken: "ya29.tok",
       plexToken: "tok",
       extra: "nope",
     });
-    expect(picked.youtubeApiKey).toBe("AIza123");
+    expect("youtubeApiKey" in picked).toBe(false);
+    expect(picked.youtubeAccessToken).toBe("ya29.tok");
     expect(picked.plexToken).toBe("tok");
     expect((picked as { extra?: string }).extra).toBeUndefined();
   });
 
-  test("import hash roundtrips", () => {
-    const hash = encodeImportHash({ youtubeApiKey: "AIza-test", youtubeRegion: "AT" });
+  test("import hash roundtrips without the API key", () => {
+    const hash = encodeImportHash({ youtubeAccessToken: "ya29.tok", youtubeRegion: "AT" });
     const decoded = decodeImportHash(`#${hash}`);
-    expect(decoded?.youtubeApiKey).toBe("AIza-test");
+    expect(decoded?.youtubeAccessToken).toBe("ya29.tok");
     expect(decoded?.youtubeRegion).toBe("AT");
+    expect(decoded?.youtubeApiKey).toBeUndefined();
   });
 
   test("HTML health on Vercel is not the native pair API", async () => {

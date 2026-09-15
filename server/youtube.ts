@@ -3,12 +3,8 @@ import { friendlyPlaybackError, resolveYoutubePlayback } from "../src/lib/youtub
 
 const YT = "https://www.googleapis.com/youtube/v3";
 
-function youtubeKey(request: Request) {
-  return (
-    request.headers.get("x-volt-youtube-key") ||
-    process.env.YOUTUBE_API_KEY ||
-    ""
-  ).trim();
+function youtubeKey(_request: Request) {
+  return (process.env.YOUTUBE_API_KEY || process.env.YOUTUBE_DATA_API_KEY || "").trim();
 }
 
 function youtubeToken(request: Request) {

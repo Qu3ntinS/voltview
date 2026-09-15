@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { api, type PlexServer } from "../lib/api";
-import { requestYoutubeToken } from "../lib/google";
+import { requestYoutubeToken, youtubeOauthClientId } from "../lib/google";
 import { encodeImportHash, pair } from "../lib/pair";
+import { pickPlexConnection } from "../lib/plexTv";
 import { loadSettings, type Settings } from "../lib/storage";
 
 export function AddPage() {
@@ -25,6 +26,22 @@ export function AddPage() {
 
   function patch(next: Partial<Settings>) {
     setForm((prev) => ({ ...prev, ...next }));
+    return { ...form, ...next };
+  }
+
+  async function push(next: Partial<Settings>) {
+    const merged = patch(next);
+    if (!room) {
+      setStatus("Kein Tesla-Code. QR auf dem Auto scannen.");
+      return;
+    }
+    try {
+      await pair.submit(room, merged);
+      setSent(true);
+      setStatus("Liegt auf dem Tesla.");
+    } catch (error) {
+      setStatus((error as Error).message === "PAIR_NOT_FOUND" ? "Code abgelaufen. QR neu scannen." : "Senden fehlgeschlagen.");
+    }
   }
 
   useEffect(() => {
@@ -34,15 +51,16 @@ export function AddPage() {
         .plexPinStatus(form, pin.id)
         .then((data) => {
           if (data.authToken) {
-            patch({ plexToken: data.authToken });
             setPin(null);
-            setStatus("Plex verbunden.");
+            setStatus("Plex verbunden. Server wählen.");
+            const merged = patch({ plexToken: data.authToken });
+            if (room) pair.submit(room, merged).catch(() => undefined);
           }
         })
         .catch(() => undefined);
     }, 2000);
     return () => window.clearInterval(id);
-  }, [pin, form.plexToken]);
+  }, [pin, form.plexToken, form.plexClientId, room]);
 
   useEffect(() => {
     if (!form.plexToken) return;
@@ -52,38 +70,20 @@ export function AddPage() {
       .catch(() => undefined);
   }, [form.plexToken, form.plexClientId]);
 
-  async function send() {
+  async function google() {
     setStatus("");
-    if (!room) {
-      setStatus("Kein Tesla-Code. QR auf dem Auto scannen.");
-      return;
-    }
     try {
-      await pair.submit(room, form);
-      setSent(true);
-      setStatus("Gesendet. Schau auf den Tesla.");
-    } catch (error) {
-      setStatus((error as Error).message === "PAIR_NOT_FOUND" ? "Code abgelaufen. QR neu scannen." : "Senden fehlgeschlagen.");
-    }
-  }
-
-  async function startPlex() {
-    try {
-      setPin(await api.plexPin(form));
+      const token = await requestYoutubeToken(youtubeOauthClientId(form));
+      await push({ youtubeAccessToken: token, youtubeClientId: youtubeOauthClientId(form) });
     } catch (error) {
       setStatus((error as Error).message);
     }
   }
 
-  async function google() {
-    if (!form.youtubeClientId) {
-      setStatus("Zuerst die OAuth Client-ID eintragen.");
-      return;
-    }
+  async function startPlex() {
+    setStatus("");
     try {
-      const token = await requestYoutubeToken(form.youtubeClientId);
-      patch({ youtubeAccessToken: token });
-      setStatus("Google verbunden.");
+      setPin(await api.plexPin(form));
     } catch (error) {
       setStatus((error as Error).message);
     }
@@ -92,46 +92,28 @@ export function AddPage() {
   return (
     <div className="add-page">
       <header className="add-head">
-        <p className="pair-kicker">VoltView</p>
-        <h1>Handy-Setup</h1>
-        <p className="muted">YouTube, Google und Plex hier eintragen. Der Tesla übernimmt den Stand.</p>
+        <p className="pair-kicker">VoltView · Handy</p>
+        <h1>Einloggen</h1>
+        <p className="muted">
+          Google und Plex hier auf dem Phone. Der Tesla übernimmt den Stand — ohne Tastatur im Auto.
+        </p>
+        {!room ? <p className="warn">QR auf dem Tesla scannen, sonst kommt der Login nicht zurück.</p> : null}
       </header>
 
-      <label>
-        YouTube Data API Key
-        <input value={form.youtubeApiKey} onChange={(e) => patch({ youtubeApiKey: e.target.value.trim() })} placeholder="AIza…" />
-      </label>
-      <label>
-        Google OAuth Client-ID
-        <input
-          value={form.youtubeClientId}
-          onChange={(e) => patch({ youtubeClientId: e.target.value.trim() })}
-          placeholder="….apps.googleusercontent.com"
-        />
-      </label>
-      <label>
-        Region
-        <select value={form.youtubeRegion} onChange={(e) => patch({ youtubeRegion: e.target.value })}>
-          {["DE", "AT", "CH", "US", "GB", "FR"].map((code) => (
-            <option key={code} value={code}>
-              {code}
-            </option>
-          ))}
-        </select>
-      </label>
-      <div className="row-gap">
-        <button type="button" className="btn" onClick={google}>
-          {form.youtubeAccessToken ? "Google neu verbinden" : "Mit Google anmelden"}
-        </button>
-        <button type="button" className="btn btn-ghost" onClick={startPlex}>
-          Plex verbinden
-        </button>
-      </div>
+      <button type="button" className="btn btn-primary" onClick={google}>
+        {form.youtubeAccessToken ? "Google neu verbinden" : "Mit Google anmelden"}
+      </button>
+      {form.youtubeAccessToken ? <p className="ok">Google verbunden. Abos und Likes kommen auf den Tesla.</p> : null}
+
+      <button type="button" className="btn" onClick={startPlex}>
+        {form.plexToken ? "Plex neu verbinden" : "Plex verbinden"}
+      </button>
       {pin ? (
         <div className="card">
-          <p className="muted">Code auf plex.tv/link</p>
-          <p className="pair-code">{pin.code}</p>
-          <a href={pin.authUrl}>Plex öffnen</a>
+          <p className="muted">Plex öffnen, einloggen, zurück hierher. Der Tesla übernimmt den Account.</p>
+          <a className="btn btn-primary" href={pin.authUrl} target="_blank" rel="noreferrer">
+            Plex öffnen
+          </a>
         </div>
       ) : null}
       {servers.map((server) => (
@@ -140,12 +122,10 @@ export function AddPage() {
           type="button"
           className="list-btn"
           onClick={() => {
-            const connection =
-              server.connections.find((c) => c.local && c.uri.startsWith("http")) ||
-              server.connections.find((c) => !c.relay) ||
-              server.connections[0];
+            const connection = pickPlexConnection(server);
             if (!connection) return;
-            patch({
+            push({
+              plexToken: form.plexToken,
               plexServerUri: connection.uri,
               plexServerToken: server.accessToken,
               plexServerName: server.name,
@@ -153,21 +133,35 @@ export function AddPage() {
           }}
         >
           {server.name}
+          {form.plexServerName === server.name ? " · aktiv" : ""}
         </button>
       ))}
 
-      <button type="button" className="btn btn-primary" onClick={send} disabled={!room || sent}>
-        {sent ? "Gesendet" : "An Tesla senden"}
+      <label>
+        Region
+        <select
+          value={form.youtubeRegion}
+          onChange={(e) => {
+            const youtubeRegion = e.target.value;
+            setForm((prev) => ({ ...prev, youtubeRegion }));
+          }}
+        >
+          {["DE", "AT", "CH", "US", "GB", "FR"].map((code) => (
+            <option key={code} value={code}>
+              {code}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      <button type="button" className="btn btn-primary" onClick={() => push({})} disabled={!room}>
+        {sent ? "Aktualisiert" : "An Tesla senden"}
       </button>
       {status ? <p className={sent ? "ok" : "warn"}>{status}</p> : null}
 
       <details className="muted">
-        <summary>Ohne QR: Link im Tesla öffnen</summary>
-        <button
-          type="button"
-          className="btn btn-ghost"
-          onClick={() => navigator.clipboard.writeText(importUrl)}
-        >
+        <summary>Ohne Live-QR: Link im Tesla öffnen</summary>
+        <button type="button" className="btn btn-ghost" onClick={() => navigator.clipboard.writeText(importUrl)}>
           Sync-Link kopieren
         </button>
       </details>

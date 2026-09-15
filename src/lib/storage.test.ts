@@ -12,13 +12,13 @@ describe("settings normalize", () => {
     expect(next.youtubeClientId).toBe("123.apps.googleusercontent.com");
   });
 
-  test("swaps an AIza key pasted into the client id field", () => {
+  test("never keeps a YouTube API key in the browser", () => {
     const next = normalizeSettings({
       ...defaultSettings,
-      youtubeApiKey: "",
+      youtubeApiKey: "AIzaSyTestkeyxxxxxxxxxxxxxxxx",
       youtubeClientId: "AIzaSyTestkeyxxxxxxxxxxxxxxxx",
     });
-    expect(next.youtubeApiKey).toBe("AIzaSyTestkeyxxxxxxxxxxxxxxxx");
+    expect(next.youtubeApiKey).toBe("");
     expect(next.youtubeClientId).toBe("");
   });
 });

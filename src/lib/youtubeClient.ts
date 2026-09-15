@@ -34,16 +34,14 @@ function mapVideo(item: any): YoutubeVideo {
 }
 
 async function ytGet(path: string, params: Record<string, string>, settings: Settings) {
-  if (!settings.youtubeApiKey && !settings.youtubeAccessToken) {
+  if (!settings.youtubeAccessToken) {
     throw new Error("NO_YOUTUBE_KEY");
   }
   const url = new URL(`${YT}/${path}`);
   Object.entries(params).forEach(([k, v]) => {
     if (v) url.searchParams.set(k, v);
   });
-  if (settings.youtubeApiKey) url.searchParams.set("key", settings.youtubeApiKey);
-  const headers: Record<string, string> = {};
-  if (settings.youtubeAccessToken) headers.Authorization = `Bearer ${settings.youtubeAccessToken}`;
+  const headers: Record<string, string> = { Authorization: `Bearer ${settings.youtubeAccessToken}` };
   const res = await fetch(url.toString(), { headers });
   const data = await res.json();
   if (!res.ok) throw new Error(data?.error?.message || `YouTube ${res.status}`);
