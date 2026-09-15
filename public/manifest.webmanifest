@@ -1,12 +1,12 @@
 {
-  "name": "VoltView — Midnight Theater",
+  "name": "VoltView",
   "short_name": "VoltView",
-  "description": "Theater-Hub für Tesla und Browser: YouTube, Plex, Radio und offizielle Streaming-Apps.",
+  "description": "YouTube, Plex, Radio und offizielle Apps im Tesla-Browser.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#05030a",
-  "theme_color": "#05030a",
+  "background_color": "#111111",
+  "theme_color": "#111111",
   "lang": "de",
   "icons": [
     {

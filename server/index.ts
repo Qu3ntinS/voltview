@@ -2,6 +2,7 @@ import { cors } from "@elysiajs/cors";
 import { Elysia } from "elysia";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
+import { pairRoutes } from "./pair";
 import { plexRoutes } from "./plex";
 import { radioRoutes } from "./radio";
 import { watchRoutes } from "./watch";
@@ -17,6 +18,7 @@ export const app = new Elysia()
   .use(radioRoutes)
   .use(plexRoutes)
   .use(watchRoutes)
+  .use(pairRoutes)
   .get("/api/health", () => ({
     ok: true,
     name: "voltview",

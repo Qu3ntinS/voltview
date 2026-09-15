@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 import { loadRecents, loadSettings, pushRecent, saveSettings, type RecentItem, type Settings } from "./storage";
+import { decodeImportHash } from "./pair";
 
 type SettingsContextValue = {
   settings: Settings;
@@ -10,8 +11,19 @@ type SettingsContextValue = {
 
 const SettingsContext = createContext<SettingsContextValue | null>(null);
 
+function initialSettings() {
+  const loaded = loadSettings();
+  if (typeof window === "undefined") return loaded;
+  const imported = decodeImportHash(window.location.hash);
+  if (!imported || !Object.keys(imported).length) return loaded;
+  const next = { ...loaded, ...imported };
+  saveSettings(next);
+  window.history.replaceState(null, "", window.location.pathname + window.location.search);
+  return next;
+}
+
 export function SettingsProvider({ children }: { children: ReactNode }) {
-  const [settings, setSettings] = useState<Settings>(() => loadSettings());
+  const [settings, setSettings] = useState<Settings>(() => initialSettings());
   const [recents, setRecents] = useState<RecentItem[]>(() => loadRecents());
 
   const update = useCallback((patch: Partial<Settings>) => {

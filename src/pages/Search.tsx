@@ -23,8 +23,7 @@ export function SearchPage() {
 
   return (
     <div>
-      <p className="text-xs uppercase tracking-[0.28em] text-volt-2">Suche</p>
-      <h1 className="mt-2 font-display text-4xl font-extrabold">{q ? `Suche: ${q}` : "Suche"}</h1>
+      <h1 className="text-2xl font-bold tracking-tight">{q ? q : "Suche"}</h1>
       {videos.length ? (
         <section className="mt-8">
           <h2 className="mb-4 font-display text-2xl font-bold">YouTube</h2>

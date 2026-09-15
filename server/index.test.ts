@@ -31,6 +31,36 @@ describe("VoltView API", () => {
     expect(body.error).toBe("NO_YOUTUBE_LOGIN");
   });
 
+  test("pair room accepts phone settings and is consumed", async () => {
+    const created = await app.handle(new Request("http://localhost/api/pair", { method: "POST" }));
+    expect(created.status).toBe(200);
+    const room = (await created.json()) as { id: string };
+    expect(room.id).toMatch(/^[A-Z2-9]{4}$/);
+
+    const empty = await app.handle(new Request(`http://localhost/api/pair/${room.id}`));
+    expect((await empty.json()).ready).toBe(false);
+
+    const sent = await app.handle(
+      new Request(`http://localhost/api/pair/${room.id}`, {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ youtubeApiKey: "AIza-from-phone", extra: "drop" }),
+      })
+    );
+    expect(sent.status).toBe(200);
+
+    const ready = await app.handle(new Request(`http://localhost/api/pair/${room.id}`));
+    const payload = await ready.json();
+    expect(payload.ready).toBe(true);
+    expect(payload.settings.youtubeApiKey).toBe("AIza-from-phone");
+    expect(payload.settings.extra).toBeUndefined();
+
+    const gone = await app.handle(new Request(`http://localhost/api/pair/${room.id}`, { method: "DELETE" }));
+    expect(gone.status).toBe(200);
+    const missing = await app.handle(new Request(`http://localhost/api/pair/${room.id}`));
+    expect(missing.status).toBe(404);
+  });
+
   test("watch sessions start and accept heartbeats", async () => {
     const created = await app.handle(
       new Request("http://localhost/api/watch/session", {

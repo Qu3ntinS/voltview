@@ -1,6 +1,5 @@
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense } from "react";
 import { Route, Routes } from "react-router-dom";
-import { BootScreen } from "./components/BootScreen";
 import { Shell } from "./components/Shell";
 
 const HomePage = lazy(() => import("./pages/Home").then((m) => ({ default: m.HomePage })));
@@ -16,29 +15,18 @@ const GamesPage = lazy(() => import("./pages/Games").then((m) => ({ default: m.G
 const SettingsPage = lazy(() => import("./pages/Settings").then((m) => ({ default: m.SettingsPage })));
 const SearchPage = lazy(() => import("./pages/Search").then((m) => ({ default: m.SearchPage })));
 const ServiceLaunchPage = lazy(() => import("./pages/ServiceLaunch").then((m) => ({ default: m.ServiceLaunchPage })));
+const AddPage = lazy(() => import("./pages/Add").then((m) => ({ default: m.AddPage })));
 const NotFoundPage = lazy(() => import("./pages/NotFound").then((m) => ({ default: m.NotFoundPage })));
 
 function Loading() {
-  return <div className="p-8 text-mist">Lade Modul…</div>;
+  return <div className="p-6 text-mist">Laden…</div>;
 }
 
 export function App() {
-  const [booted, setBooted] = useState(() => sessionStorage.getItem("voltview.booted") === "1");
-
-  if (!booted) {
-    return (
-      <BootScreen
-        onDone={() => {
-          sessionStorage.setItem("voltview.booted", "1");
-          setBooted(true);
-        }}
-      />
-    );
-  }
-
   return (
     <Suspense fallback={<Loading />}>
       <Routes>
+        <Route path="/add" element={<AddPage />} />
         <Route element={<Shell />}>
           <Route path="/" element={<HomePage />} />
           <Route path="/apps" element={<AppsPage />} />

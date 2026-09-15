@@ -29,6 +29,10 @@ describe("SEO resolver", () => {
     expect(titles.size).toBe(services.length);
   });
 
+  test("add page stays noindex", () => {
+    expect(resolveSeo("/add").robots).toContain("noindex");
+  });
+
   test("watch pages stay noindex", () => {
     const seo = resolveSeo("/watch/yt/abc");
     expect(seo.robots).toContain("noindex");
@@ -74,7 +78,7 @@ describe("SEO static shells", () => {
 
   test("applySeoToHtml rewrites title and canonical", () => {
     const html = `<html><head>
-      <title>VoltView — Midnight Theater</title>
+      <title>VoltView</title>
       <meta name="description" content="old" />
       <meta name="robots" content="index,follow" />
       <meta name="googlebot" content="index,follow" />

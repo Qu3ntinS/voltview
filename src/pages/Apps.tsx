@@ -11,13 +11,8 @@ export function AppsPage() {
 
   return (
     <div>
-      <div className="mb-6">
-        <p className="text-xs uppercase tracking-[0.28em] text-volt-2">Alle Streaming-Dienste</p>
-        <h1 className="mt-2 font-display text-4xl font-extrabold">Netflix, Disney+, Prime & mehr</h1>
-        <p className="mt-3 max-w-2xl text-mist">
-          Jeder Dienst hat eine eigene VoltView-Seite und öffnet danach deinen offiziellen Account.
-          YouTube und Plex bleiben im eigenen Player — die großen Streamer dürfen das rechtlich nicht.
-        </p>
+      <div className="mb-4">
+        <h1 className="text-2xl font-bold tracking-tight">Apps</h1>
       </div>
       <div className="mb-6 flex flex-wrap gap-2">
         <Chip active={filter === "all"} onClick={() => setFilter("all")} label="Alle" />
@@ -44,7 +39,7 @@ function Chip({ active, label, onClick }: { active: boolean; label: string; onCl
     <button
       type="button"
       onClick={onClick}
-      className={`h-12 rounded-2xl px-5 text-sm ${
+      className={`h-10 rounded-lg px-4 text-sm ${
         active ? "bg-volt text-white" : "border border-white/10 bg-panel text-mist"
       }`}
     >

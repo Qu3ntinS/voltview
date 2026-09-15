@@ -2,11 +2,11 @@ import { featuredServiceIds, getService, services } from "../data/services";
 
 export const SITE_URL = "https://qu3ntins.github.io/voltview";
 export const SITE_NAME = "VoltView";
-export const DEFAULT_TITLE = "VoltView — Midnight Theater";
+export const DEFAULT_TITLE = "VoltView";
 export const DEFAULT_DESCRIPTION =
-  "VoltView ist dein Midnight-Purple Theater für Tesla und Browser: YouTube mit Google-Login, Plex, Radio und offizielle Streaming-Apps wie Netflix, Disney+ und Prime — ohne Zeitlimit.";
+  "YouTube, Plex, Radio und offizielle Apps wie Netflix und Disney+ im Tesla-Browser.";
 export const OG_IMAGE = `${SITE_URL}/og.png`;
-export const OG_IMAGE_ALT = "VoltView Midnight Theater — dunkles Tesla-Entertainment-Hub";
+export const OG_IMAGE_ALT = "VoltView";
 
 export type SeoPage = {
   title: string;
@@ -27,39 +27,43 @@ const pages: Record<string, SeoPage> = {
   },
   "/apps": {
     title: "Streaming-Apps · VoltView",
-    description:
-      "Netflix, Disney+, Prime Video, Max, Joyn, ARD, ZDF und weitere offizielle Streaming-Apps in VoltView öffnen. Tesla-Theater über YouTube-Redirect.",
+    description: "Netflix, Disney+, Prime Video und weitere offizielle Apps in VoltView öffnen.",
     robots: INDEXABLE,
     type: "website",
   },
   "/youtube": {
     title: "YouTube · VoltView",
-    description:
-      "YouTube im eigenen VoltView-Player. Google-Login für Abos und Likes, volle Länge, keine Zeitgrenze.",
+    description: "YouTube im VoltView-Player. Google-Login für Abos und Likes.",
     robots: INDEXABLE,
     type: "website",
   },
   "/plex": {
     title: "Plex · VoltView",
-    description: "Eigene Plex-Mediathek im VoltView-Theater: Libraries, Weiterschauen und HLS-Playback.",
+    description: "Eigene Plex-Mediathek: Libraries, Weiterschauen, HLS.",
     robots: INDEXABLE,
     type: "website",
   },
   "/radio": {
     title: "Radio · VoltView",
-    description: "Internetradio aus dem Radio-Browser-Verzeichnis, direkt im VoltView-Player.",
+    description: "Internetradio aus dem Radio-Browser-Verzeichnis.",
     robots: INDEXABLE,
     type: "website",
   },
   "/games": {
     title: "Games · VoltView",
-    description: "Kurze Beifahrer-Spiele für Ladepausen im Tesla — Volt Snake und Circuit Memory.",
+    description: "Kurze Pausen-Spiele für Ladestops.",
     robots: INDEXABLE,
     type: "website",
   },
   "/settings": {
     title: "Setup · VoltView",
-    description: "YouTube-Key, Google-Login und Plex in VoltView einrichten.",
+    description: "YouTube, Google und Plex per QR vom Handy auf den Tesla legen.",
+    robots: NOINDEX,
+    type: "website",
+  },
+  "/add": {
+    title: "Handy-Setup · VoltView",
+    description: "Setup vom Handy an den Tesla senden.",
     robots: NOINDEX,
     type: "website",
   },
@@ -78,6 +82,7 @@ const crumbNames: Record<string, string> = {
   radio: "Radio",
   games: "Games",
   settings: "Setup",
+  add: "Handy",
   search: "Suche",
   watch: "Player",
   library: "Bibliothek",
@@ -114,7 +119,7 @@ export function resolveSeo(pathname: string): SeoPage & { canonical: string; jso
     if (service) {
       page = {
         title: `${service.name} · VoltView`,
-        description: `${service.name} in VoltView öffnen: ${service.blurb}. Offizieller Account, Tesla-Theater über YouTube-Redirect.`,
+        description: `${service.name} in VoltView öffnen: ${service.blurb}.`,
         robots: INDEXABLE,
         type: "website",
       };
@@ -182,13 +187,7 @@ export function resolveSeo(pathname: string): SeoPage & { canonical: string; jso
         inLanguage: "de",
         image: OG_IMAGE,
         screenshot: OG_IMAGE,
-        featureList: [
-          "YouTube im eigenen Player ohne Zeitlimit",
-          "Offizielle Streaming-Apps wie Netflix, Disney+ und Prime",
-          "Plex mit HLS über den eigenen Server",
-          "Internetradio",
-          "Tesla-Vollbild über YouTube-Redirect",
-        ],
+        featureList: ["YouTube", "Offizielle Streaming-Apps", "Plex", "Radio", "QR-Setup vom Handy"],
         offers: { "@type": "Offer", price: "0", priceCurrency: "EUR" },
       },
       {
