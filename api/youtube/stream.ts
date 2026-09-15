@@ -1,4 +1,4 @@
-import { resolveYoutubePlayback } from "../src/lib/youtubePlayback";
+import { friendlyPlaybackError, resolveYoutubePlayback } from "../src/lib/youtubePlayback";
 
 export default async function handler(
   req: { query?: { id?: string | string[] }; url?: string },
@@ -11,7 +11,8 @@ export default async function handler(
   try {
     res.status(200).json(await resolveYoutubePlayback(id));
   } catch (error) {
-    const message = (error as Error).message;
-    res.status(message === "BAD_VIDEO_ID" ? 400 : 502).json({ error: message });
+    const raw = (error as Error).message;
+    const message = raw === "BAD_VIDEO_ID" ? raw : friendlyPlaybackError(raw);
+    res.status(raw === "BAD_VIDEO_ID" ? 400 : 502).json({ error: message });
   }
 }

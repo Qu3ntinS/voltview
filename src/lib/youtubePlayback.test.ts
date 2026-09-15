@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { canCallInnertube, pickPlayback, sanitizeVideoId } from "./youtubePlayback";
+import { canCallInnertube, friendlyPlaybackError, pickPlayback, sanitizeVideoId } from "./youtubePlayback";
 
 describe("youtube playback", () => {
   test("rejects bad ids", () => {
@@ -50,5 +50,10 @@ describe("youtube playback", () => {
 
   test("innertube stays off in the browser tab", () => {
     expect(canCallInnertube()).toBe(typeof window === "undefined");
+  });
+
+  test("maps extractor codes to a Tesla-facing message", () => {
+    expect(friendlyPlaybackError("INVIDIOUS_FAILED")).toContain("YouTube-IFrame");
+    expect(friendlyPlaybackError("LOGIN_REQUIRED")).toContain("Bot-Check");
   });
 });

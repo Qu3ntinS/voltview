@@ -1,5 +1,5 @@
 import { Elysia } from "elysia";
-import { resolveYoutubePlayback } from "../src/lib/youtubePlayback";
+import { friendlyPlaybackError, resolveYoutubePlayback } from "../src/lib/youtubePlayback";
 
 const YT = "https://www.googleapis.com/youtube/v3";
 
@@ -264,8 +264,9 @@ export const youtubeRoutes = new Elysia({ prefix: "/api/youtube" })
     try {
       return await resolveYoutubePlayback(String(query.id || ""));
     } catch (error) {
-      const message = (error as Error).message;
-      set.status = message === "BAD_VIDEO_ID" ? 400 : 502;
+      const raw = (error as Error).message;
+      const message = raw === "BAD_VIDEO_ID" ? raw : friendlyPlaybackError(raw);
+      set.status = raw === "BAD_VIDEO_ID" ? 400 : 502;
       return { error: message };
     }
   });

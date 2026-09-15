@@ -229,6 +229,17 @@ async function pipedPlayback(videoId: string) {
   throw new Error("PIPED_FAILED");
 }
 
+export function friendlyPlaybackError(raw: string) {
+  const message = String(raw || "").trim();
+  if (/LOGIN_REQUIRED|not a bot|Melde dich|Sign in|Please sign in/i.test(message)) {
+    return "YouTube blockiert den Stream von diesem Netz (Bot-Check). Im Tesla nach dem Redirect neu laden — dort kommt die Anfrage von deiner IP.";
+  }
+  if (/INVIDIOUS|PIPED|NO_STREAM|INNERTUBE|NO_PROGRESSIVE|HLS_UNSUPPORTED/i.test(message)) {
+    return "Kein Stream gefunden. Tesla unterdrückt den YouTube-IFrame; VoltView holt den Stream selbst. Bitte im Auto neu laden.";
+  }
+  return message || "Stream nicht verfügbar.";
+}
+
 export async function resolveYoutubePlayback(rawId: string): Promise<PlaybackSource> {
   const videoId = sanitizeVideoId(rawId);
   const errors: string[] = [];
@@ -242,5 +253,5 @@ export async function resolveYoutubePlayback(rawId: string): Promise<PlaybackSou
       errors.push((error as Error).message);
     }
   }
-  throw new Error(errors[0] || "NO_STREAM");
+  throw new Error(friendlyPlaybackError(errors[0] || "NO_STREAM"));
 }

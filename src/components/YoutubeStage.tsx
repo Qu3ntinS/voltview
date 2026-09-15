@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { PlayerChrome } from "./PlayerChrome";
 import { api } from "../lib/api";
-import type { PlaybackSource } from "../lib/youtubePlayback";
+import { friendlyPlaybackError, type PlaybackSource } from "../lib/youtubePlayback";
 
 type HlsHandle = { destroy: () => void };
 
@@ -65,10 +65,7 @@ export function YoutubeStage({
       .catch((err: Error) => {
         if (cancelled) return;
         setLoading(false);
-        setError(
-          err.message ||
-            "Stream nicht verfügbar. Tesla unterdrückt den YouTube-IFrame — VoltView holt den Stream selbst.",
-        );
+        setError(friendlyPlaybackError(err.message));
       });
 
     return () => {
