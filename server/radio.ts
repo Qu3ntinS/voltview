@@ -58,6 +58,33 @@ export const radioRoutes = new Elysia({ prefix: "/api/radio" })
       return { error: (error as Error).message, items: [] };
     }
   })
+  .get("/play/:id", async ({ params, set }) => {
+    try {
+      const data = await radioGet(`/json/stations/byuuid/${params.id}`);
+      const station = Array.isArray(data) ? data[0] : data;
+      const streamUrl = station?.url_resolved || station?.url;
+      if (!streamUrl) {
+        set.status = 404;
+        return { error: "Station not found" };
+      }
+      const res = await fetch(streamUrl, {
+        headers: { "User-Agent": UA, Accept: "audio/*,*/*" },
+      });
+      if (!res.ok || !res.body) {
+        set.status = 502;
+        return { error: "Stream failed" };
+      }
+      return new Response(res.body, {
+        headers: {
+          "content-type": res.headers.get("content-type") || "audio/mpeg",
+          "cache-control": "no-store",
+        },
+      });
+    } catch (error) {
+      set.status = 502;
+      return { error: (error as Error).message };
+    }
+  })
   .get("/search", async ({ query, set }) => {
     try {
       const name = String(query.q || "").trim();

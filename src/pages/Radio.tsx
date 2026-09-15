@@ -21,7 +21,7 @@ export function RadioPage() {
     setCurrent(station);
     const audio = audioRef.current;
     if (!audio) return;
-    audio.src = station.url;
+    audio.src = `/api/radio/play/${encodeURIComponent(station.id)}`;
     audio.play().catch(() => setError("Stream blockiert oder offline."));
   }
 
