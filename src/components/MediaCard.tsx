@@ -21,7 +21,7 @@ export function MediaCard({
   return (
     <Link
       to={to}
-      className={`group relative overflow-hidden rounded-xl border border-white/10 bg-panel ${size}`}
+      className={`group relative overflow-hidden rounded-2xl border border-white/10 bg-panel glow-ring ${size}`}
     >
       {image ? (
         <img src={image} alt={title} className="absolute inset-0 h-full w-full object-cover" />
