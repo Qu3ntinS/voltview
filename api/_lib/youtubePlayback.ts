@@ -309,9 +309,7 @@ export function playbackCandidates(rawId: string): PlaybackSource[] {
 /** Third-party HTML5 embeds (not youtube.com / youtube-nocookie). */
 export function embedCandidates(rawId: string): string[] {
   const videoId = sanitizeVideoId(rawId);
-  return EMBED_HOSTS.map(
-    (base) => `${base}/embed/${videoId}?autoplay=1&quality=medium&player_style=youtube`,
-  );
+  return EMBED_HOSTS.map((base) => `${base}/embed/${videoId}?autoplay=1&quality=medium`);
 }
 
 async function firstLiveCandidate(candidates: PlaybackSource[]): Promise<PlaybackSource | null> {

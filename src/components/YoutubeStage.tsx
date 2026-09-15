@@ -7,7 +7,7 @@ import {
   playbackCandidates,
   type PlaybackSource,
 } from "../lib/youtubePlayback";
-import { connectionDownlinkMbps, mediaDuration } from "../lib/playerMedia";
+import { connectionDownlinkMbps, localPlaybackOverride, mediaDuration } from "../lib/playerMedia";
 
 type HlsLike = {
   destroy: () => void;
@@ -99,7 +99,11 @@ export function YoutubeStage({
     let hls: HlsLike | null = null;
     let timer = 0;
     let index = 0;
-    const candidates = safeList(() => playbackCandidates(videoId)).slice(0, MAX_FILE_ATTEMPTS);
+    const override = localPlaybackOverride();
+    const candidates = [
+      ...(override ? [override] : []),
+      ...safeList(() => playbackCandidates(videoId)),
+    ].slice(0, MAX_FILE_ATTEMPTS);
     const embedList = safeList(() => embedCandidates(videoId));
 
     setError("");
