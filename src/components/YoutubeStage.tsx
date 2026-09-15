@@ -1,9 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import { PlayerChrome } from "./PlayerChrome";
-import { api } from "../lib/api";
-import { friendlyPlaybackError, type PlaybackSource } from "../lib/youtubePlayback";
+import {
+  embedCandidates,
+  friendlyPlaybackError,
+  playbackCandidates,
+  type PlaybackSource,
+} from "../lib/youtubePlayback";
 
 type HlsHandle = { destroy: () => void };
+
+const ATTEMPT_MS = 4000;
+const MAX_FILE_ATTEMPTS = 2;
 
 async function attachSource(video: HTMLVideoElement, source: PlaybackSource): Promise<HlsHandle | null> {
   if (source.kind === "hls" && !video.canPlayType("application/vnd.apple.mpegurl")) {
@@ -22,6 +29,14 @@ async function attachSource(video: HTMLVideoElement, source: PlaybackSource): Pr
   return null;
 }
 
+function safeList<T>(build: () => T[], fallback: T[] = []): T[] {
+  try {
+    return build();
+  } catch {
+    return fallback;
+  }
+}
+
 export function YoutubeStage({
   videoId,
   onSnapshot,
@@ -34,51 +49,98 @@ export function YoutubeStage({
   const [current, setCurrent] = useState(0);
   const [duration, setDuration] = useState(0);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [mode, setMode] = useState<"file" | "embed">("embed");
+  const [embedIndex, setEmbedIndex] = useState(0);
+  const embeds = safeList(() => embedCandidates(videoId));
 
   useEffect(() => {
-    const video = videoRef.current;
-    if (!video || !videoId) return;
+    const media = videoRef.current;
+    if (!media || !videoId) return;
+    const node: HTMLVideoElement = media;
     let cancelled = false;
+    let ignoreError = false;
     let hls: HlsHandle | null = null;
+    let timer = 0;
+    let index = 0;
+    const candidates = safeList(() => playbackCandidates(videoId)).slice(0, MAX_FILE_ATTEMPTS);
+
     setError("");
-    setLoading(true);
     setPlaying(false);
     setCurrent(0);
     setDuration(0);
-    video.removeAttribute("src");
-    video.load();
+    setMode("embed");
+    setEmbedIndex(0);
 
-    api
-      .youtubeStream(videoId)
-      .then(async (source) => {
-        if (cancelled || !videoRef.current) return;
+    function clearTimer() {
+      window.clearTimeout(timer);
+    }
+
+    function cleanupMedia() {
+      hls?.destroy();
+      hls = null;
+      ignoreError = true;
+      node.pause();
+      node.removeAttribute("src");
+      node.load();
+      ignoreError = false;
+    }
+
+    async function tryIndex(next: number) {
+      if (cancelled || next >= candidates.length) {
+        clearTimer();
+        return;
+      }
+      index = next;
+      const source = candidates[next];
+      if (!source || !videoRef.current) return;
+      try {
+        ignoreError = true;
+        hls?.destroy();
         hls = await attachSource(videoRef.current, source);
-        if (cancelled) {
-          hls?.destroy();
-          return;
-        }
-        setLoading(false);
-        const play = videoRef.current.play();
-        if (play) play.catch(() => undefined);
-      })
-      .catch((err: Error) => {
-        if (cancelled) return;
-        setLoading(false);
-        setError(friendlyPlaybackError(err.message));
-      });
+        ignoreError = false;
+      } catch {
+        ignoreError = false;
+        void tryIndex(next + 1);
+        return;
+      }
+      if (cancelled) return;
+      clearTimer();
+      timer = window.setTimeout(() => void tryIndex(next + 1), ATTEMPT_MS);
+    }
+
+    function onReady() {
+      if (cancelled) return;
+      clearTimer();
+      setMode("file");
+      setError("");
+      const play = node.play();
+      if (play) play.catch(() => undefined);
+    }
+
+    function onFail() {
+      if (cancelled || ignoreError) return;
+      clearTimer();
+      void tryIndex(index + 1);
+    }
+
+    node.addEventListener("loadeddata", onReady);
+    node.addEventListener("error", onFail);
+    void tryIndex(0);
 
     return () => {
       cancelled = true;
-      hls?.destroy();
-      video.pause();
-      video.removeAttribute("src");
-      video.load();
+      clearTimer();
+      node.removeEventListener("loadeddata", onReady);
+      node.removeEventListener("error", onFail);
+      cleanupMedia();
     };
   }, [videoId]);
 
+  const embedUrl = embeds[embedIndex] || "";
+
   return (
     <PlayerChrome
+      chrome={mode === "embed" ? "minimal" : "full"}
       playing={playing}
       current={current}
       duration={duration}
@@ -94,14 +156,19 @@ export function YoutubeStage({
     >
       <video
         ref={videoRef}
-        className="absolute inset-0 h-full w-full bg-black object-contain"
+        className={
+          mode === "embed"
+            ? "hidden"
+            : "absolute inset-0 h-full w-full bg-black object-contain"
+        }
         poster={videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : undefined}
         playsInline
+        muted={mode === "embed"}
         autoPlay
         preload="auto"
         disablePictureInPicture
         controlsList="nodownload noplaybackrate"
-        {...{ "webkit-playsinline": "true" }}
+        {...{ "webkit-playsinline": "true", referrerPolicy: "no-referrer" }}
         onPlay={() => setPlaying(true)}
         onPause={() => setPlaying(false)}
         onDurationChange={(event) => setDuration(event.currentTarget.duration || 0)}
@@ -113,17 +180,31 @@ export function YoutubeStage({
           setDuration(durationSec);
           onSnapshot({ positionSec, durationSec, playing: !node.paused });
         }}
-        onError={() => {
-          if (!loading) setError("Video konnte nicht geladen werden.");
-        }}
       />
-      {loading ? (
-        <p className="absolute inset-x-4 top-4 rounded-xl bg-black/70 px-3 py-2 text-sm text-mist">
-          VoltView-Player lädt den Stream…
+      {mode === "embed" && embedUrl ? (
+        <iframe
+          key={embedUrl}
+          title="VoltView Player"
+          src={embedUrl}
+          className="absolute inset-0 h-full w-full border-0 bg-black"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+          allowFullScreen
+          referrerPolicy="origin"
+        />
+      ) : null}
+      {mode === "embed" && !embedUrl ? (
+        <p className="absolute inset-x-4 top-4 rounded-xl bg-black/70 px-3 py-2 text-sm text-volt-2">
+          {error || friendlyPlaybackError("NO_STREAM")}
         </p>
       ) : null}
-      {error ? (
-        <p className="absolute inset-x-4 top-4 rounded-xl bg-black/70 px-3 py-2 text-sm text-volt-2">{error}</p>
+      {mode === "embed" && embeds.length > 1 ? (
+        <button
+          type="button"
+          className="absolute right-4 top-4 z-10 rounded-xl bg-black/70 px-3 py-2 text-sm text-mist"
+          onClick={() => setEmbedIndex((i) => (i + 1) % embeds.length)}
+        >
+          Anderer Player
+        </button>
       ) : null}
     </PlayerChrome>
   );

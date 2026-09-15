@@ -1,7 +1,9 @@
 export {
   canCallInnertube,
+  embedCandidates,
   friendlyPlaybackError,
   pickPlayback,
+  playbackCandidates,
   resolveYoutubePlayback,
   sanitizeVideoId,
 } from "../../api/_lib/youtubePlayback";
