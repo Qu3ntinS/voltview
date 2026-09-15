@@ -1,5 +1,5 @@
 import { lazy, Suspense, useState } from "react";
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Route, Routes } from "react-router-dom";
 import { BootScreen } from "./components/BootScreen";
 import { Shell } from "./components/Shell";
 
@@ -16,6 +16,7 @@ const GamesPage = lazy(() => import("./pages/Games").then((m) => ({ default: m.G
 const SettingsPage = lazy(() => import("./pages/Settings").then((m) => ({ default: m.SettingsPage })));
 const SearchPage = lazy(() => import("./pages/Search").then((m) => ({ default: m.SearchPage })));
 const ServiceLaunchPage = lazy(() => import("./pages/ServiceLaunch").then((m) => ({ default: m.ServiceLaunchPage })));
+const NotFoundPage = lazy(() => import("./pages/NotFound").then((m) => ({ default: m.NotFoundPage })));
 
 function Loading() {
   return <div className="p-8 text-mist">Lade Modul…</div>;
@@ -52,7 +53,7 @@ export function App() {
           <Route path="/games" element={<GamesPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/search" element={<SearchPage />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>
     </Suspense>

@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import { OG_IMAGE, SITE_NAME, resolveSeo } from "../lib/seo";
+import { OG_IMAGE, OG_IMAGE_ALT, SITE_NAME, resolveSeo } from "../lib/seo";
 
 function setMeta(name: string, content: string, attr: "name" | "property" = "name") {
   let tag = document.querySelector(`meta[${attr}="${name}"]`) as HTMLMetaElement | null;
@@ -42,11 +42,13 @@ export function Seo() {
     document.documentElement.lang = "de";
     setMeta("description", seo.description);
     setMeta("robots", seo.robots);
+    setMeta("googlebot", seo.robots.includes("noindex") ? "noindex,nofollow" : "index,follow");
     setMeta("og:title", seo.title, "property");
     setMeta("og:description", seo.description, "property");
     setMeta("og:url", seo.canonical, "property");
     setMeta("og:type", seo.type, "property");
     setMeta("og:image", OG_IMAGE, "property");
+    setMeta("og:image:alt", OG_IMAGE_ALT, "property");
     setMeta("og:image:width", "1200", "property");
     setMeta("og:image:height", "630", "property");
     setMeta("og:site_name", SITE_NAME, "property");
@@ -55,6 +57,7 @@ export function Seo() {
     setMeta("twitter:title", seo.title);
     setMeta("twitter:description", seo.description);
     setMeta("twitter:image", OG_IMAGE);
+    setMeta("twitter:image:alt", OG_IMAGE_ALT);
     setCanonical(seo.canonical);
     setJsonLd(seo.jsonLd);
   }, [location.pathname]);

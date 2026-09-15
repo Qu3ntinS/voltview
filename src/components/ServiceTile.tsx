@@ -5,6 +5,7 @@ export function ServiceTile({ service }: { service: Service }) {
   return (
     <Link
       to={`/apps/${service.id}`}
+      aria-label={`${service.name} in VoltView öffnen`}
       className="relative h-36 min-w-52 shrink-0 overflow-hidden rounded-3xl border border-white/8 text-left glow-ring"
       style={{ background: `linear-gradient(145deg, ${service.accent} 0%, #0a0714 78%)` }}
     >

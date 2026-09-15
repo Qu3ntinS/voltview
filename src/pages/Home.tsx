@@ -37,16 +37,17 @@ export function HomePage() {
       <section className="relative mb-8 overflow-hidden rounded-[28px] border border-white/5 bg-panel glow-ring">
         <div className="relative min-h-[340px]">
           {hero?.thumbnail ? (
-            <img src={hero.thumbnail} alt="" className="absolute inset-0 h-full w-full object-cover" />
+            <img src={hero.thumbnail} alt={hero.title} className="absolute inset-0 h-full w-full object-cover" />
           ) : (
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_20%,rgba(139,92,246,0.35),transparent_40%)]" />
           )}
           <div className="hero-mask absolute inset-0" />
           <div className="relative flex min-h-[340px] max-w-2xl flex-col justify-end p-8">
+            <h1 className="sr-only">VoltView — Midnight Theater für Tesla</h1>
             <p className="text-xs uppercase tracking-[0.32em] text-volt-2">Dein Theater. Kein Zeitlimit.</p>
-            <h1 className="mt-3 font-display text-5xl font-extrabold leading-none">
+            <p className="mt-3 font-display text-5xl font-extrabold leading-none">
               {hero?.title || "Midnight Purple. Volle Kontrolle."}
-            </h1>
+            </p>
             <p className="mt-4 max-w-lg text-mist">
               Offizielle Streaming-Apps, YouTube ohne 20-Minuten-Deckel und dein eigener Plex-Server
               — gebaut für den Tesla-Browser und jedes andere Display.
@@ -138,10 +139,10 @@ export function HomePage() {
 
       {settings.plexServerUri ? <PlexHomePreview /> : null}
 
-      <p className="pb-4 text-xs text-mist">
+      <footer className="pb-4 text-xs text-mist">
         Bitte nur im Stand nutzen. VoltView ist unabhängig von Tesla, Netflix, Disney, Prime, YouTube
         und Plex. Marken gehören ihren Inhabern.
-      </p>
+      </footer>
     </div>
   );
 }

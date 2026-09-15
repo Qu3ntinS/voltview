@@ -2,9 +2,18 @@ import { useEffect, useRef, useState } from "react";
 
 export function GamesPage() {
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
-      <SnakeGame />
-      <MemoryGame />
+    <div>
+      <div className="mb-6">
+        <p className="text-xs uppercase tracking-[0.28em] text-volt-2">Beifahrer</p>
+        <h1 className="mt-2 font-display text-4xl font-extrabold">Games</h1>
+        <p className="mt-3 max-w-2xl text-mist">
+          Kurze Pausen-Spiele fürs Tesla-Theater — Volt Snake und Circuit Memory. Kein Content-Katalog.
+        </p>
+      </div>
+      <div className="grid gap-6 lg:grid-cols-2">
+        <SnakeGame />
+        <MemoryGame />
+      </div>
     </div>
   );
 }
@@ -59,7 +68,7 @@ function SnakeGame() {
         <h2 className="font-display text-2xl font-bold">Volt Snake</h2>
         <p className="text-mist">Score {score}</p>
       </div>
-      <canvas ref={canvasRef} className="w-full rounded-2xl bg-ink" />
+      <canvas ref={canvasRef} className="w-full rounded-2xl bg-ink" aria-label="Volt Snake Spielfeld" />
       <div className="mt-4 grid grid-cols-3 gap-2">
         <span />
         <Pad onClick={() => (dirRef.current = { x: 0, y: -1 })} label="↑" />
@@ -128,6 +137,7 @@ function MemoryGame() {
             key={card.id}
             type="button"
             onClick={() => flip(index)}
+            aria-label={card.open || card.done ? `Karte ${card.v}` : "Verdeckte Karte"}
             className={`flex h-20 items-center justify-center rounded-2xl text-2xl ${
               card.open || card.done ? "bg-volt/30 text-volt-2" : "bg-ink text-transparent"
             }`}

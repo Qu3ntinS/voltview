@@ -7,8 +7,8 @@
     "dev": "bun run --parallel dev:api dev:web",
     "dev:api": "bun --watch server/index.ts",
     "dev:web": "vite",
-    "build": "vite build",
-    "build:pages": "VITE_STATIC=1 vite build",
+    "build": "vite build && bun scripts/seo-static.ts",
+    "build:pages": "VITE_STATIC=1 vite build && bun scripts/seo-static.ts",
     "start": "bun server/index.ts",
     "typecheck": "tsc --noEmit",
     "test": "bun test"

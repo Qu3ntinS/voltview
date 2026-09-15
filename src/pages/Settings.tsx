@@ -73,6 +73,10 @@ export function SettingsPage() {
 
   return (
     <div className="mx-auto grid max-w-4xl gap-6">
+      <div>
+        <p className="text-xs uppercase tracking-[0.28em] text-volt-2">VoltView</p>
+        <h1 className="mt-2 font-display text-4xl font-extrabold">Setup</h1>
+      </div>
       {isStatic ? (
         <section className="rounded-[28px] border border-volt/30 bg-volt/10 p-6">
           <p className="text-xs uppercase tracking-[0.28em] text-volt-2">GitHub Pages</p>

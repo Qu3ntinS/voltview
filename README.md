@@ -83,7 +83,12 @@ Nur im Stand nutzen. Blick auf den Bildschirm während der Fahrt ist gefährlich
 
 ## SEO
 
-Pro Route eigene Title/Description, Canonical, Open Graph, Twitter Cards, JSON-LD (WebSite, WebApplication, Breadcrumb), `robots.txt`, `sitemap.xml`, `og.png` (1200×630) und Web-Manifest. Player, Suche und Setup sind `noindex`.
+- Pro Route eigene Title, Description, Canonical, Open Graph, Twitter Cards
+- JSON-LD: WebSite, WebApplication, Breadcrumb; `/apps` zusätzlich ItemList aller Dienste
+- `robots.txt`, `sitemap.xml` (alle öffentlichen App-Seiten), `og.png` 1200×630, Web-Manifest
+- Player, Suche, Setup, persönliche Plex-Bibliotheken und 404 sind `noindex`
+- `bun run build` / `build:pages` schreibt statische HTML-Shells (`dist/apps/disney/index.html` usw.), damit Crawler und Link-Vorschauen die Meta-Tags ohne JavaScript sehen
+- GitHub Project Pages liest `robots.txt` nur unter `github.io/robots.txt`. Deshalb zählen die Meta-Robots-Tags; Sitemap in der Search Console einreichen: `https://qu3ntins.github.io/voltview/sitemap.xml`
 
 ## Repo
 

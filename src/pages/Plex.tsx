@@ -60,7 +60,8 @@ export function PlexPage() {
     <div>
       <div className="mb-6">
         <p className="text-xs uppercase tracking-[0.28em] text-volt-2">Eigene Mediathek</p>
-        <h1 className="mt-2 font-display text-4xl font-extrabold">{settings.plexServerName || "Plex"}</h1>
+        <h1 className="mt-2 font-display text-4xl font-extrabold">Plex</h1>
+        {settings.plexServerName ? <p className="mt-2 text-mist">{settings.plexServerName}</p> : null}
       </div>
       {error ? <p className="mb-4 text-volt-2">{error}</p> : null}
       <div className="mb-8 flex flex-wrap gap-2">
