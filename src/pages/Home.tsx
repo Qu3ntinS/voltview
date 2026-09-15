@@ -29,18 +29,20 @@ export function HomePage() {
     };
   }, [settings]);
 
-  const needsSetup = !settings.youtubeApiKey && !settings.plexToken;
+  const needsYoutubeKey = !settings.youtubeApiKey;
 
   return (
     <div>
-      {needsSetup ? (
+      {needsYoutubeKey ? (
         <section className="card glow-ring mb-4 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="font-semibold">Noch kein Login</p>
-            <p className="muted">QR auf Setup scannen und auf dem Handy anmelden.</p>
+            <p className="font-semibold">YouTube Data API Key fehlt</p>
+            <p className="muted">
+              Den Key mit AIza… unter Setup in diesem Browser eintragen. Nur in der Google Cloud anlegen reicht nicht.
+            </p>
           </div>
           <Link to="/settings" className="btn btn-primary">
-            QR öffnen
+            Zu Setup
           </Link>
         </section>
       ) : null}
