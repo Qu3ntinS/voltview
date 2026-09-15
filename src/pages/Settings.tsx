@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { api, type PlexServer } from "../lib/api";
-import { isStatic, publicSiteUrl } from "../lib/env";
+import { publicSiteUrl } from "../lib/env";
 import { type PairSettings } from "../lib/pair";
 import { useSettings } from "../lib/settings";
 import { teslaRedirectUrl } from "../lib/tesla";
@@ -82,13 +82,14 @@ export function SettingsPage() {
 
       <PairPanel onApply={applyPair} />
 
-      {isStatic ? (
-        <section className="card">
-          <h2 className="text-lg font-semibold">Tesla-Link</h2>
-          <p className="muted mt-2">YouTube, Apps, Radio und Games laufen hier. Plex braucht `bun run start`.</p>
-          <p className="mono wrap mt-2">{teslaRedirectUrl(publicSiteUrl())}</p>
-        </section>
-      ) : null}
+      <section className="card">
+        <h2 className="text-lg font-semibold">Tesla-Link</h2>
+        <p className="muted mt-2">
+          Diesen YouTube-Redirect als Lesezeichen speichern — wie Tesla Play. Dann darf der Browser Video, nicht nur Ton.
+          VoltView springt im Tesla selbst über youtube.com/redirect. Vor dem Player bleibt die Stand-Warnung.
+        </p>
+        <p className="mono wrap mt-2">{teslaRedirectUrl(publicSiteUrl())}</p>
+      </section>
 
       <section className="card">
         <h2 className="text-lg font-semibold">YouTube</h2>

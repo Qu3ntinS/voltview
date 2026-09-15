@@ -71,12 +71,19 @@ export function YoutubeStage({
           rel: 0,
           modestbranding: 1,
           playsinline: 1,
-          fs: 0,
+          fs: 1,
           iv_load_policy: 3,
-          origin: window.location.origin,
         },
         events: {
           onReady: (event: { target: YtPlayer }) => {
+            const iframe = boxRef.current?.querySelector("iframe");
+            if (iframe) {
+              iframe.setAttribute(
+                "allow",
+                "autoplay; fullscreen; picture-in-picture; encrypted-media; accelerometer; gyroscope",
+              );
+              iframe.setAttribute("allowfullscreen", "true");
+            }
             event.target.playVideo();
             setDuration(event.target.getDuration() || 0);
           },
