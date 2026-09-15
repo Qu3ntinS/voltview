@@ -28,6 +28,9 @@ export function TopBar() {
   return (
     <header className="topbar">
       <Link to="/" className="brand">
+        <span className="brand-mark" aria-hidden>
+          VV
+        </span>
         VoltView
       </Link>
       <form onSubmit={onSearch} role="search" className="search">

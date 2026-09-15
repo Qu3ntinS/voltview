@@ -38,7 +38,7 @@ export function ServiceLaunchPage() {
         <ArrowLeft className="h-4 w-4" />
         Apps
       </Link>
-      <section className="card" style={{ background: `linear-gradient(160deg, ${service.accent} 0%, #111 78%)` }}>
+      <section className="card glow-ring" style={{ background: `linear-gradient(160deg, ${service.accent} 0%, #0a0714 78%)` }}>
         <h1 className="text-3xl font-bold tracking-tight">{service.name}</h1>
         <p className="mt-2 max-w-xl text-white/80">{service.blurb}</p>
         <button type="button" onClick={() => setWarn(true)} className="btn btn-primary mt-5">

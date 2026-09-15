@@ -34,7 +34,7 @@ export function HomePage() {
   return (
     <div>
       {needsSetup ? (
-        <section className="card mb-4 flex flex-wrap items-center justify-between gap-3">
+        <section className="card glow-ring mb-4 flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="font-semibold">Noch kein Login</p>
             <p className="muted">QR auf Setup scannen und auf dem Handy anmelden.</p>
@@ -69,7 +69,7 @@ export function HomePage() {
       <Row
         title="Apps"
         action={
-          <Link to="/apps" className="text-sm">
+          <Link to="/apps" className="text-sm text-volt-2">
             Alle
           </Link>
         }
@@ -83,7 +83,7 @@ export function HomePage() {
         <Row
           title="YouTube"
           action={
-            <Link to="/youtube" className="text-sm">
+            <Link to="/youtube" className="text-sm text-volt-2">
               Mehr
             </Link>
           }
@@ -123,7 +123,7 @@ function PlexHomePreview() {
     <Row
       title="Plex"
       action={
-        <Link to="/plex" className="text-sm">
+        <Link to="/plex" className="text-sm text-volt-2">
           Mehr
         </Link>
       }
