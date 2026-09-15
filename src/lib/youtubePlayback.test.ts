@@ -5,6 +5,7 @@ import {
   friendlyPlaybackError,
   pickPlayback,
   playbackCandidates,
+  preferredProgressiveItags,
   sanitizeVideoId,
 } from "./youtubePlayback";
 
@@ -64,12 +65,14 @@ describe("youtube playback", () => {
     expect(friendlyPlaybackError("LOGIN_REQUIRED")).toContain("Bot-Check");
   });
 
-  test("builds latest_version URLs the car can load without CORS", () => {
+  test("builds adaptive HLS first, then connection-aware mp4", () => {
     const list = playbackCandidates("jNQXAC9IVRw");
-    expect(list.length).toBeGreaterThan(4);
-    expect(list[0]?.url).toContain("/latest_version?id=jNQXAC9IVRw&itag=18");
+    expect(list[0]?.kind).toBe("hls");
+    expect(list[0]?.url).toContain("/api/manifest/hls_playlist/jNQXAC9IVRw");
+    expect(list.slice(0, 6).some((item) => item.kind === "progressive")).toBe(true);
     expect(list.some((item) => item.url.includes("itag=22"))).toBe(true);
-    expect(list.some((item) => item.url.includes("local=true"))).toBe(true);
+    expect(list.some((item) => item.url.includes("itag=18"))).toBe(true);
+    expect(preferredProgressiveItags().map((item) => item.itag)).toContain(18);
   });
 
   test("prefers an iframe-friendly Invidious embed over youtube.com", () => {

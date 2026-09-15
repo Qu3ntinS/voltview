@@ -4,6 +4,7 @@ export {
   friendlyPlaybackError,
   pickPlayback,
   playbackCandidates,
+  preferredProgressiveItags,
   resolveYoutubePlayback,
   sanitizeVideoId,
 } from "../../api/_lib/youtubePlayback";
