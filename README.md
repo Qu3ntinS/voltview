@@ -54,7 +54,7 @@ Kein extra GitHub-Action nötig. Vercel hängt am Repo und deployed selbst:
 2. **Production Branch = `master`**, nicht `gh-pages`. `gh-pages` ist nur das fertige GitHub-Pages-Paket (kein `package.json`) — Vercel darf den nicht bauen.
 3. Danach: Push auf `master` = Production, jeder PR bekommt eine Preview-URL.
 
-In Vercel: Project → Settings → Git → Production Branch → `master`. Builds auf `gh-pages` werden übersprungen.
+In Vercel: Project → Settings → Git → Production Branch → `master`. Der Branch `gh-pages` bekommt ein `vercel.json` mit `ignoreCommand`, sonst klont Vercel die Pages-Dateien und `bun install` findet kein App-Repo.
 
 Hobby-Plan reicht. Build nimmt `bun run build:vercel` (`vercel.json`, Bun 1.4.x). YouTube-Katalog, Plex-Link, Apps, Radio, Games und QR-Live-Sync laufen über `/api` plus jsonblob.
 
