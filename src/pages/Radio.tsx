@@ -1,10 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { api, type RadioStation } from "../lib/api";
 import { useSettings } from "../lib/settings";
 
 export function RadioPage() {
   const { settings } = useSettings();
-  const audioRef = useRef<HTMLAudioElement>(null);
   const [items, setItems] = useState<RadioStation[]>([]);
   const [q, setQ] = useState("");
   const [current, setCurrent] = useState<RadioStation | null>(null);
@@ -16,14 +15,6 @@ export function RadioPage() {
       .then((data) => setItems(data.items || []))
       .catch((err) => setError(err.message));
   }, [settings]);
-
-  function play(station: RadioStation) {
-    setCurrent(station);
-    const audio = audioRef.current;
-    if (!audio) return;
-    audio.src = `/api/radio/play/${encodeURIComponent(station.id)}`;
-    audio.play().catch(() => setError("Stream blockiert oder offline."));
-  }
 
   function search() {
     if (!q.trim()) return;
@@ -57,18 +48,27 @@ export function RadioPage() {
         <div className="mb-6 rounded-3xl border border-white/10 bg-panel p-5 glow-ring">
           <p className="text-xs uppercase tracking-[0.2em] text-volt-2">Läuft</p>
           <p className="mt-2 font-display text-2xl font-bold">{current.name}</p>
-          <audio ref={audioRef} className="mt-4 w-full" controls autoPlay />
+          <audio
+            key={current.id}
+            className="mt-4 w-full"
+            controls
+            autoPlay
+            src={`/api/radio/play/${encodeURIComponent(current.id)}`}
+            onError={() => setError("Stream blockiert oder offline.")}
+            onPlaying={() => setError("")}
+          />
         </div>
-      ) : (
-        <audio ref={audioRef} className="hidden" />
-      )}
+      ) : null}
       {error ? <p className="mb-4 text-volt-2">{error}</p> : null}
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
         {items.map((station) => (
           <button
             key={station.id}
             type="button"
-            onClick={() => play(station)}
+            onClick={() => {
+              setError("");
+              setCurrent(station);
+            }}
             className="flex h-24 items-center gap-4 rounded-2xl border border-white/5 bg-panel px-4 text-left glow-ring"
           >
             <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-xl bg-white/5">
