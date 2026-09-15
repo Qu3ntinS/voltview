@@ -75,6 +75,6 @@ describe("youtube playback", () => {
   test("prefers an iframe-friendly Invidious embed over youtube.com", () => {
     const list = embedCandidates("jNQXAC9IVRw");
     expect(list[0]).toContain("invidious.tiekoetter.com/embed/jNQXAC9IVRw");
-    expect(list.every((url) => !/youtube\.com|youtube-nocookie/.test(url))).toBe(true);
+    expect(list.every((url) => !/youtube\.com|youtube-nocookie|nerdvpn/.test(url))).toBe(true);
   });
 });

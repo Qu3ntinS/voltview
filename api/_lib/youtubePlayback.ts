@@ -61,12 +61,11 @@ const INVIDIOUS = [
   "https://inv.tux.pizza",
 ];
 
-/** Embed hosts that allow being framed (not youtube.com — Tesla strips that to audio). */
+/** Embed hosts that allow being framed and actually serve a player (not youtube.com). */
 const EMBED_HOSTS = [
   "https://invidious.tiekoetter.com",
-  "https://invidious.nerdvpn.de",
-  "https://yewtu.be",
   "https://piped.video",
+  "https://piped.private.coffee",
 ];
 
 const PIPED = [
@@ -318,26 +317,30 @@ async function firstLiveCandidate(candidates: PlaybackSource[]): Promise<Playbac
 export async function resolveYoutubePlayback(rawId: string): Promise<PlaybackSource> {
   const videoId = sanitizeVideoId(rawId);
   const candidates = playbackCandidates(videoId);
-  const errors: string[] = [];
   if (canCallInnertube()) {
-    try {
-      return await innertubePlayer(videoId);
-    } catch (error) {
-      errors.push((error as Error).message);
-    }
-    try {
-      return await invidiousPlayback(videoId);
-    } catch (error) {
-      errors.push((error as Error).message);
-    }
-    try {
-      return await pipedPlayback(videoId);
-    } catch (error) {
-      errors.push((error as Error).message);
-    }
-    const live = await firstLiveCandidate(candidates);
-    if (live) return live;
+    const found = await Promise.race([
+      (async () => {
+        try {
+          return await innertubePlayer(videoId);
+        } catch {
+          /* next */
+        }
+        try {
+          return await invidiousPlayback(videoId);
+        } catch {
+          /* next */
+        }
+        try {
+          return await pipedPlayback(videoId);
+        } catch {
+          /* next */
+        }
+        return firstLiveCandidate(candidates);
+      })(),
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), 2500)),
+    ]);
+    if (found) return found;
   }
   if (candidates[0]) return candidates[0];
-  throw new Error(friendlyPlaybackError(errors[0] || "NO_STREAM"));
+  throw new Error(friendlyPlaybackError("NO_STREAM"));
 }

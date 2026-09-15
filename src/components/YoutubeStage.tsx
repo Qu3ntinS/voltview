@@ -9,8 +9,8 @@ import {
 
 type HlsHandle = { destroy: () => void };
 
-const ATTEMPT_MS = 4500;
-const MAX_FILE_ATTEMPTS = 4;
+const ATTEMPT_MS = 4000;
+const MAX_FILE_ATTEMPTS = 2;
 
 async function attachSource(video: HTMLVideoElement, source: PlaybackSource): Promise<HlsHandle | null> {
   if (source.kind === "hls" && !video.canPlayType("application/vnd.apple.mpegurl")) {
@@ -49,8 +49,7 @@ export function YoutubeStage({
   const [current, setCurrent] = useState(0);
   const [duration, setDuration] = useState(0);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [mode, setMode] = useState<"file" | "embed">("file");
+  const [mode, setMode] = useState<"file" | "embed">("embed");
   const [embedIndex, setEmbedIndex] = useState(0);
   const embeds = safeList(() => embedCandidates(videoId));
 
@@ -64,14 +63,12 @@ export function YoutubeStage({
     let timer = 0;
     let index = 0;
     const candidates = safeList(() => playbackCandidates(videoId)).slice(0, MAX_FILE_ATTEMPTS);
-    const embedList = safeList(() => embedCandidates(videoId));
 
     setError("");
-    setLoading(true);
     setPlaying(false);
     setCurrent(0);
     setDuration(0);
-    setMode("file");
+    setMode("embed");
     setEmbedIndex(0);
 
     function clearTimer() {
@@ -88,27 +85,14 @@ export function YoutubeStage({
       ignoreError = false;
     }
 
-    function showEmbed(message = "") {
-      if (cancelled) return;
-      clearTimer();
-      cleanupMedia();
-      setMode("embed");
-      setLoading(false);
-      setError(message);
-    }
-
     async function tryIndex(next: number) {
-      if (cancelled) return;
-      if (next >= candidates.length) {
-        showEmbed(embedList.length ? "" : friendlyPlaybackError("NO_STREAM"));
+      if (cancelled || next >= candidates.length) {
+        clearTimer();
         return;
       }
       index = next;
       const source = candidates[next];
-      if (!source || !videoRef.current) {
-        showEmbed(friendlyPlaybackError("NO_STREAM"));
-        return;
-      }
+      if (!source || !videoRef.current) return;
       try {
         ignoreError = true;
         hls?.destroy();
@@ -127,7 +111,7 @@ export function YoutubeStage({
     function onReady() {
       if (cancelled) return;
       clearTimer();
-      setLoading(false);
+      setMode("file");
       setError("");
       const play = node.play();
       if (play) play.catch(() => undefined);
@@ -141,7 +125,6 @@ export function YoutubeStage({
 
     node.addEventListener("loadeddata", onReady);
     node.addEventListener("error", onFail);
-
     void tryIndex(0);
 
     return () => {
@@ -180,6 +163,7 @@ export function YoutubeStage({
         }
         poster={videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : undefined}
         playsInline
+        muted={mode === "embed"}
         autoPlay
         preload="auto"
         disablePictureInPicture
@@ -208,18 +192,15 @@ export function YoutubeStage({
           referrerPolicy="origin"
         />
       ) : null}
-      {loading ? (
-        <p className="absolute inset-x-4 top-4 rounded-xl bg-black/70 px-3 py-2 text-sm text-mist">
-          VoltView-Player holt den Stream…
+      {mode === "embed" && !embedUrl ? (
+        <p className="absolute inset-x-4 top-4 rounded-xl bg-black/70 px-3 py-2 text-sm text-volt-2">
+          {error || friendlyPlaybackError("NO_STREAM")}
         </p>
-      ) : null}
-      {error ? (
-        <p className="absolute inset-x-4 top-4 rounded-xl bg-black/70 px-3 py-2 text-sm text-volt-2">{error}</p>
       ) : null}
       {mode === "embed" && embeds.length > 1 ? (
         <button
           type="button"
-          className="absolute right-4 top-4 rounded-xl bg-black/70 px-3 py-2 text-sm text-mist"
+          className="absolute right-4 top-4 z-10 rounded-xl bg-black/70 px-3 py-2 text-sm text-mist"
           onClick={() => setEmbedIndex((i) => (i + 1) % embeds.length)}
         >
           Anderer Player
