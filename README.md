@@ -53,7 +53,7 @@ Kein extra GitHub-Action nötig. Vercel hängt am Repo und deployed selbst:
 1. Einmalig: [vercel.com/new](https://vercel.com/new) → GitHub-Repo `Qu3ntinS/voltview` importieren → Deploy.
 2. Danach: Push auf `master` = Production, jeder PR bekommt eine Preview-URL.
 
-Hobby-Plan reicht. Build nimmt `bun run build:vercel` (`vercel.json`). YouTube, Apps, Radio, Games und QR-Sync laufen. Plex braucht weiter `bun run start`.
+Hobby-Plan reicht. Build nimmt `bun run build:vercel` (`vercel.json`, Bun 1.4.x). YouTube, Apps, Radio, Games und QR-Live-Sync laufen (Sync über jsonblob, weil Vercel hier kein `/api/pair` hat). Plex braucht weiter `bun run start`.
 
 Google OAuth JS-Origin: deine `*.vercel.app`-URL (ohne Pfad). Tesla-Theater: `https://www.youtube.com/redirect?q=https://<projekt>.vercel.app/`
 
