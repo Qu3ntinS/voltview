@@ -1,5 +1,11 @@
 import type { Settings } from "./storage";
 
+export type YoutubeChannel = {
+  id: string;
+  title: string;
+  thumbnail: string;
+};
+
 export type YoutubeVideo = {
   id: string;
   title: string;
@@ -59,6 +65,7 @@ export type PlexServer = {
 function headers(settings: Settings, extra?: Record<string, string>) {
   const h: Record<string, string> = { ...(extra || {}) };
   if (settings.youtubeApiKey) h["x-volt-youtube-key"] = settings.youtubeApiKey;
+  if (settings.youtubeAccessToken) h["x-volt-youtube-token"] = settings.youtubeAccessToken;
   if (settings.plexToken) h["x-volt-plex-token"] = settings.plexToken;
   if (settings.plexClientId) h["x-volt-plex-client"] = settings.plexClientId;
   if (settings.plexServerUri) h["x-volt-plex-server"] = settings.plexServerUri;
@@ -91,6 +98,12 @@ export const api = {
     getJson<{ items: YoutubeVideo[] }>(`/api/youtube/videos?id=${encodeURIComponent(id)}`, settings),
   youtubeRelated: (settings: Settings, q: string) =>
     getJson<{ items: YoutubeVideo[] }>(`/api/youtube/related?q=${encodeURIComponent(q)}`, settings),
+  youtubeLiked: (settings: Settings) =>
+    getJson<{ items: YoutubeVideo[]; error?: string }>("/api/youtube/liked", settings),
+  youtubeSubscriptions: (settings: Settings) =>
+    getJson<{ items: YoutubeChannel[]; error?: string }>("/api/youtube/subscriptions", settings),
+  youtubeFeed: (settings: Settings) =>
+    getJson<{ items: YoutubeVideo[]; error?: string }>("/api/youtube/feed", settings),
   radioPopular: (settings: Settings, country = "DE") =>
     getJson<{ items: RadioStation[] }>(`/api/radio/popular?country=${encodeURIComponent(country)}`, settings),
   radioSearch: (settings: Settings, q: string) =>
@@ -126,6 +139,8 @@ function defaultLike(): Settings {
   return {
     youtubeApiKey: "",
     youtubeRegion: "DE",
+    youtubeClientId: "",
+    youtubeAccessToken: "",
     plexToken: "",
     plexClientId: "",
     plexServerUri: "",

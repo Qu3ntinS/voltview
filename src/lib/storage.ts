@@ -1,6 +1,8 @@
 export type Settings = {
   youtubeApiKey: string;
   youtubeRegion: string;
+  youtubeClientId: string;
+  youtubeAccessToken: string;
   plexToken: string;
   plexClientId: string;
   plexServerUri: string;
@@ -30,6 +32,8 @@ function randomId() {
 export const defaultSettings: Settings = {
   youtubeApiKey: "",
   youtubeRegion: "DE",
+  youtubeClientId: "",
+  youtubeAccessToken: "",
   plexToken: "",
   plexClientId: "",
   plexServerUri: "",

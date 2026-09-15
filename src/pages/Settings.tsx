@@ -84,6 +84,17 @@ export function SettingsPage() {
           placeholder="AIza…"
           className="mt-5 h-14 w-full rounded-2xl border border-white/10 bg-ink px-4 outline-none focus:ring-2 focus:ring-volt/50"
         />
+        <label className="mt-5 block text-sm text-mist">Google OAuth Client-ID für dein YouTube</label>
+        <p className="mt-1 text-sm text-mist">
+          OAuth-Client vom Typ Web, Redirect/JS-Origin auf deine VoltView-URL. Scope nur
+          youtube.readonly — Abos und Likes, nichts schreiben.
+        </p>
+        <input
+          value={settings.youtubeClientId}
+          onChange={(e) => update({ youtubeClientId: e.target.value.trim() })}
+          placeholder="….apps.googleusercontent.com"
+          className="mt-3 h-14 w-full rounded-2xl border border-white/10 bg-ink px-4 outline-none focus:ring-2 focus:ring-volt/50"
+        />
         <label className="mt-4 block text-sm text-mist">Region für Trends</label>
         <select
           value={settings.youtubeRegion}

@@ -24,6 +24,13 @@ describe("VoltView API", () => {
     expect(body.error).toBe("NO_PLEX_TOKEN");
   });
 
+  test("youtube liked feed requires Google login", async () => {
+    const res = await app.handle(new Request("http://localhost/api/youtube/liked"));
+    expect(res.status).toBe(401);
+    const body = await res.json();
+    expect(body.error).toBe("NO_YOUTUBE_LOGIN");
+  });
+
   test("watch sessions start and accept heartbeats", async () => {
     const created = await app.handle(
       new Request("http://localhost/api/watch/session", {

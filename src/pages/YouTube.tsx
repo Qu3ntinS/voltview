@@ -1,7 +1,9 @@
 import { FormEvent, useEffect, useState } from "react";
 import { MediaCard } from "../components/MediaCard";
-import { api, type YoutubeVideo } from "../lib/api";
+import { Row } from "../components/Row";
+import { api, type YoutubeChannel, type YoutubeVideo } from "../lib/api";
 import { formatDuration } from "../lib/format";
+import { requestYoutubeToken } from "../lib/google";
 import { useSettings } from "../lib/settings";
 
 const categories = [
@@ -16,11 +18,15 @@ const categories = [
 ];
 
 export function YouTubePage() {
-  const { settings } = useSettings();
+  const { settings, update } = useSettings();
   const [category, setCategory] = useState("");
   const [q, setQ] = useState("");
   const [items, setItems] = useState<YoutubeVideo[]>([]);
+  const [liked, setLiked] = useState<YoutubeVideo[]>([]);
+  const [feed, setFeed] = useState<YoutubeVideo[]>([]);
+  const [subs, setSubs] = useState<YoutubeChannel[]>([]);
   const [error, setError] = useState("");
+  const [loginError, setLoginError] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -44,6 +50,24 @@ export function YouTubePage() {
     };
   }, [settings, category]);
 
+  useEffect(() => {
+    if (!settings.youtubeAccessToken) {
+      setLiked([]);
+      setFeed([]);
+      setSubs([]);
+      return;
+    }
+    Promise.all([
+      api.youtubeLiked(settings).catch(() => ({ items: [] })),
+      api.youtubeFeed(settings).catch(() => ({ items: [] })),
+      api.youtubeSubscriptions(settings).catch(() => ({ items: [] })),
+    ]).then(([likes, personal, channels]) => {
+      setLiked(likes.items || []);
+      setFeed(personal.items || []);
+      setSubs(channels.items || []);
+    });
+  }, [settings]);
+
   function onSearch(event: FormEvent) {
     event.preventDefault();
     if (!q.trim()) return;
@@ -58,29 +82,104 @@ export function YouTubePage() {
       .finally(() => setLoading(false));
   }
 
+  async function signIn() {
+    setLoginError("");
+    if (!settings.youtubeClientId) {
+      setLoginError("Unter Setup die Google OAuth Client-ID eintragen.");
+      return;
+    }
+    try {
+      const token = await requestYoutubeToken(settings.youtubeClientId);
+      update({ youtubeAccessToken: token });
+    } catch (err) {
+      setLoginError((err as Error).message);
+    }
+  }
+
   return (
     <div>
       <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="text-xs uppercase tracking-[0.28em] text-volt-2">YouTube IFrame API</p>
+          <p className="text-xs uppercase tracking-[0.28em] text-volt-2">Dein YouTube</p>
           <h1 className="mt-2 font-display text-4xl font-extrabold">YouTube</h1>
           <p className="mt-3 max-w-2xl text-mist">
-            Offizieller Player, volle Länge, keine VoltView-Zeitgrenze. Trends und Suche brauchen
-            einen kostenlosen YouTube-Data-API-Key.
+            Offizieller Player, volle Länge. Mit Google-Login kommen Abos und Likes — nur
+            youtube.readonly, wie bei TeslaPlay.
           </p>
         </div>
-        <form onSubmit={onSearch} className="flex gap-2">
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Video oder Kanal"
-            className="h-14 w-72 rounded-2xl border border-white/10 bg-panel px-4 outline-none focus:ring-2 focus:ring-volt/50"
-          />
-          <button type="submit" className="h-14 rounded-2xl bg-volt px-5 font-semibold">
-            Suchen
-          </button>
-        </form>
+        <div className="flex flex-wrap gap-2">
+          {settings.youtubeAccessToken ? (
+            <button
+              type="button"
+              onClick={() => update({ youtubeAccessToken: "" })}
+              className="h-14 rounded-2xl border border-white/10 px-5"
+            >
+              Google trennen
+            </button>
+          ) : (
+            <button type="button" onClick={signIn} className="h-14 rounded-2xl bg-white px-5 font-semibold text-black">
+              Mit Google anmelden
+            </button>
+          )}
+          <form onSubmit={onSearch} className="flex gap-2">
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Video oder Kanal"
+              className="h-14 w-64 rounded-2xl border border-white/10 bg-panel px-4 outline-none focus:ring-2 focus:ring-volt/50"
+            />
+            <button type="submit" className="h-14 rounded-2xl bg-volt px-5 font-semibold">
+              Suchen
+            </button>
+          </form>
+        </div>
       </div>
+      {loginError ? <p className="mb-4 text-volt-2">{loginError}</p> : null}
+
+      {feed.length ? (
+        <Row title="Neu aus deinen Abos">
+          {feed.map((video) => (
+            <MediaCard
+              key={`feed-${video.id}`}
+              to={`/watch/yt/${video.id}`}
+              title={video.title}
+              subtitle={video.channel}
+              image={video.thumbnail}
+              wide
+            />
+          ))}
+        </Row>
+      ) : null}
+      {liked.length ? (
+        <Row title="Geliked">
+          {liked.map((video) => (
+            <MediaCard
+              key={`like-${video.id}`}
+              to={`/watch/yt/${video.id}`}
+              title={video.title}
+              subtitle={video.channel}
+              image={video.thumbnail}
+              wide
+            />
+          ))}
+        </Row>
+      ) : null}
+      {subs.length ? (
+        <Row title="Deine Kanäle">
+          {subs.map((channel) => (
+            <div
+              key={channel.id}
+              className="flex h-24 w-64 shrink-0 items-center gap-3 rounded-2xl border border-white/5 bg-panel px-4"
+            >
+              {channel.thumbnail ? (
+                <img src={channel.thumbnail} alt="" className="h-14 w-14 rounded-full object-cover" />
+              ) : null}
+              <p className="font-semibold">{channel.title}</p>
+            </div>
+          ))}
+        </Row>
+      ) : null}
+
       <div className="mb-6 flex flex-wrap gap-2">
         {categories.map((cat) => (
           <button

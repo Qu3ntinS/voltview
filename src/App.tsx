@@ -15,6 +15,7 @@ const RadioPage = lazy(() => import("./pages/Radio").then((m) => ({ default: m.R
 const GamesPage = lazy(() => import("./pages/Games").then((m) => ({ default: m.GamesPage })));
 const SettingsPage = lazy(() => import("./pages/Settings").then((m) => ({ default: m.SettingsPage })));
 const SearchPage = lazy(() => import("./pages/Search").then((m) => ({ default: m.SearchPage })));
+const ServiceLaunchPage = lazy(() => import("./pages/ServiceLaunch").then((m) => ({ default: m.ServiceLaunchPage })));
 
 function Loading() {
   return <div className="p-8 text-mist">Lade Modul…</div>;
@@ -40,6 +41,7 @@ export function App() {
         <Route element={<Shell />}>
           <Route path="/" element={<HomePage />} />
           <Route path="/apps" element={<AppsPage />} />
+          <Route path="/apps/:id" element={<ServiceLaunchPage />} />
           <Route path="/youtube" element={<YouTubePage />} />
           <Route path="/watch/yt/:id" element={<WatchYouTubePage />} />
           <Route path="/plex" element={<PlexPage />} />

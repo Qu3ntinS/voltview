@@ -1,14 +1,9 @@
 import { useMemo, useState } from "react";
-import { LeaveAppModal } from "../components/LeaveAppModal";
 import { ServiceTile } from "../components/ServiceTile";
 import { serviceCategories, services, type Service } from "../data/services";
-import { useSettings } from "../lib/settings";
-import { startWatchSession } from "../lib/watch";
 
 export function AppsPage() {
-  const { settings } = useSettings();
   const [filter, setFilter] = useState<Service["category"] | "all">("all");
-  const [leaving, setLeaving] = useState<Service | null>(null);
   const visible = useMemo(
     () => (filter === "all" ? services : services.filter((s) => s.category === filter)),
     [filter]
@@ -17,11 +12,11 @@ export function AppsPage() {
   return (
     <div>
       <div className="mb-6">
-        <p className="text-xs uppercase tracking-[0.28em] text-volt-2">Launcher</p>
-        <h1 className="mt-2 font-display text-4xl font-extrabold">Alle Dienste</h1>
+        <p className="text-xs uppercase tracking-[0.28em] text-volt-2">Alle Streaming-Dienste</p>
+        <h1 className="mt-2 font-display text-4xl font-extrabold">Netflix, Disney+, Prime & mehr</h1>
         <p className="mt-3 max-w-2xl text-mist">
-          Netflix, Disney+, Prime und die deutschen Mediatheken öffnen sich mit deinem eigenen
-          Account. VoltView hostet deren Katalog nicht und umgeht keine Sperren.
+          Jeder Dienst hat eine eigene VoltView-Seite und öffnet danach deinen offiziellen Account.
+          YouTube und Plex bleiben im eigenen Player — die großen Streamer dürfen das rechtlich nicht.
         </p>
       </div>
       <div className="mb-6 flex flex-wrap gap-2">
@@ -37,23 +32,9 @@ export function AppsPage() {
       </div>
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {visible.map((service) => (
-          <ServiceTile key={service.id} service={service} onOpen={setLeaving} />
+          <ServiceTile key={service.id} service={service} />
         ))}
       </div>
-      <LeaveAppModal
-        service={leaving}
-        onCancel={() => setLeaving(null)}
-        onConfirm={() => {
-          if (!leaving) return;
-          startWatchSession({
-            deviceId: settings.plexClientId || "voltview-web",
-            source: "app",
-            contentId: leaving.id,
-            title: leaving.name,
-          }).catch(() => undefined);
-          window.location.href = leaving.url;
-        }}
-      />
     </div>
   );
 }

@@ -1,19 +1,15 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { LeaveAppModal } from "../components/LeaveAppModal";
 import { MediaCard } from "../components/MediaCard";
 import { Row } from "../components/Row";
 import { ServiceTile } from "../components/ServiceTile";
-import { services } from "../data/services";
+import { featuredServices } from "../data/services";
 import { api, plexImage, type YoutubeVideo } from "../lib/api";
 import { useSettings } from "../lib/settings";
-import { startWatchSession } from "../lib/watch";
-import type { Service } from "../data/services";
 
 export function HomePage() {
   const { settings, recents } = useSettings();
   const [videos, setVideos] = useState<YoutubeVideo[]>([]);
-  const [leaving, setLeaving] = useState<Service | null>(null);
   const [ytError, setYtError] = useState("");
 
   useEffect(() => {
@@ -98,15 +94,15 @@ export function HomePage() {
       ) : null}
 
       <Row
-        title="Streaming Apps"
+        title="Netflix, Disney+, Prime & Co."
         action={
           <Link to="/apps" className="text-sm text-volt-2">
-            Alle
+            Alle Dienste
           </Link>
         }
       >
-        {services.slice(0, 8).map((service) => (
-          <ServiceTile key={service.id} service={service} onOpen={setLeaving} />
+        {featuredServices().map((service) => (
+          <ServiceTile key={service.id} service={service} />
         ))}
       </Row>
 
@@ -135,23 +131,9 @@ export function HomePage() {
       {settings.plexServerUri ? <PlexHomePreview /> : null}
 
       <p className="pb-4 text-xs text-mist">
-        Bitte nur im Stand nutzen. VoltView ist unabhängig von Tesla, Netflix, YouTube und Plex.
-        Marken gehören ihren Inhabern.
+        Bitte nur im Stand nutzen. VoltView ist unabhängig von Tesla, Netflix, Disney, Prime, YouTube
+        und Plex. Marken gehören ihren Inhabern.
       </p>
-      <LeaveAppModal
-        service={leaving}
-        onCancel={() => setLeaving(null)}
-        onConfirm={() => {
-          if (!leaving) return;
-          startWatchSession({
-            deviceId: settings.plexClientId || "voltview-web",
-            source: "app",
-            contentId: leaving.id,
-            title: leaving.name,
-          }).catch(() => undefined);
-          window.location.href = leaving.url;
-        }}
-      />
     </div>
   );
 }

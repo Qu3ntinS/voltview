@@ -4,7 +4,7 @@ Persönliches Midnight-Purple Theater für den Browser — inkl. Tesla-Display. 
 
 VoltView ist **kein** Streaming-Anbieter. Es ist ein Hub:
 
-- **Apps** öffnen Netflix, Disney+, Prime, Max, Joyn, ARD, ZDF und andere **offizielle** Web-Apps mit deinem eigenen Account.
+- **Apps** öffnen Netflix, Disney+, Prime, Max, Joyn, ARD, ZDF und andere **offizielle** Web-Apps mit deinem eigenen Account. Jeder Dienst hat eine eigene VoltView-Seite.
 - **YouTube** spielt über die offizielle IFrame-API in voller Länge. Trends und Suche nutzen die YouTube Data API v3.
 - **Plex** spricht die offizielle Plex-API an (PIN-Login, deine Libraries, HLS-Transcode).
 - **Radio** kommt aus dem öffentlichen Radio-Browser-Verzeichnis.
@@ -50,7 +50,7 @@ Die API serviert dann `dist/` mit.
 
 ## Setup im UI
 
-1. **YouTube:** Google Cloud Console → YouTube Data API v3 aktivieren → Key unter *Setup* eintragen. Ohne Key kannst du trotzdem Videos per ID/Suche-URL abspielen, sobald du eines öffnest; Trends bleiben leer.
+1. **YouTube:** Google Cloud Console → YouTube Data API v3 aktivieren → Key unter *Setup* eintragen. Für Abos/Likes zusätzlich eine OAuth-Client-ID (Scope `youtube.readonly`) und auf YouTube *Mit Google anmelden*.
 2. **Plex:** *Plex verbinden* → Code auf [plex.tv/link](https://plex.tv/link) freigeben → Server wählen. Token bleibt im `localStorage` dieses Browsers.
 3. **Tesla:** VoltView als Lesezeichen speichern. Netflix & Co. verlassen die Seite — zurück nur über das Bookmark.
 

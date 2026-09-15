@@ -9,9 +9,9 @@ export type Service = {
 
 export const services: Service[] = [
   { id: "netflix", name: "Netflix", url: "https://www.netflix.com", category: "video", accent: "#e50914", blurb: "Serien & Filme" },
-  { id: "youtube-tv", name: "YouTube TV", url: "https://www.youtube.com/tv", category: "video", accent: "#ff0033", blurb: "TV-Oberfläche" },
   { id: "disney", name: "Disney+", url: "https://www.disneyplus.com", category: "video", accent: "#113ccf", blurb: "Disney, Marvel, Star" },
   { id: "prime", name: "Prime Video", url: "https://www.primevideo.com", category: "video", accent: "#00a8e1", blurb: "Amazon Originals" },
+  { id: "youtube-tv", name: "YouTube TV", url: "https://www.youtube.com/tv", category: "video", accent: "#ff0033", blurb: "TV-Oberfläche" },
   { id: "appletv", name: "Apple TV", url: "https://tv.apple.com", category: "video", accent: "#8e8e93", blurb: "Apple Originals" },
   { id: "max", name: "Max", url: "https://www.max.com", category: "video", accent: "#002be7", blurb: "HBO & mehr" },
   { id: "paramount", name: "Paramount+", url: "https://www.paramountplus.com", category: "video", accent: "#0064ff", blurb: "Shows & Filme" },
@@ -27,7 +27,22 @@ export const services: Service[] = [
   { id: "rtl", name: "RTL+", url: "https://plus.rtl.de", category: "de", accent: "#e1000f", blurb: "Shows & Sport" },
   { id: "wow", name: "WOW", url: "https://www.wowtv.de", category: "de", accent: "#6c2bd9", blurb: "Sky Inhalte" },
   { id: "dazn", name: "DAZN", url: "https://www.dazn.com", category: "sport", accent: "#0c2340", blurb: "Live Sport" },
+  { id: "discovery", name: "discovery+", url: "https://www.discoveryplus.com", category: "video", accent: "#0050ff", blurb: "Dokus & Reality" },
+  { id: "skyshowtime", name: "SkyShowtime", url: "https://www.skyshowtime.com", category: "video", accent: "#000000", blurb: "Sky & Paramount" },
+  { id: "magenta", name: "MagentaTV", url: "https://www.telekom.de/magenta-tv", category: "de", accent: "#e20074", blurb: "Telekom TV" },
 ];
+
+export const featuredServiceIds = ["netflix", "disney", "prime", "max", "appletv", "youtube-tv"];
+
+export function getService(id: string) {
+  return services.find((service) => service.id === id) || null;
+}
+
+export function featuredServices() {
+  return featuredServiceIds
+    .map((id) => getService(id))
+    .filter((service): service is Service => Boolean(service));
+}
 
 export const serviceCategories: { id: Service["category"]; label: string }[] = [
   { id: "video", label: "Streamer" },
