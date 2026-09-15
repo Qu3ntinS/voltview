@@ -76,10 +76,22 @@ function pickSettings(input: Record<string, unknown>): PairSettings {
   return next;
 }
 
-async function nativeOk() {
+async function readJson<T>(res: Response): Promise<T | null> {
+  const type = res.headers.get("content-type") || "";
+  if (type && !type.includes("json")) return null;
   try {
-    const res = await fetch("/api/health");
-    return res.ok;
+    return (await res.json()) as T;
+  } catch {
+    return null;
+  }
+}
+
+export async function nativePairAvailable() {
+  try {
+    const res = await fetch("/api/health", { headers: { Accept: "application/json" } });
+    if (!res.ok) return false;
+    const data = await readJson<{ ok?: boolean; name?: string }>(res);
+    return data?.ok === true && data?.name === "voltview";
   } catch {
     return false;
   }
@@ -107,11 +119,14 @@ async function blobGet(id: string) {
 
 export const pair = {
   async create(): Promise<{ id: string; addUrl: string }> {
-    if (await nativeOk()) {
-      const res = await fetch("/api/pair", { method: "POST" });
-      if (!res.ok) throw new Error("PAIR_CREATE_FAILED");
-      const data = (await res.json()) as { id: string };
-      return { id: data.id, addUrl: addUrl(data.id) };
+    if (await nativePairAvailable()) {
+      try {
+        const res = await fetch("/api/pair", { method: "POST", headers: { Accept: "application/json" } });
+        const data = res.ok ? await readJson<{ id?: string }>(res) : null;
+        if (data?.id) return { id: data.id, addUrl: addUrl(data.id) };
+      } catch {
+        // Static hosts (Vercel/Pages) often serve index.html for /api/* — use jsonblob instead.
+      }
     }
     const id = await blobCreate();
     return { id, addUrl: addUrl(id) };
