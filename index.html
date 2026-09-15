@@ -11,6 +11,21 @@
     <meta name="application-name" content="VoltView" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <meta name="format-detection" content="telephone=no" />
+    <script>
+      (function () {
+        var ua = navigator.userAgent || "";
+        if (!/Tesla|QtCarBrowser/i.test(ua)) return;
+        if (/(?:^|[?&])tesla=1(?:&|$)/.test(location.search)) return;
+        if (/youtube\.com/i.test(document.referrer || "")) return;
+        try {
+          if (sessionStorage.getItem("voltview.teslaUnlock") === "1") return;
+        } catch (e) {}
+        var hash = location.hash || "";
+        var base = hash ? location.href.slice(0, location.href.length - hash.length) : location.href;
+        base += (location.search ? "&" : "?") + "tesla=1";
+        location.replace("https://www.youtube.com/redirect?q=" + encodeURIComponent(base + hash));
+      })();
+    </script>
     <title>VoltView</title>
     <meta name="description" content="YouTube, Plex, Radio und offizielle Apps wie Netflix und Disney+ im Tesla-Browser." />
     <meta name="robots" content="index,follow,max-image-preview:large" />

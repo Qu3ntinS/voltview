@@ -65,6 +65,8 @@ Der Key wird beim Build ins Frontend gebacken. In der Google Cloud HTTP-Referrer
 
 Google OAuth JS-Origin: deine `*.vercel.app`-URL (ohne Pfad). Tesla-Theater: `https://www.youtube.com/redirect?q=https://<projekt>.vercel.app/`
 
+Im Tesla-Browser leitet VoltView selbst über `youtube.com/redirect` weiter (Tesla-Play-Workaround), damit YouTube-Video nicht als schwarzes Bild mit Ton hängt. Die Stand-Warnung vor dem Player bleibt.
+
 ## GitHub Pages (ohne eigenen Server)
 
 Nach dem Push auf `master`/`main` schreibt der Workflow `dist/` auf den Branch `gh-pages`.
