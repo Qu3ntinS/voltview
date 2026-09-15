@@ -33,38 +33,22 @@ export function ServiceLaunchPage() {
 
   return (
     <div>
-      {warn ? (
-        <SafetyGate title={`${service.name} nur im Stand`} resetKey={service.id} onConfirm={openOfficial} />
-      ) : null}
-      <Link to="/apps" className="mb-5 inline-flex h-12 items-center gap-2 rounded-2xl bg-white/5 px-4">
+      {warn ? <SafetyGate title={`${service.name} nur im Stand`} resetKey={service.id} onConfirm={openOfficial} /> : null}
+      <Link to="/apps" className="btn mb-4">
         <ArrowLeft className="h-4 w-4" />
-        Alle Dienste
+        Apps
       </Link>
-      <section
-        className="overflow-hidden rounded-[28px] border border-white/8 p-8 glow-ring"
-        style={{ background: `linear-gradient(145deg, ${service.accent} 0%, #0a0714 72%)` }}
-      >
-        <p className="text-xs uppercase tracking-[0.28em] text-white/70">Streaming-Dienst</p>
-        <h1 className="mt-3 font-display text-5xl font-extrabold">{service.name}</h1>
-        <p className="mt-4 max-w-2xl text-lg text-white/80">
-          {service.blurb}. VoltView öffnet {service.name} über den YouTube-Redirect — derselbe
-          Tesla-Theater-Trick wie TeslaPlay. Danach „Go to site“ tippen.
-        </p>
-        <button
-          type="button"
-          onClick={() => setWarn(true)}
-          className="mt-8 inline-flex h-16 items-center rounded-2xl bg-white px-8 text-lg font-semibold text-black"
-        >
-          {service.name} im Tesla-Theater
+      <section className="card" style={{ background: `linear-gradient(160deg, ${service.accent} 0%, #111 78%)` }}>
+        <h1 className="text-3xl font-bold tracking-tight">{service.name}</h1>
+        <p className="mt-2 max-w-xl text-white/80">{service.blurb}</p>
+        <button type="button" onClick={() => setWarn(true)} className="btn btn-primary mt-5">
+          Öffnen
         </button>
-        <p className="mt-4 text-sm text-white/65">
-          Vor dem Start kommt immer die Stand-Warnung. Den Katalog spielt der offizielle Account.
-        </p>
       </section>
       {others.length ? (
-        <div className="mt-8">
-          <h2 className="mb-4 font-display text-2xl font-bold">Weitere Dienste</h2>
-          <div className="flex gap-4 overflow-x-auto pb-2">
+        <div className="mt-6">
+          <h2 className="mb-3 text-lg font-semibold">Weitere</h2>
+          <div className="flex gap-3 overflow-x-auto pb-2">
             {others.map((item) => (
               <ServiceTile key={item.id} service={item} />
             ))}

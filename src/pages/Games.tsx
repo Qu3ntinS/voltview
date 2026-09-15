@@ -4,11 +4,7 @@ export function GamesPage() {
   return (
     <div>
       <div className="mb-6">
-        <p className="text-xs uppercase tracking-[0.28em] text-volt-2">Beifahrer</p>
-        <h1 className="mt-2 font-display text-4xl font-extrabold">Games</h1>
-        <p className="mt-3 max-w-2xl text-mist">
-          Kurze Pausen-Spiele fürs Tesla-Theater — Volt Snake und Circuit Memory. Kein Content-Katalog.
-        </p>
+        <h1 className="text-2xl font-bold tracking-tight">Games</h1>
       </div>
       <div className="grid gap-6 lg:grid-cols-2">
         <SnakeGame />

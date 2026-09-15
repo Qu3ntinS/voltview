@@ -91,7 +91,7 @@ export function YouTubePage() {
   async function signIn() {
     setLoginError("");
     if (!settings.youtubeClientId) {
-      setLoginError("Unter Setup die Google OAuth Client-ID eintragen.");
+      setLoginError("Google Client-ID unter Setup eintragen.");
       return;
     }
     try {
@@ -106,25 +106,20 @@ export function YouTubePage() {
     <div>
       <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="text-xs uppercase tracking-[0.28em] text-volt-2">Dein YouTube</p>
-          <h1 className="mt-2 font-display text-4xl font-extrabold">YouTube</h1>
-          <p className="mt-3 max-w-2xl text-mist">
-            Offizieller Player, volle Länge. Mit Google-Login kommen Abos und Likes — nur
-            youtube.readonly, wie bei TeslaPlay.
-          </p>
+          <h1 className="text-2xl font-bold tracking-tight">YouTube</h1>
         </div>
         <div className="flex flex-wrap gap-2">
           {settings.youtubeAccessToken ? (
             <button
               type="button"
               onClick={() => update({ youtubeAccessToken: "" })}
-              className="h-14 rounded-2xl border border-white/10 px-5"
+              className="btn"
             >
-              Google trennen
+              Trennen
             </button>
           ) : (
-            <button type="button" onClick={signIn} className="h-14 rounded-2xl bg-white px-5 font-semibold text-black">
-              Mit Google anmelden
+            <button type="button" onClick={signIn} className="btn btn-primary">
+              Google
             </button>
           )}
           <form onSubmit={onSearch} className="flex gap-2">
@@ -132,9 +127,9 @@ export function YouTubePage() {
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Video oder Kanal"
-              className="h-14 w-64 rounded-2xl border border-white/10 bg-panel px-4 outline-none focus:ring-2 focus:ring-volt/50"
+              className="h-10 w-52 rounded-lg border border-white/10 bg-panel px-3 outline-none"
             />
-            <button type="submit" className="h-14 rounded-2xl bg-volt px-5 font-semibold">
+            <button type="submit" className="btn btn-primary">
               Suchen
             </button>
           </form>
@@ -142,15 +137,10 @@ export function YouTubePage() {
       </div>
       {loginError ? <p className="mb-4 text-volt-2">{loginError}</p> : null}
       {!settings.youtubeAccessToken ? (
-        <div className="mb-8 rounded-[28px] border border-white/10 bg-panel p-6 glow-ring">
-          <p className="text-xs uppercase tracking-[0.28em] text-volt-2">Wie bei TeslaPlay</p>
-          <h2 className="mt-2 font-display text-2xl font-bold">Dein YouTube</h2>
-          <p className="mt-3 max-w-2xl text-mist">
-            Mit Google anmelden — nur Lesezugriff (youtube.readonly). Danach siehst du neue Videos
-            deiner Abos, Likes und Kanäle. Key und OAuth-Client-ID stehen unter Setup.
-          </p>
-          <button type="button" onClick={signIn} className="mt-5 h-14 rounded-2xl bg-white px-6 font-semibold text-black">
-            Mit Google anmelden
+        <div className="card mb-5">
+          <p className="muted">Google-Login für Abos und Likes. Client-ID steht unter Setup (oder QR).</p>
+          <button type="button" onClick={signIn} className="btn btn-primary mt-3">
+            Google
           </button>
         </div>
       ) : null}
@@ -228,7 +218,7 @@ export function YouTubePage() {
       {error ? (
         <div className="mb-6 rounded-2xl border border-volt/30 bg-volt/10 p-5 text-volt-2">
           {error === "NO_YOUTUBE_KEY"
-            ? "Kein API-Key. Unter Setup einen YouTube Data API v3 Key eintragen."
+            ? "Kein API-Key. Unter Setup oder per QR nachtragen."
             : error}
         </div>
       ) : null}

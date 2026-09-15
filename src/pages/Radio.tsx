@@ -48,20 +48,16 @@ export function RadioPage() {
           }}
         />
       ) : null}
-      <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <p className="text-xs uppercase tracking-[0.28em] text-volt-2">Radio Browser</p>
-          <h1 className="mt-2 font-display text-4xl font-extrabold">Radio</h1>
-          <p className="mt-3 text-mist">Öffentliche Internetradios, kein Abo nötig.</p>
-        </div>
+      <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+        <h1 className="text-2xl font-bold tracking-tight">Radio</h1>
         <div className="flex gap-2">
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Sender suchen"
-            className="h-14 w-72 rounded-2xl border border-white/10 bg-panel px-4 outline-none focus:ring-2 focus:ring-volt/50"
+            placeholder="Sender"
+            className="h-10 w-56 rounded-lg border border-white/10 bg-panel px-3"
           />
-          <button type="button" onClick={search} className="h-14 rounded-2xl bg-volt px-5 font-semibold">
+          <button type="button" onClick={search} className="btn btn-primary">
             Suchen
           </button>
         </div>

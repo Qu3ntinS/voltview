@@ -6,15 +6,14 @@ export function ServiceTile({ service }: { service: Service }) {
     <Link
       to={`/apps/${service.id}`}
       aria-label={`${service.name} in VoltView öffnen`}
-      className="relative h-36 min-w-52 shrink-0 overflow-hidden rounded-3xl border border-white/8 text-left glow-ring"
+      className="relative h-28 min-w-40 shrink-0 overflow-hidden rounded-xl border border-white/10 text-left"
       style={{ background: `linear-gradient(145deg, ${service.accent} 0%, #0a0714 78%)` }}
     >
       <div className="tile-sheen absolute inset-0" />
       <div className="relative flex h-full flex-col justify-between p-4">
-        <span className="text-[11px] uppercase tracking-[0.22em] text-white/70">{service.blurb}</span>
+        <span className="text-[11px] text-white/70">{service.blurb}</span>
         <div>
-          <p className="font-display text-2xl font-bold leading-none">{service.name}</p>
-          <p className="mt-2 text-xs text-white/70">Offizieller Account</p>
+          <p className="text-lg font-semibold leading-none">{service.name}</p>
         </div>
       </div>
     </Link>

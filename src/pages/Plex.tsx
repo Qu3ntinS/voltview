@@ -33,7 +33,7 @@ export function PlexPage() {
     return (
       <EmptyPlex
         title="Plex braucht den Server"
-        body="GitHub Pages ist nur das Frontend. Plex-Login und HLS-Proxy laufen mit bun run start auf deinem Rechner oder NAS."
+        body="Pages liefert nur das Frontend. Plex läuft mit bun run start."
       />
     );
   }
@@ -58,10 +58,9 @@ export function PlexPage() {
 
   return (
     <div>
-      <div className="mb-6">
-        <p className="text-xs uppercase tracking-[0.28em] text-volt-2">Eigene Mediathek</p>
-        <h1 className="mt-2 font-display text-4xl font-extrabold">Plex</h1>
-        {settings.plexServerName ? <p className="mt-2 text-mist">{settings.plexServerName}</p> : null}
+      <div className="mb-4">
+        <h1 className="text-2xl font-bold tracking-tight">Plex</h1>
+        {settings.plexServerName ? <p className="muted">{settings.plexServerName}</p> : null}
       </div>
       {error ? <p className="mb-4 text-volt-2">{error}</p> : null}
       <div className="mb-8 flex flex-wrap gap-2">
@@ -108,11 +107,11 @@ function PlexCard({ item }: { item: PlexItem }) {
 
 function EmptyPlex({ title, body }: { title: string; body: string }) {
   return (
-    <div className="mx-auto max-w-xl rounded-[28px] border border-white/10 bg-panel p-8 glow-ring">
-      <h1 className="font-display text-3xl font-bold">{title}</h1>
-      <p className="mt-3 text-mist">{body}</p>
-      <Link to="/settings" className="mt-6 inline-flex h-14 items-center rounded-2xl bg-volt px-6 font-semibold">
-        Zu den Einstellungen
+    <div className="card max-w-lg">
+      <h1 className="text-xl font-semibold">{title}</h1>
+      <p className="muted mt-2">{body}</p>
+      <Link to="/settings" className="btn btn-primary mt-4">
+        Setup
       </Link>
     </div>
   );

@@ -6,7 +6,6 @@ import { ServiceTile } from "../components/ServiceTile";
 import { featuredServices } from "../data/services";
 import { api, plexImage, type YoutubeVideo } from "../lib/api";
 import { useSettings } from "../lib/settings";
-import { teslaFullscreen } from "../lib/tesla";
 
 export function HomePage() {
   const { settings, recents } = useSettings();
@@ -30,62 +29,27 @@ export function HomePage() {
     };
   }, [settings]);
 
-  const hero = videos[0];
+  const needsSetup = !settings.youtubeApiKey && !settings.plexToken;
 
   return (
     <div>
-      <section className="relative mb-8 overflow-hidden rounded-[28px] border border-white/5 bg-panel glow-ring">
-        <div className="relative min-h-[340px]">
-          {hero?.thumbnail ? (
-            <img src={hero.thumbnail} alt={hero.title} className="absolute inset-0 h-full w-full object-cover" />
-          ) : (
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_20%,rgba(139,92,246,0.35),transparent_40%)]" />
-          )}
-          <div className="hero-mask absolute inset-0" />
-          <div className="relative flex min-h-[340px] max-w-2xl flex-col justify-end p-8">
-            <h1 className="sr-only">VoltView — Midnight Theater für Tesla</h1>
-            <p className="text-xs uppercase tracking-[0.32em] text-volt-2">Dein Theater. Kein Zeitlimit.</p>
-            <p className="mt-3 font-display text-5xl font-extrabold leading-none">
-              {hero?.title || "Midnight Purple. Volle Kontrolle."}
-            </p>
-            <p className="mt-4 max-w-lg text-mist">
-              Offizielle Streaming-Apps, YouTube ohne 20-Minuten-Deckel und dein eigener Plex-Server
-              — gebaut für den Tesla-Browser und jedes andere Display.
-            </p>
-            <div className="mt-6 flex flex-wrap gap-3">
-              {hero ? (
-                <Link
-                  to={`/watch/yt/${hero.id}`}
-                  className="inline-flex h-14 items-center rounded-2xl bg-volt px-6 text-lg font-semibold"
-                >
-                  Jetzt ansehen
-                </Link>
-              ) : (
-                <Link
-                  to="/settings"
-                  className="inline-flex h-14 items-center rounded-2xl bg-volt px-6 text-lg font-semibold"
-                >
-                  Setup öffnen
-                </Link>
-              )}
-              <Link
-                to="/apps"
-                className="inline-flex h-14 items-center rounded-2xl border border-white/10 bg-white/5 px-6 text-lg"
-              >
-                Alle Apps
-              </Link>
-              <button
-                type="button"
-                onClick={() => teslaFullscreen(window.location.href)}
-                className="inline-flex h-14 items-center rounded-2xl border border-volt/40 bg-volt/15 px-6 text-lg text-volt-2"
-              >
-                Tesla Vollbild
-              </button>
-            </div>
-            {ytError ? <p className="mt-4 text-sm text-volt-2">{ytError === "NO_YOUTUBE_KEY" ? "YouTube-Key in den Einstellungen ergänzen, dann erscheinen Trends hier." : ytError}</p> : null}
+      {needsSetup ? (
+        <section className="card mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="font-semibold">Noch kein Login</p>
+            <p className="muted">QR auf Setup scannen und auf dem Handy anmelden.</p>
           </div>
-        </div>
-      </section>
+          <Link to="/settings" className="btn btn-primary">
+            QR öffnen
+          </Link>
+        </section>
+      ) : null}
+
+      {ytError && ytError === "NO_YOUTUBE_KEY" ? (
+        <p className="muted mb-3">YouTube-Key fehlt — unter Setup oder per QR nachtragen.</p>
+      ) : ytError ? (
+        <p className="warn mb-3">{ytError}</p>
+      ) : null}
 
       {recents.length ? (
         <Row title="Weiterschauen">
@@ -103,10 +67,10 @@ export function HomePage() {
       ) : null}
 
       <Row
-        title="Netflix, Disney+, Prime & Co."
+        title="Apps"
         action={
-          <Link to="/apps" className="text-sm text-volt-2">
-            Alle Dienste
+          <Link to="/apps" className="text-sm">
+            Alle
           </Link>
         }
       >
@@ -117,9 +81,9 @@ export function HomePage() {
 
       {videos.length ? (
         <Row
-          title="YouTube Trends"
+          title="YouTube"
           action={
-            <Link to="/youtube" className="text-sm text-volt-2">
+            <Link to="/youtube" className="text-sm">
               Mehr
             </Link>
           }
@@ -138,11 +102,6 @@ export function HomePage() {
       ) : null}
 
       {settings.plexServerUri ? <PlexHomePreview /> : null}
-
-      <footer className="pb-4 text-xs text-mist">
-        Bitte nur im Stand nutzen. VoltView ist unabhängig von Tesla, Netflix, Disney, Prime, YouTube
-        und Plex. Marken gehören ihren Inhabern.
-      </footer>
     </div>
   );
 }
@@ -161,7 +120,14 @@ function PlexHomePreview() {
   if (!items.length) return null;
 
   return (
-    <Row title="Plex Weiterschauen" action={<Link to="/plex" className="text-sm text-volt-2">Plex</Link>}>
+    <Row
+      title="Plex"
+      action={
+        <Link to="/plex" className="text-sm">
+          Mehr
+        </Link>
+      }
+    >
       {items.slice(0, 12).map((item) => (
         <MediaCard
           key={item.id}
