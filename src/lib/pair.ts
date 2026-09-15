@@ -94,6 +94,7 @@ async function nativeCreate() {
 
 async function nativeStatus(id: string) {
   const res = await fetch(`/api/pair/${encodeURIComponent(id)}`, { headers: { Accept: "application/json" } });
+  if (res.status === 404) return { ready: false, settings: null };
   if (!res.ok) return null;
   const data = await readJson<{ ready?: boolean; settings?: PairSettings | null }>(res);
   if (!data || typeof data.ready !== "boolean") return null;
