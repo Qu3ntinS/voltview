@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { api, type PlexServer } from "../lib/api";
-import { isStatic, pagesUrl } from "../lib/env";
+import { isStatic, publicSiteUrl } from "../lib/env";
 import { type PairSettings } from "../lib/pair";
 import { useSettings } from "../lib/settings";
 import { teslaRedirectUrl } from "../lib/tesla";
@@ -84,9 +84,9 @@ export function SettingsPage() {
 
       {isStatic ? (
         <section className="card">
-          <h2 className="text-lg font-semibold">GitHub Pages</h2>
+          <h2 className="text-lg font-semibold">Tesla-Link</h2>
           <p className="muted mt-2">YouTube, Apps, Radio und Games laufen hier. Plex braucht `bun run start`.</p>
-          <p className="mono wrap mt-2">{teslaRedirectUrl(pagesUrl)}</p>
+          <p className="mono wrap mt-2">{teslaRedirectUrl(publicSiteUrl())}</p>
         </section>
       ) : null}
 

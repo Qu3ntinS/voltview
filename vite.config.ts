@@ -5,9 +5,10 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 
 const staticMode = process.env.VITE_STATIC === "1";
+const base = process.env.VITE_BASE || (staticMode ? "/voltview/" : "/");
 
 export default defineConfig({
-  base: staticMode ? "/voltview/" : "/",
+  base,
   plugins: [
     react(),
     tailwindcss(),
