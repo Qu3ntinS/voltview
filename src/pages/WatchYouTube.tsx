@@ -98,7 +98,7 @@ export function WatchYouTubePage() {
         </div>
       }
     >
-      <YoutubeStage videoId={id} onSnapshot={onSnapshot} />
+      <YoutubeStage videoId={id} title={video?.title} onSnapshot={onSnapshot} />
     </Theater>
     </SafetyGate>
   );

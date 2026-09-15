@@ -41,7 +41,7 @@ export function Theater({
         </button>
       </div>
       <div className="grid min-h-0 flex-1 gap-3 px-3 pb-3 lg:grid-cols-[minmax(0,1fr)_280px]">
-        <div data-theater-stage className="overflow-hidden rounded-xl border border-line bg-black">
+        <div data-theater-stage className="relative h-full min-h-0 overflow-hidden rounded-xl border border-line bg-black">
           {children}
         </div>
         {sidebar ? <aside className="hidden min-h-0 overflow-y-auto lg:block">{sidebar}</aside> : null}

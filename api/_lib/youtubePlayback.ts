@@ -77,9 +77,23 @@ const PIPED = [
 ];
 
 const ITAGS = [
-  { itag: 18, quality: "360p" },
   { itag: 22, quality: "720p" },
+  { itag: 18, quality: "360p" },
 ] as const;
+
+export function preferredProgressiveItags() {
+  const downlink =
+    typeof navigator === "undefined"
+      ? 0
+      : Number((navigator as Navigator & { connection?: { downlink?: number } }).connection?.downlink || 0);
+  if (downlink > 0 && downlink < 2.5) {
+    return [
+      { itag: 18, quality: "360p" },
+      { itag: 22, quality: "720p" },
+    ] as const;
+  }
+  return ITAGS;
+}
 
 /** InnerTube has no CORS. Only call it from the API, never from the Tesla/browser tab. */
 export function canCallInnertube() {
@@ -261,21 +275,32 @@ export function friendlyPlaybackError(raw: string) {
  */
 export function playbackCandidates(rawId: string): PlaybackSource[] {
   const videoId = sanitizeVideoId(rawId);
+  const itags = preferredProgressiveItags();
   const out: PlaybackSource[] = [];
+  const hlsFor = (base: string): PlaybackSource => ({
+    url: `${base}/api/manifest/hls_playlist/${videoId}?local=true`,
+    mime: "application/vnd.apple.mpegurl",
+    quality: "auto",
+    kind: "hls",
+  });
+  const progressiveFor = (base: string, itag: number, quality: string, local: boolean): PlaybackSource => ({
+    url: `${base}/latest_version?id=${videoId}&itag=${itag}${local ? "&local=true" : ""}`,
+    mime: "video/mp4",
+    quality: local ? `${quality}-proxy` : quality,
+    kind: "progressive",
+  });
+
+  // Interleave HLS (ABR) with muxed MP4 per host so a hanging playlist
+  // cannot burn the whole attempt budget before a seekable file is tried.
   for (const base of INVIDIOUS) {
-    for (const { itag, quality } of ITAGS) {
-      out.push({
-        url: `${base}/latest_version?id=${videoId}&itag=${itag}`,
-        mime: "video/mp4",
-        quality,
-        kind: "progressive",
-      });
-      out.push({
-        url: `${base}/latest_version?id=${videoId}&itag=${itag}&local=true`,
-        mime: "video/mp4",
-        quality: `${quality}-proxy`,
-        kind: "progressive",
-      });
+    out.push(hlsFor(base));
+    for (const { itag, quality } of itags) {
+      out.push(progressiveFor(base, itag, quality, true));
+    }
+  }
+  for (const base of INVIDIOUS) {
+    for (const { itag, quality } of itags) {
+      out.push(progressiveFor(base, itag, quality, false));
     }
   }
   return out;
@@ -284,9 +309,7 @@ export function playbackCandidates(rawId: string): PlaybackSource[] {
 /** Third-party HTML5 embeds (not youtube.com / youtube-nocookie). */
 export function embedCandidates(rawId: string): string[] {
   const videoId = sanitizeVideoId(rawId);
-  return EMBED_HOSTS.map(
-    (base) => `${base}/embed/${videoId}?autoplay=1&quality=medium&player_style=youtube`,
-  );
+  return EMBED_HOSTS.map((base) => `${base}/embed/${videoId}?autoplay=1&quality=medium`);
 }
 
 async function firstLiveCandidate(candidates: PlaybackSource[]): Promise<PlaybackSource | null> {
