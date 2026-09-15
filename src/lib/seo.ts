@@ -1,6 +1,18 @@
 import { featuredServiceIds, getService, services } from "../data/services";
 
-export const SITE_URL = "https://qu3ntins.github.io/voltview";
+function resolveSiteUrl() {
+  const fromProcess =
+    typeof process !== "undefined" && process.env
+      ? process.env.VITE_SITE_URL ||
+        (process.env.VERCEL_PROJECT_PRODUCTION_URL
+          ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+          : "")
+      : "";
+  const fromVite = import.meta.env?.VITE_SITE_URL || "";
+  return (fromProcess || fromVite || "https://qu3ntins.github.io/voltview").replace(/\/$/, "");
+}
+
+export const SITE_URL = resolveSiteUrl();
 export const SITE_NAME = "VoltView";
 export const DEFAULT_TITLE = "VoltView";
 export const DEFAULT_DESCRIPTION =

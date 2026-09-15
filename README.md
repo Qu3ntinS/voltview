@@ -46,6 +46,17 @@ bun run build
 bun run start
 ```
 
+## Vercel (empfohlen)
+
+Kein extra GitHub-Action nötig. Vercel hängt am Repo und deployed selbst:
+
+1. Einmalig: [vercel.com/new](https://vercel.com/new) → GitHub-Repo `Qu3ntinS/voltview` importieren → Deploy.
+2. Danach: Push auf `master` = Production, jeder PR bekommt eine Preview-URL.
+
+Hobby-Plan reicht. Build nimmt `bun run build:vercel` (`vercel.json`). YouTube, Apps, Radio, Games und QR-Sync laufen. Plex braucht weiter `bun run start`.
+
+Google OAuth JS-Origin: deine `*.vercel.app`-URL (ohne Pfad). Tesla-Theater: `https://www.youtube.com/redirect?q=https://<projekt>.vercel.app/`
+
 ## GitHub Pages (ohne eigenen Server)
 
 Nach dem Push auf `master`/`main` schreibt der Workflow `dist/` auf den Branch `gh-pages`.
@@ -79,6 +90,7 @@ Nur im Stand nutzen. Blick auf den Bildschirm während der Fahrt ist gefährlich
 | `bun run dev` | Vite + Elysia parallel |
 | `bun run build` | Frontend-Build |
 | `bun run build:pages` | Statischer Build für GitHub Pages |
+| `bun run build:vercel` | Statischer Build für Vercel (`base=/`) |
 | `bun run start` | API + statisches UI |
 | `bun test` | API- und Helper-Tests |
 | `bun run typecheck` | TypeScript |
