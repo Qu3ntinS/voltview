@@ -26,6 +26,7 @@ jobs:
         run: |
           cp scripts/gh-pages-vercel/vercel.json dist/vercel.json
           cp scripts/gh-pages-vercel/package.json dist/package.json
+          cp scripts/gh-pages-vercel/bun.lock dist/bun.lock
       - uses: actions/upload-artifact@v4
         with:
           name: dist
