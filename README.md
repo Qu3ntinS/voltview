@@ -81,6 +81,10 @@ Nur im Stand nutzen. Blick auf den Bildschirm während der Fahrt ist gefährlich
 | `bun test` | API- und Helper-Tests |
 | `bun run typecheck` | TypeScript |
 
+## SEO
+
+Pro Route eigene Title/Description, Canonical, Open Graph, Twitter Cards, JSON-LD (WebSite, WebApplication, Breadcrumb), `robots.txt`, `sitemap.xml`, `og.png` (1200×630) und Web-Manifest. Player, Suche und Setup sind `noindex`.
+
 ## Repo
 
 https://github.com/Qu3ntinS/voltview

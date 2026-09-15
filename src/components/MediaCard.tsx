@@ -24,7 +24,7 @@ export function MediaCard({
       className={`group relative overflow-hidden rounded-2xl border border-white/5 bg-panel glow-ring ${size}`}
     >
       {image ? (
-        <img src={image} alt="" className="absolute inset-0 h-full w-full object-cover" />
+        <img src={image} alt={title} className="absolute inset-0 h-full w-full object-cover" />
       ) : (
         <div className="absolute inset-0 bg-[linear-gradient(160deg,#3b0764,transparent_70%)]" />
       )}
