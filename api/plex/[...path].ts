@@ -1,4 +1,4 @@
-import { plexDispatch } from "../../src/lib/plexDispatch";
+import { plexDispatch } from "../_lib/plexDispatch";
 
 export default async function handler(
   req: { method?: string; url?: string; headers?: Record<string, string | string[] | undefined>; query?: Record<string, string | string[]> },
