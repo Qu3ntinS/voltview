@@ -1,0 +1,24 @@
+{
+  "name": "VoltView — Midnight Theater",
+  "short_name": "VoltView",
+  "description": "Theater-Hub für Tesla und Browser: YouTube, Plex, Radio und offizielle Streaming-Apps.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#05030a",
+  "theme_color": "#05030a",
+  "lang": "de",
+  "icons": [
+    {
+      "src": "apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

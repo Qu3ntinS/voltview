@@ -1,0 +1,110 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Syne", sans-serif;
+  --font-sans: "Outfit", sans-serif;
+  --color-void: #05030a;
+  --color-ink: #0a0714;
+  --color-panel: #120c1f;
+  --color-panel-2: #1a1230;
+  --color-line: #2a2042;
+  --color-mist: #9b92b3;
+  --color-foam: #f4f0ff;
+  --color-volt: #8b5cf6;
+  --color-volt-2: #c4b5fd;
+  --color-deep: #4c1d95;
+  --color-ember: #7c3aed;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+  background: var(--color-void);
+  color: var(--color-foam);
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background:
+    radial-gradient(1200px 600px at 10% -10%, rgba(124, 58, 237, 0.22), transparent 55%),
+    radial-gradient(900px 500px at 90% 0%, rgba(76, 29, 149, 0.18), transparent 50%),
+    linear-gradient(180deg, #0b0716 0%, #05030a 100%);
+  overflow: hidden;
+}
+
+button,
+a,
+input,
+textarea {
+  font: inherit;
+}
+
+button {
+  color: inherit;
+}
+
+::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(139, 92, 246, 0.35);
+  border-radius: 99px;
+}
+
+.rail-btn {
+  min-height: 72px;
+}
+
+.media-row {
+  scrollbar-width: none;
+}
+
+.media-row::-webkit-scrollbar {
+  display: none;
+}
+
+.glow-ring {
+  box-shadow: 0 0 0 1px rgba(196, 181, 253, 0.16), 0 18px 50px rgba(76, 29, 149, 0.28);
+}
+
+.hero-mask {
+  background:
+    linear-gradient(90deg, rgba(5, 3, 10, 0.88) 12%, rgba(5, 3, 10, 0.35) 58%, transparent 100%),
+    linear-gradient(180deg, transparent 40%, rgba(5, 3, 10, 0.92) 100%);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.sr-only:focus {
+  position: static;
+  width: auto;
+  height: auto;
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+
+.tile-sheen {
+  background-image:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.08), transparent 42%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 70%);
+}

@@ -1,0 +1,251 @@
+import { FormEvent, useEffect, useState } from "react";
+import { MediaCard } from "../components/MediaCard";
+import { Row } from "../components/Row";
+import { api, type YoutubeChannel, type YoutubeVideo } from "../lib/api";
+import { formatDuration } from "../lib/format";
+import { requestYoutubeToken } from "../lib/google";
+import { useSettings } from "../lib/settings";
+
+const categories = [
+  { id: "", label: "Trending" },
+  { id: "10", label: "Musik" },
+  { id: "20", label: "Gaming" },
+  { id: "17", label: "Sport" },
+  { id: "24", label: "Entertainment" },
+  { id: "23", label: "Comedy" },
+  { id: "28", label: "Wissenschaft" },
+  { id: "1", label: "Film" },
+];
+
+export function YouTubePage() {
+  const { settings, update } = useSettings();
+  const [category, setCategory] = useState("");
+  const [q, setQ] = useState("");
+  const [items, setItems] = useState<YoutubeVideo[]>([]);
+  const [liked, setLiked] = useState<YoutubeVideo[]>([]);
+  const [feed, setFeed] = useState<YoutubeVideo[]>([]);
+  const [subs, setSubs] = useState<YoutubeChannel[]>([]);
+  const [error, setError] = useState("");
+  const [loginError, setLoginError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    setLoading(true);
+    api
+      .youtubeTrending(settings, category)
+      .then((data) => {
+        if (!alive) return;
+        setItems(data.items || []);
+        setError(data.error || "");
+      })
+      .catch((err) => {
+        if (alive) setError(err.message);
+      })
+      .finally(() => {
+        if (alive) setLoading(false);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [settings, category]);
+
+  useEffect(() => {
+    if (!settings.youtubeAccessToken) {
+      setLiked([]);
+      setFeed([]);
+      setSubs([]);
+      return;
+    }
+    const recover = (err: Error) => {
+      if (err.message === "NO_YOUTUBE_LOGIN" || /401/.test(err.message)) {
+        update({ youtubeAccessToken: "" });
+      }
+      return { items: [] };
+    };
+    Promise.all([
+      api.youtubeLiked(settings).catch(recover),
+      api.youtubeFeed(settings).catch(recover),
+      api.youtubeSubscriptions(settings).catch(recover),
+    ]).then(([likes, personal, channels]) => {
+      setLiked(likes.items || []);
+      setFeed(personal.items || []);
+      setSubs(channels.items || []);
+    });
+  }, [settings]);
+
+  function onSearch(event: FormEvent) {
+    event.preventDefault();
+    if (!q.trim()) return;
+    setLoading(true);
+    api
+      .youtubeSearch(settings, q.trim())
+      .then((data) => {
+        setItems(data.items || []);
+        setError(data.error || "");
+      })
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }
+
+  async function signIn() {
+    setLoginError("");
+    if (!settings.youtubeClientId) {
+      setLoginError("Unter Setup die Google OAuth Client-ID eintragen.");
+      return;
+    }
+    try {
+      const token = await requestYoutubeToken(settings.youtubeClientId);
+      update({ youtubeAccessToken: token });
+    } catch (err) {
+      setLoginError((err as Error).message);
+    }
+  }
+
+  return (
+    <div>
+      <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <p className="text-xs uppercase tracking-[0.28em] text-volt-2">Dein YouTube</p>
+          <h1 className="mt-2 font-display text-4xl font-extrabold">YouTube</h1>
+          <p className="mt-3 max-w-2xl text-mist">
+            Offizieller Player, volle Länge. Mit Google-Login kommen Abos und Likes — nur
+            youtube.readonly, wie bei TeslaPlay.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {settings.youtubeAccessToken ? (
+            <button
+              type="button"
+              onClick={() => update({ youtubeAccessToken: "" })}
+              className="h-14 rounded-2xl border border-white/10 px-5"
+            >
+              Google trennen
+            </button>
+          ) : (
+            <button type="button" onClick={signIn} className="h-14 rounded-2xl bg-white px-5 font-semibold text-black">
+              Mit Google anmelden
+            </button>
+          )}
+          <form onSubmit={onSearch} className="flex gap-2">
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Video oder Kanal"
+              className="h-14 w-64 rounded-2xl border border-white/10 bg-panel px-4 outline-none focus:ring-2 focus:ring-volt/50"
+            />
+            <button type="submit" className="h-14 rounded-2xl bg-volt px-5 font-semibold">
+              Suchen
+            </button>
+          </form>
+        </div>
+      </div>
+      {loginError ? <p className="mb-4 text-volt-2">{loginError}</p> : null}
+      {!settings.youtubeAccessToken ? (
+        <div className="mb-8 rounded-[28px] border border-white/10 bg-panel p-6 glow-ring">
+          <p className="text-xs uppercase tracking-[0.28em] text-volt-2">Wie bei TeslaPlay</p>
+          <h2 className="mt-2 font-display text-2xl font-bold">Dein YouTube</h2>
+          <p className="mt-3 max-w-2xl text-mist">
+            Mit Google anmelden — nur Lesezugriff (youtube.readonly). Danach siehst du neue Videos
+            deiner Abos, Likes und Kanäle. Key und OAuth-Client-ID stehen unter Setup.
+          </p>
+          <button type="button" onClick={signIn} className="mt-5 h-14 rounded-2xl bg-white px-6 font-semibold text-black">
+            Mit Google anmelden
+          </button>
+        </div>
+      ) : null}
+
+      {feed.length ? (
+        <Row title="Neu aus deinen Abos">
+          {feed.map((video) => (
+            <MediaCard
+              key={`feed-${video.id}`}
+              to={`/watch/yt/${video.id}`}
+              title={video.title}
+              subtitle={video.channel}
+              image={video.thumbnail}
+              wide
+            />
+          ))}
+        </Row>
+      ) : null}
+      {liked.length ? (
+        <Row title="Geliked">
+          {liked.map((video) => (
+            <MediaCard
+              key={`like-${video.id}`}
+              to={`/watch/yt/${video.id}`}
+              title={video.title}
+              subtitle={video.channel}
+              image={video.thumbnail}
+              wide
+            />
+          ))}
+        </Row>
+      ) : null}
+      {subs.length ? (
+        <Row title="Deine Kanäle">
+          {subs.map((channel) => (
+            <button
+              key={channel.id}
+              type="button"
+              onClick={() => {
+                setLoading(true);
+                api
+                  .youtubeChannel(settings, channel.id)
+                  .then((data) => {
+                    setItems(data.items || []);
+                    setError(data.error || "");
+                  })
+                  .catch((err) => setError(err.message))
+                  .finally(() => setLoading(false));
+              }}
+              className="flex h-24 w-64 shrink-0 items-center gap-3 rounded-2xl border border-white/5 bg-panel px-4 text-left"
+            >
+              {channel.thumbnail ? (
+                <img src={channel.thumbnail} alt="" className="h-14 w-14 rounded-full object-cover" />
+              ) : null}
+              <p className="font-semibold">{channel.title}</p>
+            </button>
+          ))}
+        </Row>
+      ) : null}
+
+      <div className="mb-6 flex flex-wrap gap-2">
+        {categories.map((cat) => (
+          <button
+            key={cat.id || "all"}
+            type="button"
+            onClick={() => setCategory(cat.id)}
+            className={`h-12 rounded-2xl px-4 ${
+              category === cat.id ? "bg-volt" : "border border-white/10 bg-panel text-mist"
+            }`}
+          >
+            {cat.label}
+          </button>
+        ))}
+      </div>
+      {error ? (
+        <div className="mb-6 rounded-2xl border border-volt/30 bg-volt/10 p-5 text-volt-2">
+          {error === "NO_YOUTUBE_KEY"
+            ? "Kein API-Key. Unter Setup einen YouTube Data API v3 Key eintragen."
+            : error}
+        </div>
+      ) : null}
+      {loading ? <p className="text-mist">Lade…</p> : null}
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        {items.map((video) => (
+          <MediaCard
+            key={video.id}
+            to={`/watch/yt/${video.id}`}
+            title={video.title}
+            subtitle={video.channel}
+            image={video.thumbnail}
+            badge={formatDuration(video.duration)}
+            fill
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
