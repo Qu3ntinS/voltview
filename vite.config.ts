@@ -41,6 +41,13 @@ export default defineConfig({
       "/api": "http://127.0.0.1:3001",
     },
   },
+  preview: {
+    host: true,
+    port: 4173,
+    proxy: {
+      "/api": "http://127.0.0.1:3001",
+    },
+  },
   build: {
     target: "es2019",
     cssTarget: "chrome80",

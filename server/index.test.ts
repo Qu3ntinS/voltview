@@ -42,7 +42,7 @@ describe("VoltView API", () => {
     const created = await app.handle(new Request("http://localhost/api/pair", { method: "POST" }));
     expect(created.status).toBe(200);
     const room = (await created.json()) as { id: string };
-    expect(room.id).toMatch(/^[A-Z2-9]{4}$/);
+    expect(room.id).toMatch(/^[A-Z2-9]{12}$/);
 
     const empty = await app.handle(new Request(`http://localhost/api/pair/${room.id}`));
     expect((await empty.json()).ready).toBe(false);
