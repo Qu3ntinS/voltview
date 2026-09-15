@@ -6,8 +6,12 @@ import tailwindcss from "@tailwindcss/vite";
 
 const staticMode = process.env.VITE_STATIC === "1";
 const base = process.env.VITE_BASE || (staticMode ? "/voltview/" : "/");
-if (!process.env.VITE_YOUTUBE_API_KEY && process.env.YOUTUBE_API_KEY) {
-  process.env.VITE_YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
+process.env.VITE_YOUTUBE_API_KEY =
+  process.env.VITE_YOUTUBE_API_KEY || process.env.YOUTUBE_API_KEY || process.env.YOUTUBE_DATA_API_KEY || "";
+if (process.env.VITE_YOUTUBE_API_KEY) {
+  console.log("[voltview] YouTube Data API key present for this build");
+} else {
+  console.log("[voltview] No YOUTUBE_API_KEY / VITE_YOUTUBE_API_KEY in the environment");
 }
 
 export default defineConfig({

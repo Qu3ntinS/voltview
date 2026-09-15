@@ -10,7 +10,7 @@
     "dev:web": "vite",
     "build": "vite build && bun scripts/seo-static.ts",
     "build:pages": "VITE_STATIC=1 vite build && bun scripts/seo-static.ts",
-    "build:vercel": "VITE_STATIC=1 VITE_BASE=/ vite build && bun scripts/seo-static.ts",
+    "build:vercel": "VITE_STATIC=1 VITE_BASE=/ bun scripts/build-vercel.ts",
     "start": "bun server/index.ts",
     "typecheck": "tsc --noEmit",
     "test": "bun test"

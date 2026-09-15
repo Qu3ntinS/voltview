@@ -55,6 +55,14 @@ Kein extra GitHub-Action nötig. Vercel hängt am Repo und deployed selbst:
 
 Hobby-Plan reicht. Build nimmt `bun run build:vercel` (`vercel.json`, Bun 1.4.x). YouTube, Apps, Radio, Games und QR-Live-Sync laufen (Sync über jsonblob, weil Vercel hier kein `/api/pair` hat). Plex braucht weiter `bun run start`.
 
+YouTube-Key in Vercel: Project → Settings → Environment Variables
+
+- Name: `YOUTUBE_API_KEY` (oder `VITE_YOUTUBE_API_KEY`)
+- Environments: Production (und Preview, wenn du Previews testest)
+- Danach **Redeploy**, sonst bleibt der alte Build ohne Key
+
+Der Key wird beim Build ins Frontend gebacken. In der Google Cloud HTTP-Referrer auf `https://<projekt>.vercel.app/*` setzen.
+
 Google OAuth JS-Origin: deine `*.vercel.app`-URL (ohne Pfad). Tesla-Theater: `https://www.youtube.com/redirect?q=https://<projekt>.vercel.app/`
 
 ## GitHub Pages (ohne eigenen Server)

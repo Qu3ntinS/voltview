@@ -38,8 +38,7 @@ export function isGoogleClientId(value: string) {
 }
 
 export function bakedYoutubeApiKey() {
-  const value = import.meta.env?.VITE_YOUTUBE_API_KEY;
-  return typeof value === "string" ? value.trim() : "";
+  return String(import.meta.env.VITE_YOUTUBE_API_KEY || "").trim();
 }
 
 export function normalizeSettings(input: Settings): Settings {
