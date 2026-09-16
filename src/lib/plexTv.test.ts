@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { isLanPlexHost, mapPlexResources, pickPlexConnection, plexAuthUrl, plexIdentity } from "./plexTv";
+import { isLanPlexHost, mapPlexResources, pickPlexConnection, plexAuthUrl, plexIdentity, plexMediaHeaders } from "./plexTv";
 
 describe("plex.tv helpers", () => {
   test("builds the official auth hash URL", () => {
@@ -12,8 +12,13 @@ describe("plex.tv helpers", () => {
   test("sends product headers without leaking empty tokens", () => {
     const headers = plexIdentity("abc");
     expect(headers["X-Plex-Product"]).toBe("VoltView");
+    expect(headers.Accept).toBe("application/json");
     expect(headers["X-Plex-Token"]).toBeUndefined();
     expect(plexIdentity("abc", "tok")["X-Plex-Token"]).toBe("tok");
+  });
+
+  test("asks for binary media instead of JSON on images and streams", () => {
+    expect(plexMediaHeaders("abc", "tok").Accept).toBe("*/*");
   });
 
   test("keeps only media servers and prefers a public https connection", () => {

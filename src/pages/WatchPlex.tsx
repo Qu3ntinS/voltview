@@ -127,6 +127,7 @@ export function WatchPlexPage() {
             setCurrent(snap.positionSec);
             setDuration(snap.durationSec);
           }}
+          onError={() => setError("Stream fehlgeschlagen.")}
         />
       </PlayerChrome>
     </Theater>
