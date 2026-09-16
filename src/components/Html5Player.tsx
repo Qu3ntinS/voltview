@@ -43,7 +43,7 @@ function shouldProbe(url: string) {
 }
 
 function attemptMsFor(url: string) {
-  return /\/api\/plex(?:\?|$)/.test(url) ? 8000 : ATTEMPT_MS;
+  return /\/api\/plex(?:\?|$)/.test(url) ? 0 : ATTEMPT_MS;
 }
 
 async function sameOriginPlayable(url: string) {
@@ -228,10 +228,13 @@ export function Html5Player({
       }
       if (cancelled) return;
       clearTimer();
-      timer = window.setTimeout(() => {
-        if (cancelled || ready) return;
-        void tryIndex(index + 1);
-      }, attemptMsFor(source.url));
+      const wait = attemptMsFor(source.url);
+      if (wait) {
+        timer = window.setTimeout(() => {
+          if (cancelled || ready) return;
+          void tryIndex(index + 1);
+        }, wait);
+      }
     }
 
     function onReady() {

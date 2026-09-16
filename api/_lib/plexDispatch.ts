@@ -241,11 +241,25 @@ async function plexFilePart(ctx: PlexCtx, id: string) {
   };
 }
 
-async function proxyPlexDest(ctx: PlexCtx, dest: string, range: string | null, uris: string[]) {
+export function plexPlaybackUris(uris: string[], cloud = Boolean(process.env.VERCEL)) {
+  const remote = uris.filter((uri) => !isLanPlexHost(uri));
+  const list = cloud ? remote : remote.length ? remote : uris;
+  return list.slice(0, cloud ? 1 : 2);
+}
+
+async function proxyPlexDest(
+  ctx: PlexCtx,
+  dest: string,
+  range: string | null,
+  uris: string[],
+  extra: { omitRange?: boolean; retryUnranged?: boolean; timeoutMs?: number } = {},
+) {
   return proxyMedia(dest, {
-    range: playableRange(range),
+    range: extra.omitRange ? null : playableRange(range),
+    omitRange: extra.omitRange,
+    retryUnranged: extra.retryUnranged,
     headers: plexMediaHeaders(ctx.clientId, ctx.serverToken),
-    timeoutMs: 9000,
+    timeoutMs: extra.timeoutMs ?? 6000,
     allowHost: (host) => {
       if (isAllowedMediaUrl(`https://${host}/`)) return true;
       return (
@@ -263,35 +277,60 @@ async function proxyPlexDest(ctx: PlexCtx, dest: string, range: string | null, u
 
 async function servePlexFile(ctx: PlexCtx, id: string, range: string | null) {
   const uris = await plexUris(ctx);
-  if (!uris.length) throw new Error("NO_PLEX_SERVER");
-  let part = { key: "", container: "" };
-  try {
-    part = await plexFilePart(ctx, id);
-  } catch {
-    /* transcode fallback */
-  }
-  const directMp4 = part.key && (/^(mp4|mov|m4v)$/.test(part.container) || /\.(mp4|m4v|mov)(\?|$)/i.test(part.key));
-  if (directMp4) {
-    for (const server of uris) {
-      const out = await proxyPlexDest(ctx, `${server}${part.key}`, range, uris);
+  const list = plexPlaybackUris(uris);
+  if (!list.length) throw new Error("NO_PLEX_SERVER");
+  const firstChunk = !range || /^bytes=0-/i.test(range);
+
+  async function tryStart(mode: "remux" | "transcode") {
+    for (const server of list) {
+      const dest = plexStartUrl(server, id, ctx, "mp4", mode).toString();
+      const out = await proxyPlexDest(ctx, dest, range, uris, {
+        omitRange: firstChunk,
+        retryUnranged: firstChunk,
+        timeoutMs: 6000,
+      });
       if (out) {
         ctx.server = server;
         return out;
       }
     }
+    return null;
   }
-  for (const server of uris) {
-    const dest = plexStartUrl(server, id, { ...ctx, server }, "mp4").toString();
-    const out = await proxyPlexDest(ctx, dest, range, uris);
-    if (out) {
-      ctx.server = server;
-      return out;
+
+  const remuxed = await tryStart("remux");
+  if (remuxed) return remuxed;
+
+  try {
+    const part = await plexFilePart(ctx, id);
+    const directMp4 = part.key && (/^(mp4|mov|m4v)$/.test(part.container) || /\.(mp4|m4v|mov)(\?|$)/i.test(part.key));
+    if (directMp4) {
+      for (const server of list) {
+        const out = await proxyPlexDest(ctx, `${server}${part.key}`, range, uris, {
+          retryUnranged: firstChunk,
+          timeoutMs: 5000,
+        });
+        if (out) {
+          ctx.server = server;
+          return out;
+        }
+      }
     }
+  } catch {
+    /* transcode fallback */
   }
+
+  const transcoded = await tryStart("transcode");
+  if (transcoded) return transcoded;
   return json({ error: "Stream fehlgeschlagen." }, 502);
 }
 
-function plexStartUrl(server: string, id: string, ctx: PlexCtx, kind: "hls" | "mp4") {
+export function plexStartUrl(
+  server: string,
+  id: string,
+  ctx: Pick<PlexCtx, "clientId" | "serverToken">,
+  kind: "hls" | "mp4",
+  mode: "remux" | "transcode" = "transcode",
+) {
   const dest = new URL(`${server}/video/:/transcode/universal/start.${kind === "mp4" ? "mp4" : "m3u8"}`);
   dest.searchParams.set("path", `/library/metadata/${id}`);
   dest.searchParams.set("mediaIndex", "0");
@@ -299,7 +338,7 @@ function plexStartUrl(server: string, id: string, ctx: PlexCtx, kind: "hls" | "m
   dest.searchParams.set("protocol", kind === "mp4" ? "http" : "hls");
   dest.searchParams.set("fastSeek", "1");
   dest.searchParams.set("directPlay", "0");
-  dest.searchParams.set("directStream", kind === "mp4" ? "0" : "1");
+  dest.searchParams.set("directStream", kind === "hls" || mode === "remux" ? "1" : "0");
   dest.searchParams.set("subtitleSize", "100");
   dest.searchParams.set("audioBoost", "100");
   dest.searchParams.set("autoAdjustQuality", "1");
@@ -312,9 +351,13 @@ function plexStartUrl(server: string, id: string, ctx: PlexCtx, kind: "hls" | "m
   dest.searchParams.set("X-Plex-Device", "VoltView");
   dest.searchParams.set("X-Plex-Token", ctx.serverToken);
   if (kind === "mp4") {
-    dest.searchParams.set("videoQuality", "70");
-    dest.searchParams.set("maxVideoBitrate", "4000");
+    dest.searchParams.set("videoQuality", "60");
+    dest.searchParams.set("maxVideoBitrate", "3000");
     dest.searchParams.set("videoResolution", "1280x720");
+    dest.searchParams.set(
+      "X-Plex-Client-Profile-Extra",
+      "add-transcode-target(type=videoProfile&context=streaming&protocol=http&container=mp4&videoCodec=h264&audioCodec=aac,mp3&replace=true)",
+    );
   }
   return dest;
 }
@@ -449,7 +492,7 @@ export async function plexDispatch(request: Request): Promise<Response> {
       }
       let last = "Stream failed";
       for (const server of uris) {
-        const dest = plexStartUrl(server, id, { ...ctx, server }, "hls");
+        const dest = plexStartUrl(server, id, ctx, "hls");
         try {
           const res = await plexMedia(ctx, dest.toString());
           const body = await res.text();
