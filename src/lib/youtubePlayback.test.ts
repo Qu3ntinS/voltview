@@ -7,6 +7,7 @@ import {
   playbackCandidates,
   preferredProgressiveItags,
   sanitizeVideoId,
+  youtubeFileUrl,
 } from "./youtubePlayback";
 
 describe("youtube playback", () => {
@@ -73,6 +74,14 @@ describe("youtube playback", () => {
     expect(list.some((item) => item.url.includes("itag=22"))).toBe(true);
     expect(list.some((item) => item.url.includes("itag=18"))).toBe(true);
     expect(preferredProgressiveItags().map((item) => item.itag)).toContain(18);
+  });
+
+  test("can skip HLS so Tesla only tries mp4", () => {
+    const list = playbackCandidates("jNQXAC9IVRw", { hls: false });
+    expect(list.length).toBeGreaterThan(0);
+    expect(list.every((item) => item.kind === "progressive")).toBe(true);
+    expect(list[0]?.url).toContain("latest_version");
+    expect(youtubeFileUrl("jNQXAC9IVRw", 18)).toBe("/api/youtube/file?id=jNQXAC9IVRw&itag=18");
   });
 
   test("prefers an iframe-friendly Invidious embed over youtube.com", () => {

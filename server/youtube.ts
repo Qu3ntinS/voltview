@@ -1,5 +1,5 @@
 import { Elysia } from "elysia";
-import { friendlyPlaybackError, resolveYoutubePlayback } from "../src/lib/youtubePlayback";
+import { firstLiveCandidate, friendlyPlaybackError, playbackCandidates, resolveYoutubePlayback, sanitizeVideoId } from "../src/lib/youtubePlayback";
 
 const YT = "https://www.googleapis.com/youtube/v3";
 
@@ -305,5 +305,26 @@ export const youtubeRoutes = new Elysia({ prefix: "/api/youtube" })
       const message = raw === "BAD_VIDEO_ID" ? raw : friendlyPlaybackError(raw);
       set.status = raw === "BAD_VIDEO_ID" ? 400 : 502;
       return { error: message };
+    }
+  })
+  .get("/file", async ({ query, set }) => {
+    try {
+      const id = sanitizeVideoId(String(query.id || ""));
+      const itag = Number(query.itag || 18) || 18;
+      const all = playbackCandidates(id, { hls: false });
+      const preferred = all.filter((item) => item.url.includes(`itag=${itag}`));
+      const live = await firstLiveCandidate(preferred.length ? preferred : all);
+      const target = live?.url || preferred[0]?.url || all[0]?.url;
+      if (!target) {
+        set.status = 502;
+        return { error: "Kein Stream." };
+      }
+      set.status = 302;
+      set.headers.Location = target;
+      return;
+    } catch (error) {
+      const raw = (error as Error).message;
+      set.status = raw === "BAD_VIDEO_ID" ? 400 : 502;
+      return { error: raw === "BAD_VIDEO_ID" ? raw : "Kein Stream." };
     }
   });

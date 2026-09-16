@@ -273,10 +273,14 @@ export function friendlyPlaybackError(raw: string) {
  * Do not pre-resolve these on Vercel — googlevideo links are IP-locked
  * and Invidious JSON APIs are CORS-disabled on public instances.
  */
-export function playbackCandidates(rawId: string): PlaybackSource[] {
+export function playbackCandidates(
+  rawId: string,
+  opts: { hls?: boolean } = {},
+): PlaybackSource[] {
   const videoId = sanitizeVideoId(rawId);
   const itags = preferredProgressiveItags();
   const out: PlaybackSource[] = [];
+  const includeHls = opts.hls !== false;
   const hlsFor = (base: string): PlaybackSource => ({
     url: `${base}/api/manifest/hls_playlist/${videoId}?local=true`,
     mime: "application/vnd.apple.mpegurl",
@@ -290,10 +294,8 @@ export function playbackCandidates(rawId: string): PlaybackSource[] {
     kind: "progressive",
   });
 
-  // Interleave HLS (ABR) with muxed MP4 per host so a hanging playlist
-  // cannot burn the whole attempt budget before a seekable file is tried.
   for (const base of INVIDIOUS) {
-    out.push(hlsFor(base));
+    if (includeHls) out.push(hlsFor(base));
     for (const { itag, quality } of itags) {
       out.push(progressiveFor(base, itag, quality, true));
     }
@@ -306,13 +308,17 @@ export function playbackCandidates(rawId: string): PlaybackSource[] {
   return out;
 }
 
+export function youtubeFileUrl(videoId: string, itag: number) {
+  return `/api/youtube/file?id=${encodeURIComponent(videoId)}&itag=${itag}`;
+}
+
 /** Third-party HTML5 embeds (not youtube.com / youtube-nocookie). */
 export function embedCandidates(rawId: string): string[] {
   const videoId = sanitizeVideoId(rawId);
   return EMBED_HOSTS.map((base) => `${base}/embed/${videoId}?autoplay=1&quality=medium`);
 }
 
-async function firstLiveCandidate(candidates: PlaybackSource[]): Promise<PlaybackSource | null> {
+export async function firstLiveCandidate(candidates: PlaybackSource[]): Promise<PlaybackSource | null> {
   for (const candidate of candidates.slice(0, 6)) {
     try {
       const ctrl = new AbortController();

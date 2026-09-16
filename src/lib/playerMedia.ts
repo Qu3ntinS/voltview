@@ -1,3 +1,5 @@
+import { isTeslaBrowser } from "./tesla";
+
 export function mediaDuration(video: {
   duration: number;
   seekable: { length: number; end: (index: number) => number };
@@ -9,6 +11,12 @@ export function mediaDuration(video: {
     if (Number.isFinite(end) && end > 0) return end;
   }
   return 0;
+}
+
+/** Tesla QtWebKit claims HLS, then paints a black frame. Use MP4 there. */
+export function canUseNativeHls(video?: { canPlayType?: (type: string) => string }) {
+  if (typeof navigator !== "undefined" && isTeslaBrowser()) return false;
+  return Boolean(video?.canPlayType?.("application/vnd.apple.mpegurl"));
 }
 
 export function connectionDownlinkMbps() {
