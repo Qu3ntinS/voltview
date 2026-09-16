@@ -31,7 +31,7 @@ export function teslaFullscreen(url = window.location.href) {
   window.location.href = teslaRedirectUrl(withTeslaUnlockFlag(url));
 }
 
-/** Tesla Play: hop through youtube.com/redirect so HTML5 video is allowed, including Drive. */
+/** Hop through youtube.com/redirect so HTML5 video is allowed in the Tesla browser. */
 export function ensureTeslaVideoUnlock() {
   if (typeof window === "undefined") return false;
   if (!isTeslaBrowser()) return false;

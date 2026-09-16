@@ -57,6 +57,7 @@ function mapVideo(item: any) {
     id: item.id?.videoId || item.id,
     title: item.snippet?.title || "",
     channel: item.snippet?.channelTitle || "",
+    channelId: item.snippet?.channelId || "",
     description: item.snippet?.description || "",
     publishedAt: item.snippet?.publishedAt || "",
     thumbnail: thumb || "",
@@ -92,19 +93,41 @@ export const youtubeRoutes = new Elysia({ prefix: "/api/youtube" })
     try {
       const key = authOf(request);
       const q = String(query.q || "").trim();
-      if (!q) return { items: [] };
-      const data = await youtubeGet(
+      if (!q) return { items: [], channels: [] };
+      const videoData = await youtubeGet(
         "search",
         {
           part: "snippet",
           type: "video",
-          maxResults: "24",
+          maxResults: "20",
           q,
           regionCode: String(query.region || "DE"),
         },
         key
       );
-      return { items: (data.items || []).map(mapVideo) };
+      const channelData = await youtubeGet(
+        "search",
+        {
+          part: "snippet",
+          type: "channel",
+          maxResults: "8",
+          q,
+          regionCode: String(query.region || "DE"),
+        },
+        key
+      );
+      return {
+        items: (videoData.items || []).map(mapVideo),
+        channels: (channelData.items || []).map((item: any) => ({
+          id: item.id?.channelId || item.snippet?.channelId || "",
+          title: item.snippet?.title || "",
+          thumbnail:
+            item.snippet?.thumbnails?.high?.url ||
+            item.snippet?.thumbnails?.medium?.url ||
+            item.snippet?.thumbnails?.default?.url ||
+            "",
+        })),
+      };
     } catch (error) {
       set.status = (error as Error).message === "NO_YOUTUBE_KEY" ? 400 : 502;
       return { error: (error as Error).message, items: [] };
@@ -238,19 +261,37 @@ export const youtubeRoutes = new Elysia({ prefix: "/api/youtube" })
     try {
       const auth = authOf(request);
       const channelId = String(query.id || "");
-      if (!channelId) return { items: [] };
-      const data = await youtubeGet(
-        "search",
-        {
-          part: "snippet",
-          channelId,
-          type: "video",
-          order: "date",
-          maxResults: "24",
-        },
-        auth
-      );
-      return { items: (data.items || []).map(mapVideo) };
+      if (!channelId) return { items: [], channel: null };
+      const [meta, data] = await Promise.all([
+        youtubeGet("channels", { part: "snippet", id: channelId }, auth),
+        youtubeGet(
+          "search",
+          {
+            part: "snippet",
+            channelId,
+            type: "video",
+            order: "date",
+            maxResults: "24",
+          },
+          auth
+        ),
+      ]);
+      const ch = (meta.items || [])[0];
+      return {
+        channel: ch
+          ? {
+              id: channelId,
+              title: ch.snippet?.title || "",
+              thumbnail:
+                ch.snippet?.thumbnails?.high?.url ||
+                ch.snippet?.thumbnails?.medium?.url ||
+                ch.snippet?.thumbnails?.default?.url ||
+                "",
+              description: ch.snippet?.description || "",
+            }
+          : { id: channelId, title: "", thumbnail: "", description: "" },
+        items: (data.items || []).map(mapVideo),
+      };
     } catch (error) {
       set.status = (error as Error).message === "NO_YOUTUBE_KEY" ? 400 : 502;
       return { error: (error as Error).message, items: [] };

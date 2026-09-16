@@ -24,7 +24,7 @@ export function YouTubePage() {
   const [category, setCategory] = useState("");
   const [q, setQ] = useState("");
   const [items, setItems] = useState<YoutubeVideo[]>([]);
-  const [liked, setLiked] = useState<YoutubeVideo[]>([]);
+  const [foundChannels, setFoundChannels] = useState<YoutubeChannel[]>([]);
   const [feed, setFeed] = useState<YoutubeVideo[]>([]);
   const [subs, setSubs] = useState<YoutubeChannel[]>([]);
   const [error, setError] = useState("");
@@ -34,6 +34,7 @@ export function YouTubePage() {
   useEffect(() => {
     let alive = true;
     setLoading(true);
+    setFoundChannels([]);
     api
       .youtubeTrending(settings, category)
       .then((data) => {
@@ -54,7 +55,6 @@ export function YouTubePage() {
 
   useEffect(() => {
     if (!settings.youtubeAccessToken) {
-      setLiked([]);
       setFeed([]);
       setSubs([]);
       return;
@@ -66,15 +66,13 @@ export function YouTubePage() {
       return { items: [] };
     };
     Promise.all([
-      api.youtubeLiked(settings).catch(recover),
       api.youtubeFeed(settings).catch(recover),
       api.youtubeSubscriptions(settings).catch(recover),
-    ]).then(([likes, personal, channels]) => {
-      setLiked(likes.items || []);
+    ]).then(([personal, channels]) => {
       setFeed(personal.items || []);
       setSubs(channels.items || []);
     });
-  }, [settings]);
+  }, [settings, update]);
 
   function onSearch(event: FormEvent) {
     event.preventDefault();
@@ -84,6 +82,7 @@ export function YouTubePage() {
       .youtubeSearch(settings, q.trim())
       .then((data) => {
         setItems(data.items || []);
+        setFoundChannels(data.channels || []);
         setError(data.error || "");
       })
       .catch((err) => setError(err.message))
@@ -112,11 +111,7 @@ export function YouTubePage() {
         </div>
         <div className="flex flex-wrap gap-2">
           {settings.youtubeAccessToken ? (
-            <button
-              type="button"
-              onClick={() => update({ youtubeAccessToken: "" })}
-              className="btn"
-            >
+            <button type="button" onClick={() => update({ youtubeAccessToken: "" })} className="btn">
               Trennen
             </button>
           ) : isTeslaBrowser() ? (
@@ -145,7 +140,7 @@ export function YouTubePage() {
       {!settings.youtubeAccessToken ? (
         <div className="card mb-5">
           <p className="muted">
-            Abos und Likes: QR unter Setup, Google auf dem Handy. Trends laufen über den Server-Key — der bleibt geheim.
+            Abos und Kanäle: QR unter Setup, Google auf dem Handy. Trends laufen über den Server-Key — der bleibt geheim.
           </p>
           {isTeslaBrowser() ? (
             <Link to="/settings" className="btn mt-3 btn-primary">
@@ -173,45 +168,39 @@ export function YouTubePage() {
           ))}
         </Row>
       ) : null}
-      {liked.length ? (
-        <Row title="Geliked">
-          {liked.map((video) => (
-            <MediaCard
-              key={`like-${video.id}`}
-              to={`/watch/yt/${video.id}`}
-              title={video.title}
-              subtitle={video.channel}
-              image={video.thumbnail}
-              wide
-            />
-          ))}
-        </Row>
-      ) : null}
       {subs.length ? (
         <Row title="Deine Kanäle">
           {subs.map((channel) => (
-            <button
+            <Link
               key={channel.id}
-              type="button"
-              onClick={() => {
-                setLoading(true);
-                api
-                  .youtubeChannel(settings, channel.id)
-                  .then((data) => {
-                    setItems(data.items || []);
-                    setError(data.error || "");
-                  })
-                  .catch((err) => setError(err.message))
-                  .finally(() => setLoading(false));
-              }}
+              to={`/youtube/channel/${channel.id}`}
               className="flex h-24 w-64 shrink-0 items-center gap-3 rounded-2xl border border-white/5 bg-panel px-4 text-left"
             >
               {channel.thumbnail ? (
                 <img src={channel.thumbnail} alt="" className="h-14 w-14 rounded-full object-cover" />
               ) : null}
               <p className="font-semibold">{channel.title}</p>
-            </button>
+            </Link>
           ))}
+        </Row>
+      ) : null}
+
+      {foundChannels.length ? (
+        <Row title="Kanäle">
+          {foundChannels
+            .filter((channel) => channel.id)
+            .map((channel) => (
+              <Link
+                key={channel.id}
+                to={`/youtube/channel/${channel.id}`}
+                className="flex h-24 w-64 shrink-0 items-center gap-3 rounded-2xl border border-white/5 bg-panel px-4 text-left"
+              >
+                {channel.thumbnail ? (
+                  <img src={channel.thumbnail} alt="" className="h-14 w-14 rounded-full object-cover" />
+                ) : null}
+                <p className="font-semibold">{channel.title}</p>
+              </Link>
+            ))}
         </Row>
       ) : null}
 

@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { PlayerChrome } from "./PlayerChrome";
 import { PlayerLoading } from "./PlayerLoading";
 import {
-  embedCandidates,
   friendlyPlaybackError,
   playbackCandidates,
   type PlaybackSource,
@@ -84,10 +83,7 @@ export function YoutubeStage({
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [buffering, setBuffering] = useState(false);
-  const [mode, setMode] = useState<"file" | "embed">("file");
   const [quality, setQuality] = useState("Auto");
-  const [embedIndex, setEmbedIndex] = useState(0);
-  const embeds = safeList(() => embedCandidates(videoId));
 
   useEffect(() => {
     const media = videoRef.current;
@@ -104,7 +100,6 @@ export function YoutubeStage({
       ...(override ? [override] : []),
       ...safeList(() => playbackCandidates(videoId)),
     ].slice(0, MAX_FILE_ATTEMPTS);
-    const embedList = safeList(() => embedCandidates(videoId));
 
     setError("");
     setLoading(true);
@@ -112,9 +107,7 @@ export function YoutubeStage({
     setPlaying(false);
     setCurrent(0);
     setDuration(0);
-    setMode("file");
     setQuality("Auto");
-    setEmbedIndex(0);
 
     function clearTimer() {
       window.clearTimeout(timer);
@@ -130,27 +123,25 @@ export function YoutubeStage({
       ignoreError = false;
     }
 
-    function showEmbed() {
+    function giveUp() {
       if (cancelled) return;
       clearTimer();
       cleanupMedia();
-      setMode("embed");
       setBuffering(false);
-      setQuality("Embed");
-      setError(embedList.length ? "" : friendlyPlaybackError("NO_STREAM"));
-      if (!embedList.length) setLoading(false);
+      setLoading(false);
+      setError(friendlyPlaybackError("NO_STREAM"));
     }
 
     async function tryIndex(next: number) {
       if (cancelled) return;
       if (next >= candidates.length) {
-        showEmbed();
+        giveUp();
         return;
       }
       index = next;
       const source = candidates[next];
       if (!source || !videoRef.current) {
-        showEmbed();
+        giveUp();
         return;
       }
       setQuality(source.quality === "auto" ? "Auto" : source.quality);
@@ -182,8 +173,8 @@ export function YoutubeStage({
       if (cancelled) return;
       ready = true;
       clearTimer();
-      setMode("file");
       setBuffering(false);
+      setLoading(false);
       setError("");
       setDuration(mediaDuration(node));
       const play = node.play();
@@ -237,9 +228,7 @@ export function YoutubeStage({
     };
   }, [videoId]);
 
-  const embedUrl = embeds[embedIndex] || "";
-  const nativeReady = mode === "file" && !loading && !error;
-  const canSeek = nativeReady && duration > 0;
+  const canSeek = !loading && !error && duration > 0;
 
   return (
     <PlayerChrome
@@ -250,27 +239,22 @@ export function YoutubeStage({
       seekable={canSeek}
       onToggle={() => {
         const video = videoRef.current;
-        if (!video || mode !== "file") return;
+        if (!video) return;
         if (video.paused) video.play().catch(() => undefined);
         else video.pause();
       }}
       onSeek={(seconds) => {
         const video = videoRef.current;
-        if (mode !== "file" || !video || !canSeek) return;
+        if (!video || !canSeek) return;
         video.currentTime = seconds;
         setCurrent(seconds);
       }}
     >
       <video
         ref={videoRef}
-        className={
-          mode === "embed"
-            ? "hidden"
-            : "absolute inset-0 z-0 h-full w-full bg-black object-contain"
-        }
+        className="absolute inset-0 z-0 h-full w-full bg-black object-contain"
         poster={videoId ? `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg` : undefined}
         playsInline
-        muted={mode === "embed"}
         autoPlay
         preload="auto"
         controls={false}
@@ -287,38 +271,11 @@ export function YoutubeStage({
           onSnapshot(snap);
         }}
       />
-      {mode === "embed" && embedUrl ? (
-        <iframe
-          key={embedUrl}
-          title="VoltView Player"
-          src={embedUrl}
-          className="absolute inset-0 z-0 h-full w-full border-0 bg-black"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-          allowFullScreen
-          referrerPolicy="origin"
-          onLoad={() => {
-            setLoading(false);
-            setBuffering(false);
-          }}
-        />
-      ) : null}
       {loading || buffering ? (
-        <PlayerLoading
-          title={title}
-          subtitle={buffering ? "Puffert…" : "Wie Tesla Play — Stream wird geholt…"}
-        />
+        <PlayerLoading title={title} subtitle={buffering ? "Puffert…" : "Stream wird geladen…"} />
       ) : null}
       {error ? (
         <p className="absolute inset-x-4 top-4 z-20 rounded-xl bg-black/70 px-3 py-2 text-sm text-volt-2">{error}</p>
-      ) : null}
-      {mode === "embed" && embeds.length > 1 ? (
-        <button
-          type="button"
-          className="absolute right-4 top-4 z-20 rounded-xl bg-black/70 px-3 py-2 text-sm text-mist"
-          onClick={() => setEmbedIndex((i) => (i + 1) % embeds.length)}
-        >
-          Anderer Player
-        </button>
       ) : null}
     </PlayerChrome>
   );

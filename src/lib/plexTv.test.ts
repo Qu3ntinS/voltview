@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { mapPlexResources, pickPlexConnection, plexAuthUrl, plexIdentity } from "./plexTv";
+import { isLanPlexHost, mapPlexResources, pickPlexConnection, plexAuthUrl, plexIdentity } from "./plexTv";
 
 describe("plex.tv helpers", () => {
   test("builds the official auth hash URL", () => {
@@ -34,5 +34,35 @@ describe("plex.tv helpers", () => {
     ]);
     expect(servers).toHaveLength(1);
     expect(pickPlexConnection(servers[0])?.uri).toContain("home.plex.direct");
+  });
+
+  test("does not pick a LAN plex.direct URL for the cloud proxy", () => {
+    expect(isLanPlexHost("https://192-168-1-9.abc123.plex.direct:32400")).toBe(true);
+    expect(isLanPlexHost("https://1-2-3-4.abc123.plex.direct:32400")).toBe(false);
+    const picked = pickPlexConnection({
+      name: "NQ-Server",
+      clientIdentifier: "s1",
+      owned: true,
+      accessToken: "t",
+      connections: [
+        {
+          uri: "https://192-168-1-9.abc123.plex.direct:32400",
+          address: "192.168.1.9",
+          port: 32400,
+          local: true,
+          relay: false,
+          protocol: "https",
+        },
+        {
+          uri: "https://88-1-2-3.abc123.plex.direct:32400",
+          address: "88.1.2.3",
+          port: 32400,
+          local: false,
+          relay: false,
+          protocol: "https",
+        },
+      ],
+    });
+    expect(picked?.uri).toContain("88-1-2-3");
   });
 });

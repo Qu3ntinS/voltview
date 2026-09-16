@@ -37,7 +37,7 @@ export function HomePage() {
         <section className="card glow-ring mb-4 flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="font-semibold">Google auf dem Handy</p>
-            <p className="muted">QR unter Setup scannen, auf dem Phone anmelden. Dann kommen Abos und Likes hierher.</p>
+            <p className="muted">QR unter Setup scannen, auf dem Phone anmelden. Dann kommen Abos und Kanäle hierher.</p>
           </div>
           <Link to="/settings" className="btn btn-primary">
             QR zeigen

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { MediaCard } from "../components/MediaCard";
 import { SafetyGate } from "../components/SafetyGate";
 import { Theater } from "../components/Theater";
@@ -22,6 +22,7 @@ export function WatchYouTubePage() {
       id,
       title: "YouTube",
       channel: "",
+      channelId: "",
       description: "",
       publishedAt: "",
       thumbnail: `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
@@ -73,10 +74,17 @@ export function WatchYouTubePage() {
       title={video?.title || "YouTube"}
       sidebar={
         <div>
-          <p className="mb-3 text-sm text-mist">
-            {video?.channel}
-            {video?.views ? ` · ${formatViews(video.views)} Aufrufe` : ""}
-          </p>
+          {video?.channelId ? (
+            <Link to={`/youtube/channel/${video.channelId}`} className="mb-3 inline-block text-sm text-volt-2">
+              {video.channel}
+              {video.views ? ` · ${formatViews(video.views)} Aufrufe` : ""}
+            </Link>
+          ) : (
+            <p className="mb-3 text-sm text-mist">
+              {video?.channel}
+              {video?.views ? ` · ${formatViews(video.views)} Aufrufe` : ""}
+            </p>
+          )}
           {video?.description ? (
             <p className="mb-5 line-clamp-6 text-sm leading-relaxed text-mist">{video.description}</p>
           ) : null}

@@ -68,7 +68,7 @@ export function PairPanel({
       <div className="pair-grid">
         {url ? <QrCode value={url} label="QR zum Einrichten mit dem Handy" /> : <div className="qr-box qr-box-wait" />}
         <div>
-          <p className="pair-kicker">Wie Tesla Play</p>
+          <p className="pair-kicker">VoltView</p>
           <h2>Mit dem Handy einrichten</h2>
           <p className="muted">
             QR auf dem Tesla scannen. Google und Plex tippst du auf dem Phone — der Stand kommt zurück hierher.

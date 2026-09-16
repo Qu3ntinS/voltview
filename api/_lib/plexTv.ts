@@ -48,13 +48,34 @@ export function plexAuthUrl(clientId: string, code: string) {
   return `https://app.plex.tv/auth#?${params.toString()}`;
 }
 
+export function isLanPlexHost(raw: string) {
+  try {
+    const host = new URL(raw).hostname.toLowerCase();
+    if (/^(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[0-1])\.)/.test(host)) return true;
+    // plex.direct encodes LAN IPs as 192-168-x-x.<hash>.plex.direct
+    return /(^|\.)(192-168-|10-|127-|172-1[6-9]-|172-2\d-|172-3[0-1]-)/.test(host);
+  } catch {
+    return false;
+  }
+}
+
+export function rankPlexConnections(server: PlexServerInfo) {
+  const score = (c: PlexServerInfo["connections"][number]) => {
+    const https = c.uri.startsWith("https") || c.protocol === "https";
+    const lan = c.local || isLanPlexHost(c.uri);
+    if (!lan && !c.relay && https) return 0;
+    if (c.relay && https) return 1;
+    if (!lan && !c.relay) return 2;
+    if (c.relay) return 3;
+    if (!lan) return 4;
+    if (https) return 5;
+    return 6;
+  };
+  return [...(server.connections || [])].sort((a, b) => score(a) - score(b));
+}
+
 export function pickPlexConnection(server: PlexServerInfo) {
-  return (
-    server.connections.find((c) => !c.relay && c.uri.startsWith("https")) ||
-    server.connections.find((c) => c.local && c.uri.startsWith("http")) ||
-    server.connections.find((c) => !c.relay) ||
-    server.connections[0]
-  );
+  return rankPlexConnections(server)[0];
 }
 
 async function plexTv(path: string, clientId: string, token?: string, init?: RequestInit) {
