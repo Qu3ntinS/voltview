@@ -49,9 +49,11 @@ export function WatchPlexPage() {
 
   return (
     <SafetyGate title="Plex" resetKey={id}>
-      <Theater backTo="/plex" eyebrow="Plex" title={title}>
+      <Theater>
         <Html5Player
           sources={sources}
+          backTo="/plex"
+          eyebrow="Plex"
           title={title}
           failText="Stream fehlgeschlagen."
           onSnapshot={(snap) => {

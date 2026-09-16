@@ -103,16 +103,18 @@ export function Html5Player({
   sources,
   poster,
   title,
+  eyebrow,
+  backTo,
   failText = "Kein Stream.",
-  fallbackEmbed,
   hlsHeaders,
   onSnapshot,
 }: {
   sources: Html5Source[];
   poster?: string;
   title?: string;
+  eyebrow: string;
+  backTo: string;
   failText?: string;
-  fallbackEmbed?: string;
   hlsHeaders?: Record<string, string>;
   onSnapshot?: (snap: { positionSec: number; durationSec: number; playing: boolean }) => void;
 }) {
@@ -124,7 +126,6 @@ export function Html5Player({
   const [loading, setLoading] = useState(true);
   const [buffering, setBuffering] = useState(false);
   const [quality, setQuality] = useState("Auto");
-  const [embed, setEmbed] = useState("");
 
   const sourceKey = sources.map((item) => `${item.kind}:${item.url}`).join("|");
   const headerKey = JSON.stringify(hlsHeaders || {});
@@ -142,7 +143,6 @@ export function Html5Player({
     let index = 0;
 
     setError("");
-    setEmbed("");
     setLoading(true);
     setBuffering(false);
     setPlaying(false);
@@ -170,11 +170,6 @@ export function Html5Player({
       cleanupMedia();
       setBuffering(false);
       setLoading(false);
-      if (fallbackEmbed) {
-        setEmbed(fallbackEmbed);
-        setError("");
-        return;
-      }
       setError(failText);
     }
 
@@ -286,9 +281,9 @@ export function Html5Player({
       node.removeEventListener("playing", onPlaying);
       cleanupMedia();
     };
-  }, [failText, fallbackEmbed, headerKey, sourceKey]);
+  }, [failText, headerKey, sourceKey]);
 
-  const canSeek = !loading && !error && !embed && duration > 0;
+  const canSeek = !loading && !error && duration > 0;
 
   return (
     <PlayerChrome
@@ -297,7 +292,9 @@ export function Html5Player({
       duration={duration}
       quality={quality}
       seekable={canSeek}
-      embed={Boolean(embed)}
+      backTo={backTo}
+      eyebrow={eyebrow}
+      title={title || eyebrow}
       onToggle={() => {
         const video = videoRef.current;
         if (!video) return;
@@ -332,15 +329,6 @@ export function Html5Player({
           onSnapshot?.(snap);
         }}
       />
-      {embed ? (
-        <iframe
-          className="player-embed"
-          src={embed}
-          title={title || "YouTube"}
-          allow="autoplay; fullscreen"
-          referrerPolicy="no-referrer"
-        />
-      ) : null}
       {loading || buffering ? (
         <PlayerLoading title={title} subtitle={buffering ? "Puffert…" : "Laden…"} />
       ) : null}

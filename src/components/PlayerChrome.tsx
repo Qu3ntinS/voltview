@@ -1,5 +1,6 @@
-import { Maximize2, Pause, Play } from "lucide-react";
+import { ArrowLeft, Maximize2, Pause, Play } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { Link } from "react-router-dom";
 import { teslaFullscreen } from "../lib/tesla";
 
 const IDLE_MS = 2400;
@@ -22,7 +23,9 @@ export function PlayerChrome({
   onSeek,
   quality,
   seekable = true,
-  embed = false,
+  backTo,
+  eyebrow,
+  title,
 }: {
   children: ReactNode;
   playing: boolean;
@@ -32,7 +35,9 @@ export function PlayerChrome({
   onSeek: (seconds: number) => void;
   quality?: string;
   seekable?: boolean;
-  embed?: boolean;
+  backTo: string;
+  eyebrow: string;
+  title: string;
 }) {
   const max = duration > 0 && Number.isFinite(duration) ? duration : 1;
   const progress = duration > 0 ? Math.min(100, (current / duration) * 100) : 0;
@@ -69,34 +74,48 @@ export function PlayerChrome({
   }
 
   return (
-    <div
-      className={`player-stage${playing ? " is-playing" : ""}${idle && playing ? " is-idle" : ""}${embed ? " is-embed" : ""}`}
-      style={{ "--player-progress": `${progress}%` } as CSSProperties}
-    >
+    <div className={`player-stage${playing ? " is-playing" : ""}${idle && playing ? " is-idle" : ""}`}>
       {children}
       <button type="button" className="player-tap" aria-label={playing ? "Pause" : "Play"} onClick={onTap} />
+      <div className="player-top">
+        <Link to={backTo} className="player-back">
+          <ArrowLeft className="h-5 w-5" />
+          Zurück
+        </Link>
+        <div className="player-heading">
+          <p className="player-kicker">{eyebrow}</p>
+          <h1 className="player-title">{title}</h1>
+        </div>
+        <button type="button" onClick={() => teslaFullscreen()} className="player-full">
+          <Maximize2 className="h-5 w-5" />
+          Vollbild
+        </button>
+      </div>
       <div className="player-shade" />
-      <div
-        className="player-dock"
-        onPointerDown={bump}
-      >
-        <input
-          type="range"
-          min={0}
-          max={max}
-          step={0.25}
-          value={canSeek ? Math.min(current, duration) : 0}
-          disabled={!canSeek}
-          onChange={(e) => {
-            onSeek(Number(e.target.value));
-            bump();
-          }}
-          className="player-seek"
-          aria-label="Position"
-        />
+      <div className="player-dock" onPointerDown={bump}>
+        <div className="player-seek-wrap">
+          <div className="player-seek-track" aria-hidden="true">
+            <div className="player-seek-fill" style={{ width: `${progress}%` } as CSSProperties} />
+            <div className="player-seek-knob" style={{ left: `${progress}%` } as CSSProperties} />
+          </div>
+          <input
+            type="range"
+            min={0}
+            max={max}
+            step={0.25}
+            value={canSeek ? Math.min(current, duration) : 0}
+            disabled={!canSeek}
+            onChange={(e) => {
+              onSeek(Number(e.target.value));
+              bump();
+            }}
+            className="player-seek"
+            aria-label="Position"
+          />
+        </div>
         <div className="player-dock-row">
           <button type="button" onClick={onToggle} className="player-play">
-            {playing ? <Pause className="h-7 w-7" /> : <Play className="h-7 w-7" />}
+            {playing ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
           </button>
           <p className="player-clock">
             {clock(current)} / {clock(duration)}
