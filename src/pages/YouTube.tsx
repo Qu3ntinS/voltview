@@ -137,19 +137,6 @@ export function YouTubePage() {
         </div>
       </div>
       {loginError ? <p className="mb-4 text-volt-2">{loginError}</p> : null}
-      {!settings.youtubeAccessToken ? (
-        <div className="mb-5">
-          {isTeslaBrowser() ? (
-            <Link to="/settings" className="btn btn-primary">
-              QR
-            </Link>
-          ) : (
-            <button type="button" onClick={signIn} className="btn btn-primary">
-              Google
-            </button>
-          )}
-        </div>
-      ) : null}
 
       {feed.length ? (
         <Row title="Abos">
