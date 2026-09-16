@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { localPlaybackOverride, mediaDuration } from "./playerMedia";
+import { canUseNativeHls, localPlaybackOverride, mediaDuration } from "./playerMedia";
 
 function fakeVideo(duration: number, seekableEnd?: number) {
   return {
@@ -24,6 +24,13 @@ describe("mediaDuration", () => {
   test("returns 0 when nothing is seekable yet", () => {
     expect(mediaDuration(fakeVideo(Number.NaN))).toBe(0);
     expect(mediaDuration(fakeVideo(0))).toBe(0);
+  });
+});
+
+describe("canUseNativeHls", () => {
+  test("is false when the element cannot play HLS", () => {
+    expect(canUseNativeHls({ canPlayType: () => "" })).toBe(false);
+    expect(canUseNativeHls({ canPlayType: () => "maybe" })).toBe(true);
   });
 });
 

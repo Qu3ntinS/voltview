@@ -223,6 +223,32 @@ async function plexMedia(ctx: PlexCtx, dest: string) {
   }
 }
 
+function plexStartUrl(server: string, id: string, ctx: PlexCtx, kind: "hls" | "mp4") {
+  const dest = new URL(`${server}/video/:/transcode/universal/start.${kind === "mp4" ? "mp4" : "m3u8"}`);
+  dest.searchParams.set("path", `/library/metadata/${id}`);
+  dest.searchParams.set("mediaIndex", "0");
+  dest.searchParams.set("partIndex", "0");
+  dest.searchParams.set("protocol", kind === "mp4" ? "http" : "hls");
+  dest.searchParams.set("fastSeek", "1");
+  dest.searchParams.set("directPlay", "0");
+  dest.searchParams.set("directStream", kind === "mp4" ? "0" : "1");
+  dest.searchParams.set("subtitleSize", "100");
+  dest.searchParams.set("audioBoost", "100");
+  dest.searchParams.set("autoAdjustQuality", "1");
+  dest.searchParams.set("copyts", "1");
+  dest.searchParams.set("session", `${ctx.clientId}-${id}`);
+  dest.searchParams.set("X-Plex-Platform", "Html5");
+  dest.searchParams.set("X-Plex-Client-Identifier", ctx.clientId);
+  dest.searchParams.set("X-Plex-Product", PLEX_PRODUCT);
+  dest.searchParams.set("X-Plex-Device", "VoltView");
+  dest.searchParams.set("X-Plex-Token", ctx.serverToken);
+  if (kind === "mp4") {
+    dest.searchParams.set("videoQuality", "70");
+    dest.searchParams.set("maxVideoBitrate", "4000");
+  }
+  return dest;
+}
+
 function plexThumbUrl(server: string, imgPath: string, width: string) {
   return `${server}/photo/:/transcode?width=${encodeURIComponent(width)}&minSize=1&upscale=1&url=${encodeURI(imgPath)}`;
 }
@@ -341,26 +367,16 @@ export async function plexDispatch(request: Request): Promise<Response> {
     if (method === "GET" && path.startsWith("/stream/")) {
       requirePlexServer(ctx);
       const id = decodeURIComponent(path.slice("/stream/".length));
-      const session = `${ctx.clientId}-${id}`;
+      const format = queryOf(url, "format") === "mp4" ? "mp4" : "hls";
       const uris = await plexUris(ctx);
+      if (format === "mp4") {
+        if (!uris[0]) throw new Error("NO_PLEX_SERVER");
+        const dest = plexStartUrl(uris[0], id, { ...ctx, server: uris[0] }, "mp4");
+        return Response.redirect(dest.toString(), 302);
+      }
       let last = "Stream failed";
       for (const server of uris) {
-        const dest = new URL(`${server}/video/:/transcode/universal/start.m3u8`);
-        dest.searchParams.set("path", `/library/metadata/${id}`);
-        dest.searchParams.set("mediaIndex", "0");
-        dest.searchParams.set("partIndex", "0");
-        dest.searchParams.set("protocol", "hls");
-        dest.searchParams.set("fastSeek", "1");
-        dest.searchParams.set("directPlay", "0");
-        dest.searchParams.set("directStream", "1");
-        dest.searchParams.set("subtitleSize", "100");
-        dest.searchParams.set("audioBoost", "100");
-        dest.searchParams.set("autoAdjustQuality", "1");
-        dest.searchParams.set("session", session);
-        dest.searchParams.set("X-Plex-Platform", "Html5");
-        dest.searchParams.set("X-Plex-Client-Identifier", ctx.clientId);
-        dest.searchParams.set("X-Plex-Product", PLEX_PRODUCT);
-        dest.searchParams.set("X-Plex-Device", "VoltView");
+        const dest = plexStartUrl(server, id, { ...ctx, server }, "hls");
         try {
           const res = await plexMedia(ctx, dest.toString());
           const body = await res.text();

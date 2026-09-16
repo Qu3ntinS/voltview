@@ -4,9 +4,11 @@ import { PlayerLoading } from "./PlayerLoading";
 import {
   friendlyPlaybackError,
   playbackCandidates,
+  youtubeFileUrl,
   type PlaybackSource,
 } from "../lib/youtubePlayback";
-import { connectionDownlinkMbps, localPlaybackOverride, mediaDuration } from "../lib/playerMedia";
+import { canUseNativeHls, connectionDownlinkMbps, localPlaybackOverride, mediaDuration } from "../lib/playerMedia";
+import { isTeslaBrowser } from "../lib/tesla";
 
 type HlsLike = {
   destroy: () => void;
@@ -14,8 +16,11 @@ type HlsLike = {
   on: (event: string, handler: (event: string, data: { fatal?: boolean; level?: number }) => void) => void;
 };
 
-const ATTEMPT_MS = 4000;
-const MAX_FILE_ATTEMPTS = 10;
+const MAX_FILE_ATTEMPTS = 8;
+
+function attemptMs(source: PlaybackSource) {
+  return source.kind === "hls" ? 8000 : 20000;
+}
 
 async function attachSource(
   video: HTMLVideoElement,
@@ -23,7 +28,11 @@ async function attachSource(
   onQuality: (label: string) => void,
   onFatal: () => void,
 ): Promise<HlsLike | null> {
-  if (source.kind === "hls" && !video.canPlayType("application/vnd.apple.mpegurl")) {
+  if (source.kind === "hls") {
+    if (canUseNativeHls(video)) {
+      video.src = source.url;
+      return null;
+    }
     const { default: Hls } = await import("hls.js");
     if (!Hls.isSupported()) throw new Error("HLS_UNSUPPORTED");
     const downlink = connectionDownlinkMbps();
@@ -51,12 +60,12 @@ async function attachSource(
   return null;
 }
 
-function safeList<T>(build: () => T[], fallback: T[] = []): T[] {
-  try {
-    return build();
-  } catch {
-    return fallback;
-  }
+function teslaCandidates(videoId: string): PlaybackSource[] {
+  return [
+    { url: youtubeFileUrl(videoId, 18), mime: "video/mp4", quality: "360p", kind: "progressive" },
+    { url: youtubeFileUrl(videoId, 22), mime: "video/mp4", quality: "720p", kind: "progressive" },
+    ...playbackCandidates(videoId, { hls: false }),
+  ];
 }
 
 function readMedia(node: HTMLVideoElement) {
@@ -65,6 +74,10 @@ function readMedia(node: HTMLVideoElement) {
     durationSec: mediaDuration(node),
     playing: !node.paused,
   };
+}
+
+function stillLoading(node: HTMLVideoElement) {
+  return node.readyState < 1 && node.buffered.length === 0;
 }
 
 export function YoutubeStage({
@@ -96,9 +109,10 @@ export function YoutubeStage({
     let timer = 0;
     let index = 0;
     const override = localPlaybackOverride();
+    const tesla = isTeslaBrowser();
     const candidates = [
       ...(override ? [override] : []),
-      ...safeList(() => playbackCandidates(videoId)),
+      ...(tesla ? teslaCandidates(videoId) : playbackCandidates(videoId)),
     ].slice(0, MAX_FILE_ATTEMPTS);
 
     setError("");
@@ -166,7 +180,11 @@ export function YoutubeStage({
       }
       if (cancelled) return;
       clearTimer();
-      timer = window.setTimeout(() => void tryIndex(next + 1), ATTEMPT_MS);
+      timer = window.setTimeout(() => {
+        if (cancelled || ready) return;
+        if (!stillLoading(node)) return;
+        void tryIndex(index + 1);
+      }, attemptMs(source));
     }
 
     function onReady() {
@@ -182,7 +200,7 @@ export function YoutubeStage({
     }
 
     function onFail() {
-      if (cancelled || ignoreError) return;
+      if (cancelled || ignoreError || ready) return;
       clearTimer();
       void tryIndex(index + 1);
     }
@@ -253,14 +271,14 @@ export function YoutubeStage({
       <video
         ref={videoRef}
         className="absolute inset-0 z-0 h-full w-full bg-black object-contain"
-        poster={videoId ? `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg` : undefined}
+        poster={videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : undefined}
         playsInline
         autoPlay
         preload="auto"
         controls={false}
         disablePictureInPicture
         controlsList="nodownload noplaybackrate noremoteplayback"
-        {...{ "webkit-playsinline": "true", referrerPolicy: "no-referrer" }}
+        {...{ "webkit-playsinline": "true" }}
         onPlay={() => setPlaying(true)}
         onPause={() => setPlaying(false)}
         onDurationChange={(event) => setDuration(mediaDuration(event.currentTarget))}

@@ -28,7 +28,7 @@ describe("VoltView API", () => {
     const section = await app.handle(new Request("http://localhost/api/plex?op=section&key=1"));
     expect(section.status).toBe(400);
     expect((await section.json()).error).toBe("NO_PLEX_TOKEN");
-    const stream = await app.handle(new Request("http://localhost/api/plex?op=stream&id=9"));
+    const stream = await app.handle(new Request("http://localhost/api/plex?op=stream&id=9&format=mp4"));
     expect(stream.status).toBe(400);
   });
 
@@ -37,6 +37,11 @@ describe("VoltView API", () => {
     expect(res.status).toBe(400);
     const body = await res.json();
     expect(body.error).toBe("BAD_VIDEO_ID");
+  });
+
+  test("youtube file redirect rejects bad ids", async () => {
+    const res = await app.handle(new Request("http://localhost/api/youtube/file?id=nope"));
+    expect(res.status).toBe(400);
   });
 
   test("youtube liked feed requires Google login", async () => {

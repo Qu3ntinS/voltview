@@ -246,6 +246,6 @@ export function plexImage(settings: Settings, path?: string, width = 400) {
   return `/api/plex?${params.toString()}`;
 }
 
-export function plexStreamUrl(settings: Settings, id: string) {
-  return `/api/plex?op=stream&id=${encodeURIComponent(id)}&${plexAuthQuery(settings)}`;
+export function plexStreamUrl(settings: Settings, id: string, format: "hls" | "mp4" = "hls") {
+  return `/api/plex?op=stream&id=${encodeURIComponent(id)}&format=${format}&${plexAuthQuery(settings)}`;
 }
