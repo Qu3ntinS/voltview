@@ -74,7 +74,7 @@ export function PlayerChrome({
   }
 
   return (
-    <div className={`player-stage${playing ? " is-playing" : ""}${idle && playing ? " is-idle" : ""}`}>
+    <div className={`player-stage${playing ? " is-playing" : ""}${idle && playing && duration > 0 ? " is-idle" : ""}`}>
       {children}
       <button type="button" className="player-tap" aria-label={playing ? "Pause" : "Play"} onClick={onTap} />
       {playing ? null : (

@@ -25,6 +25,8 @@ export function App() {
     <Suspense fallback={<Loading />}>
       <Routes>
         <Route path="/add" element={<AddPage />} />
+        <Route path="/watch/yt/:id" element={<WatchYouTubePage />} />
+        <Route path="/watch/plex/:id" element={<WatchPlexPage />} />
         <Route element={<Shell />}>
           <Route path="/" element={<HomePage />} />
           <Route path="/apps" element={<ComingSoonPage feature="apps" />} />
@@ -32,11 +34,9 @@ export function App() {
           <Route path="/mirror" element={<ComingSoonPage feature="mirror" />} />
           <Route path="/youtube" element={<YouTubePage />} />
           <Route path="/youtube/channel/:id" element={<ChannelPage />} />
-          <Route path="/watch/yt/:id" element={<WatchYouTubePage />} />
           <Route path="/plex" element={<PlexPage />} />
           <Route path="/plex/library/:key" element={<PlexLibraryPage />} />
           <Route path="/plex/item/:id" element={<PlexItemPage />} />
-          <Route path="/watch/plex/:id" element={<WatchPlexPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/search" element={<SearchPage />} />
           <Route path="*" element={<NotFoundPage />} />

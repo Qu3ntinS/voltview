@@ -36,7 +36,10 @@ function isSameOrigin(url: string) {
 }
 
 function shouldProbe(url: string) {
-  return isSameOrigin(url) && !/\/api\/plex(?:\?|$)/.test(url);
+  if (!isSameOrigin(url)) return false;
+  if (/\/api\/plex(?:\?|$)/.test(url)) return false;
+  if (/\.(mp4|webm)(\?|$)/i.test(url) && !url.includes("/api/")) return false;
+  return true;
 }
 
 function attemptMsFor(url: string) {
