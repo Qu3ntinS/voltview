@@ -4,6 +4,7 @@ import {
   isAllowedMediaUrl,
   mediaHostAllowlist,
   parseByteRange,
+  playableRange,
 } from "../../api/_lib/mediaProxy";
 
 describe("media range proxy", () => {
@@ -17,6 +18,12 @@ describe("media range proxy", () => {
 
   test("parses a capped range", () => {
     expect(parseByteRange("bytes=8000-3507999")).toEqual({ start: 8000, end: 3507999 });
+  });
+
+  test("expands tiny probes so Plex start.mp4 still looks like media", () => {
+    expect(playableRange("bytes=0-1")).toBe("bytes=0-3499999");
+    expect(playableRange("bytes=100-199")).toBe("bytes=100-3500099");
+    expect(playableRange("bytes=0-3499999")).toBe("bytes=0-3499999");
   });
 
   test("only allows known media hosts", () => {

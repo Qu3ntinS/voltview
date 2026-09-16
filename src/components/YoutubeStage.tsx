@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Html5Player } from "./Html5Player";
-import { embedCandidates, friendlyPlaybackError, playbackCandidates, youtubeFileUrl } from "../lib/youtubePlayback";
+import { friendlyPlaybackError, playbackCandidates, youtubeFileUrl } from "../lib/youtubePlayback";
 import { localPlaybackOverride } from "../lib/playerMedia";
 import { isTeslaBrowser } from "../lib/tesla";
 
@@ -34,9 +34,10 @@ export function YoutubeStage({
     <Html5Player
       sources={sources}
       poster={videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : undefined}
-      title={title}
+      backTo="/youtube"
+      eyebrow="YouTube"
+      title={title || "YouTube"}
       failText={friendlyPlaybackError("NO_STREAM")}
-      fallbackEmbed={embedCandidates(videoId)[0]}
       onSnapshot={onSnapshot}
     />
   );

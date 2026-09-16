@@ -69,9 +69,6 @@ export function WatchYouTubePage() {
   return (
     <SafetyGate title="YouTube" resetKey={id}>
     <Theater
-      backTo="/youtube"
-      eyebrow="YouTube"
-      title={video?.title || "YouTube"}
       sidebar={
         <div>
           {video?.channelId ? (

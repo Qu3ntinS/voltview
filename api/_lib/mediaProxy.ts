@@ -20,6 +20,14 @@ export function parseByteRange(header: string) {
   };
 }
 
+/** Plex start.mp4 often rejects 1–2 byte probes. Ask for a real media slice. */
+export function playableRange(header?: string | null, chunk = MEDIA_CHUNK, minBytes = 65536): string {
+  const capped = capRange(header, chunk);
+  const { start, end } = parseByteRange(capped);
+  if (end - start + 1 >= minBytes) return capped;
+  return capRange(`bytes=${start}-`, chunk);
+}
+
 export function shouldCapMedia() {
   return Boolean(process.env.VERCEL);
 }
@@ -98,29 +106,48 @@ export type ProxyMediaOpts = {
   timeoutMs?: number;
   allowHost?: (host: string) => boolean;
   cap?: boolean;
+  omitRange?: boolean;
+  retryUnranged?: boolean;
 };
 
 const BROWSER_UA =
   "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
+function mediaRequestHeaders(opts: ProxyMediaOpts, range: string, useRange: boolean) {
+  const headers: Record<string, string> = {
+    accept: "*/*",
+    "user-agent": BROWSER_UA,
+    ...(opts.headers || {}),
+  };
+  if (useRange) headers.Range = opts.cap === false ? opts.range || range : range;
+  return headers;
+}
+
+function isPlayableMedia(res: Response) {
+  const type = res.headers.get("content-type") || "";
+  if (!res.ok && res.status !== 206) return false;
+  return looksLikeMedia(type, res.status);
+}
+
 export async function proxyMedia(url: string, opts: ProxyMediaOpts = {}): Promise<Response | null> {
   if (!isAllowedMediaUrl(url, opts.allowHost)) return null;
   const cap = opts.cap ?? shouldCapMedia();
   const range = capRange(opts.range);
-  const { start } = parseByteRange(range);
+  const start = opts.omitRange ? 0 : parseByteRange(range).start;
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), opts.timeoutMs ?? 8000);
   try {
-    const res = await fetch(url, {
-      headers: {
-        accept: "*/*",
-        "user-agent": BROWSER_UA,
-        ...(opts.headers || {}),
-        Range: cap ? range : opts.range || range,
-      },
-      redirect: "follow",
-      signal: ctrl.signal,
-    });
+    const fetchOnce = (useRange: boolean) =>
+      fetch(url, {
+        headers: mediaRequestHeaders({ ...opts, cap }, range, useRange),
+        redirect: "follow",
+        signal: ctrl.signal,
+      });
+
+    let res = await fetchOnce(!opts.omitRange);
+    if (opts.retryUnranged && !opts.omitRange && !isPlayableMedia(res)) {
+      res = await fetchOnce(false);
+    }
     if (res.url && !isAllowedMediaUrl(res.url, opts.allowHost)) return null;
     const type = res.headers.get("content-type") || "";
     if (!res.ok && res.status !== 206) return null;
