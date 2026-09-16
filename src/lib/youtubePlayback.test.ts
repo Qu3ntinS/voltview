@@ -98,7 +98,11 @@ describe("youtube playback", () => {
   });
 
   test("builds a phone YouTube embed when HTML5 streams fail", () => {
-    expect(youtubeOfficialEmbed("jNQXAC9IVRw")).toContain("youtube-nocookie.com/embed/jNQXAC9IVRw");
+    const url = youtubeOfficialEmbed("jNQXAC9IVRw", "https://voltview-red.vercel.app");
+    expect(url).toContain("youtube-nocookie.com/embed/jNQXAC9IVRw");
+    expect(url).toContain("controls=0");
+    expect(url).toContain("enablejsapi=1");
+    expect(url).toContain("origin=https%3A%2F%2Fvoltview-red.vercel.app");
   });
 
   test("gives the device Invidious MP4s that 302 to googlevideo on its own IP", () => {

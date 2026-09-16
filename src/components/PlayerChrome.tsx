@@ -78,10 +78,8 @@ export function PlayerChrome({
   return (
     <div className={`player-stage${playing ? " is-playing" : ""}${idle && playing && duration > 0 ? " is-idle" : ""}${embed ? " is-embed" : ""}`}>
       {children}
-      {embed ? null : (
-        <button type="button" className="player-tap" aria-label={playing ? "Pause" : "Play"} onClick={onTap} />
-      )}
-      {playing || embed ? null : (
+      <button type="button" className="player-tap" aria-label={playing ? "Pause" : "Play"} onClick={onTap} />
+      {playing ? null : (
         <div className="player-center" aria-hidden="true">
           <Play className="h-8 w-8" />
         </div>

@@ -4,7 +4,7 @@ import { Html5Player } from "../components/Html5Player";
 import { SafetyGate } from "../components/SafetyGate";
 import { Theater } from "../components/Theater";
 import { api, plexClientFileUrl, plexFileUrl, plexImage, plexStreamUrl } from "../lib/api";
-import { isLanPlexHost } from "../lib/plexTv";
+import { isLanPlexHost, rankPlexConnections } from "../lib/plexTv";
 import { useSettings } from "../lib/settings";
 import { isTeslaBrowser } from "../lib/tesla";
 import { useWatchSession } from "../lib/useWatchSession";
@@ -14,6 +14,7 @@ export function WatchPlexPage() {
   const { settings, remember } = useSettings();
   const snapRef = useRef({ positionSec: 0, durationSec: 0, playing: true });
   const [title, setTitle] = useState("Plex");
+  const [remoteUri, setRemoteUri] = useState("");
 
   useEffect(() => {
     api
@@ -43,21 +44,30 @@ export function WatchPlexPage() {
     getSnapshot: () => snapRef.current,
   });
 
+  useEffect(() => {
+    if (!settings.plexToken) return;
+    api
+      .plexResources(settings)
+      .then((data) => {
+        const match =
+          data.servers?.find((item) => settings.plexServerId && item.clientIdentifier === settings.plexServerId) ||
+          data.servers?.find((item) => settings.plexServerName && item.name === settings.plexServerName) ||
+          data.servers?.[0];
+        if (!match) return;
+        const remote = rankPlexConnections(match).find(
+          (item) => item.uri.startsWith("https") && !isLanPlexHost(item.uri),
+        );
+        if (remote?.uri) setRemoteUri(remote.uri);
+      })
+      .catch(() => undefined);
+  }, [settings]);
+
   const file = plexFileUrl(settings, id);
-  const direct = plexClientFileUrl(settings, id);
+  const stored = plexClientFileUrl(settings, id);
+  const remote = remoteUri ? plexClientFileUrl(settings, id, remoteUri) : "";
   const sources = useMemo(() => {
     const proxy = { url: file, mime: "video/mp4", quality: "Auto", kind: "progressive" as const };
     const tesla = isTeslaBrowser();
-    const lan = direct ? isLanPlexHost(direct) : true;
-    const client = direct
-      ? {
-          url: direct,
-          mime: "video/mp4",
-          quality: lan ? "LAN" : "Direkt",
-          kind: "progressive" as const,
-          timeoutMs: lan ? 2500 : 8000,
-        }
-      : null;
     const out: {
       url: string;
       mime: string;
@@ -65,11 +75,15 @@ export function WatchPlexPage() {
       kind: "progressive" | "hls";
       timeoutMs?: number;
     }[] = [];
-    // Phone on LTE cannot reach 192.168 plex.direct — try it briefly, then remote, then Vercel.
-    if (client && !tesla && lan) out.push(client);
-    if (client && !tesla && !lan) out.push(client);
+    const push = (url: string, quality: string, timeoutMs: number) => {
+      if (!url || out.some((item) => item.url === url)) return;
+      out.push({ url, mime: "video/mp4", quality, kind: "progressive", timeoutMs });
+    };
+    if (remote && !tesla) push(remote, "Remote", 8000);
+    if (stored && isLanPlexHost(stored) && !tesla) push(stored, "LAN", 2500);
+    else if (stored && !isLanPlexHost(stored) && stored !== remote && !tesla) push(stored, "Direkt", 8000);
     out.push(proxy);
-    if (client && tesla && !lan) out.push(client);
+    if (remote && tesla) push(remote, "Remote", 8000);
     if (!tesla) {
       out.push({
         url: plexStreamUrl(settings, id, "hls"),
@@ -79,7 +93,7 @@ export function WatchPlexPage() {
       });
     }
     return out;
-  }, [direct, file, id, settings]);
+  }, [file, id, remote, settings, stored]);
 
   return (
     <SafetyGate title="Plex" resetKey={id}>

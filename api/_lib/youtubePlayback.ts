@@ -366,9 +366,21 @@ export function embedCandidates(rawId: string): string[] {
 }
 
 /** Phone/desktop only. Tesla's official iframe is audio without video. */
-export function youtubeOfficialEmbed(rawId: string) {
+export function youtubeOfficialEmbed(rawId: string, origin = "") {
   const videoId = sanitizeVideoId(rawId);
-  return `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&playsinline=1&rel=0&modestbranding=1`;
+  const params = new URLSearchParams({
+    autoplay: "1",
+    playsinline: "1",
+    rel: "0",
+    modestbranding: "1",
+    controls: "0",
+    enablejsapi: "1",
+    fs: "0",
+    iv_load_policy: "3",
+    disablekb: "1",
+  });
+  if (origin) params.set("origin", origin);
+  return `https://www.youtube-nocookie.com/embed/${videoId}?${params.toString()}`;
 }
 
 export async function firstLiveCandidate(candidates: PlaybackSource[]): Promise<PlaybackSource | null> {

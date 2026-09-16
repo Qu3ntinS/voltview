@@ -490,11 +490,8 @@ textarea:focus {
   z-index: 1;
 }
 
-.player-stage.is-embed .player-tap,
-.player-stage.is-embed .player-center,
-.player-stage.is-embed .player-shade,
-.player-stage.is-embed .player-dock {
-  display: none;
+.player-stage.is-embed .player-video {
+  visibility: hidden;
 }
 
 .player-video::-webkit-media-controls,

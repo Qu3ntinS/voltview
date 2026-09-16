@@ -18,14 +18,14 @@ export function YoutubeStage({
     const override = localPlaybackOverride();
     if (override) return [override];
     if (!videoId) return [];
-    // Phone: official embed is the reliable player. Do not burn 20s on Vercel 502s.
-    if (!tesla) return [];
-    // Tesla iframe is audio-only. Load Invidious→googlevideo from the car, not Vercel.
-    return deviceProgressiveCandidates(videoId, 6).map((item) => ({
+    const limit = tesla ? 6 : 3;
+    return deviceProgressiveCandidates(videoId, limit).map((item) => ({
       ...item,
-      timeoutMs: 4000,
+      timeoutMs: tesla ? 4000 : 3500,
     }));
   }, [tesla, videoId]);
+
+  const origin = typeof window === "undefined" ? "" : window.location.origin;
 
   return (
     <Html5Player
@@ -40,7 +40,7 @@ export function YoutubeStage({
           ? undefined
           : (() => {
               try {
-                return youtubeOfficialEmbed(videoId);
+                return youtubeOfficialEmbed(videoId, origin);
               } catch {
                 return undefined;
               }
