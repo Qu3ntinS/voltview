@@ -12,7 +12,10 @@ export function SafetyGate({
   resetKey?: string;
   onConfirm?: () => void;
 }) {
-  const [accepted, setAccepted] = useState(false);
+  const [accepted, setAccepted] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return /^(localhost|127\.0\.0\.1)$/.test(window.location.hostname);
+  });
 
   useEffect(() => {
     setAccepted(false);
