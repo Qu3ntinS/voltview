@@ -5,6 +5,7 @@ describe("plexRoutePath", () => {
   test("reads op + key so Vercel does not need nested /section/:id", () => {
     expect(plexRoutePath(new URL("http://x/api/plex?op=section&key=1"))).toBe("/section/1");
     expect(plexRoutePath(new URL("http://x/api/plex?op=stream&id=99"))).toBe("/stream/99");
+    expect(plexRoutePath(new URL("http://x/api/plex?op=file&id=99"))).toBe("/file/99");
     expect(plexRoutePath(new URL("http://x/api/plex?op=metadata&id=99"))).toBe("/metadata/99");
     expect(plexRoutePath(new URL("http://x/api/plex?op=image"))).toBe("/image");
     expect(plexRoutePath(new URL("http://x/api/plex?op=libraries"))).toBe("/libraries");

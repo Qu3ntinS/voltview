@@ -1,3 +1,4 @@
+import { isAllowedMediaUrl, proxyMedia } from "./mediaProxy";
 import { isLanPlexHost, mapPlexResources, plexCreatePin, plexIdentity, plexListResources, plexMediaHeaders, plexReadPin, PLEX_PRODUCT, rankPlexConnections } from "./plexTv";
 
 type PlexCtx = {
@@ -201,7 +202,7 @@ export function plexRoutePath(url: URL) {
   const op = firstQuery(url, "op");
   if (op) {
     const rest = firstQuery(url, "key") || firstQuery(url, "id");
-    if (rest && /^(section|stream|metadata|children|pin)$/.test(op)) return `/${op}/${rest}`;
+    if (rest && /^(section|stream|metadata|children|pin|file)$/.test(op)) return `/${op}/${rest}`;
     return `/${op.replace(/^\/+/, "")}`;
   }
   const path = url.pathname.replace(/^\/api\/plex/, "") || "/";
@@ -213,14 +214,77 @@ function isBinaryOk(res: Response) {
   return res.ok && !type.includes("json") && !type.includes("html") && !type.includes("xml");
 }
 
-async function plexMedia(ctx: PlexCtx, dest: string) {
+async function plexMedia(ctx: PlexCtx, dest: string, extra: Record<string, string> = {}) {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 12000);
   try {
-    return await fetch(dest, { headers: plexMediaHeaders(ctx.clientId, ctx.serverToken), signal: ctrl.signal });
+    return await fetch(dest, {
+      headers: { ...plexMediaHeaders(ctx.clientId, ctx.serverToken), ...extra },
+      signal: ctrl.signal,
+    });
   } finally {
     clearTimeout(timer);
   }
+}
+
+async function plexFilePart(ctx: PlexCtx, id: string) {
+  const data = await plexJson(ctx, `/library/metadata/${id}`);
+  const item = (data.MediaContainer?.Metadata || [])[0];
+  const media = item?.Media?.[0];
+  const part = media?.Part?.[0];
+  return {
+    key: String(part?.key || ""),
+    container: String(media?.container || part?.container || "").toLowerCase(),
+  };
+}
+
+async function proxyPlexDest(ctx: PlexCtx, dest: string, range: string | null, uris: string[]) {
+  return proxyMedia(dest, {
+    range,
+    headers: plexMediaHeaders(ctx.clientId, ctx.serverToken),
+    timeoutMs: 8000,
+    allowHost: (host) => {
+      if (isAllowedMediaUrl(`https://${host}/`)) return true;
+      return (
+        uris.some((uri) => {
+          try {
+            return new URL(uri).hostname.toLowerCase() === host.toLowerCase();
+          } catch {
+            return false;
+          }
+        }) || isAllowedPlexUrl(dest, ctx.server)
+      );
+    },
+  });
+}
+
+async function servePlexFile(ctx: PlexCtx, id: string, range: string | null) {
+  const uris = await plexUris(ctx);
+  if (!uris.length) throw new Error("NO_PLEX_SERVER");
+  let part = { key: "", container: "" };
+  try {
+    part = await plexFilePart(ctx, id);
+  } catch {
+    /* transcode fallback */
+  }
+  if (part.key && /^(mp4|mov|m4v)$/.test(part.container)) {
+    for (const server of uris) {
+      const out = await proxyPlexDest(ctx, `${server}${part.key}`, range, uris);
+      if (out) {
+        ctx.server = server;
+        return out;
+      }
+    }
+  }
+  for (const server of uris) {
+    const dest = plexStartUrl(server, id, { ...ctx, server }, "mp4").toString();
+    const out = await proxyPlexDest(ctx, dest, range, uris);
+    if (out) {
+      ctx.server = server;
+      return out;
+    }
+  }
+  return json({ error: "Stream fehlgeschlagen." }, 502);
 }
 
 function plexStartUrl(server: string, id: string, ctx: PlexCtx, kind: "hls" | "mp4") {
@@ -364,15 +428,18 @@ export async function plexDispatch(request: Request): Promise<Response> {
       }
       return json({ error: "Image failed" }, 502);
     }
+    if (method === "GET" && path.startsWith("/file/")) {
+      requirePlexServer(ctx);
+      const id = decodeURIComponent(path.slice("/file/".length));
+      return servePlexFile(ctx, id, request.headers.get("range"));
+    }
     if (method === "GET" && path.startsWith("/stream/")) {
       requirePlexServer(ctx);
       const id = decodeURIComponent(path.slice("/stream/".length));
       const format = queryOf(url, "format") === "mp4" ? "mp4" : "hls";
       const uris = await plexUris(ctx);
       if (format === "mp4") {
-        if (!uris[0]) throw new Error("NO_PLEX_SERVER");
-        const dest = plexStartUrl(uris[0], id, { ...ctx, server: uris[0] }, "mp4");
-        return Response.redirect(dest.toString(), 302);
+        return servePlexFile(ctx, id, request.headers.get("range"));
       }
       let last = "Stream failed";
       for (const server of uris) {
