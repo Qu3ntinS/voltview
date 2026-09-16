@@ -8,8 +8,8 @@ export function NotFoundPage() {
         <Link to="/" className="btn btn-primary">
           Home
         </Link>
-        <Link to="/apps" className="btn">
-          Apps
+        <Link to="/youtube" className="btn">
+          YouTube
         </Link>
       </div>
     </div>

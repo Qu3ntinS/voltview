@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { MediaCard } from "../components/MediaCard";
-import { api, plexImage, type PlexItem, type RadioStation, type YoutubeChannel, type YoutubeVideo } from "../lib/api";
+import { api, plexImage, type PlexItem, type YoutubeChannel, type YoutubeVideo } from "../lib/api";
 import { useSettings } from "../lib/settings";
 
 export function SearchPage() {
@@ -11,7 +11,6 @@ export function SearchPage() {
   const [videos, setVideos] = useState<YoutubeVideo[]>([]);
   const [channels, setChannels] = useState<YoutubeChannel[]>([]);
   const [plex, setPlex] = useState<PlexItem[]>([]);
-  const [radio, setRadio] = useState<RadioStation[]>([]);
 
   useEffect(() => {
     if (!q) return;
@@ -25,7 +24,6 @@ export function SearchPage() {
     if (settings.plexServerUri) {
       api.plexSearch(settings, q).then((d) => setPlex(d.items || [])).catch(() => setPlex([]));
     }
-    api.radioSearch(settings, q).then((d) => setRadio(d.items || [])).catch(() => setRadio([]));
   }, [q, settings]);
 
   return (
@@ -75,19 +73,6 @@ export function SearchPage() {
                 image={plexImage(settings, item.thumb)}
                 fill
               />
-            ))}
-          </div>
-        </section>
-      ) : null}
-      {radio.length ? (
-        <section className="mt-8">
-          <h2 className="mb-4 font-display text-2xl font-bold">Radio</h2>
-          <div className="grid gap-3 md:grid-cols-2">
-            {radio.map((station) => (
-              <div key={station.id} className="rounded-2xl border border-white/5 bg-panel px-4 py-4">
-                <p className="font-semibold">{station.name}</p>
-                <p className="text-sm text-mist">{station.country}</p>
-              </div>
             ))}
           </div>
         </section>

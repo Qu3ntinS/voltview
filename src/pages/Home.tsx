@@ -2,8 +2,6 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { MediaCard } from "../components/MediaCard";
 import { Row } from "../components/Row";
-import { ServiceTile } from "../components/ServiceTile";
-import { featuredServices } from "../data/services";
 import { api, plexImage, type YoutubeVideo } from "../lib/api";
 import { useSettings } from "../lib/settings";
 
@@ -66,19 +64,18 @@ export function HomePage() {
         </Row>
       ) : null}
 
-      <Row
-        title="Apps"
-        action={
-          <Link to="/apps" className="text-sm text-volt-2">
-            Alle
-          </Link>
-        }
-      >
-        {featuredServices().map((service) => (
-          <ServiceTile key={service.id} service={service} />
-        ))}
-      </Row>
-
+      <div className="mb-6 grid gap-3 sm:grid-cols-2">
+        <Link to="/apps" className="card coming-soon-tile">
+          <p className="pair-kicker">Coming soon</p>
+          <h2 className="text-lg font-semibold">Apps</h2>
+          <p className="muted mt-1">Netflix, Disney+ und mehr, sobald YouTube und Plex stehen.</p>
+        </Link>
+        <Link to="/mirror" className="card coming-soon-tile">
+          <p className="pair-kicker">Coming soon</p>
+          <h2 className="text-lg font-semibold">Screen Mirror</h2>
+          <p className="muted mt-1">Handy-Bildschirm auf den Tesla legen.</p>
+        </Link>
+      </div>
       {videos.length ? (
         <Row
           title="YouTube"
