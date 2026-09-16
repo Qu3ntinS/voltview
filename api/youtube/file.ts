@@ -22,15 +22,21 @@ export default async function handler(
     end: (body?: unknown) => void;
   },
 ) {
-  const url = new URL(req.url || "http://localhost/api/youtube/file");
-  const id = from(req.query?.id) || url.searchParams.get("id") || "";
-  const itag = Number(from(req.query?.itag) || url.searchParams.get("itag") || "18") || 18;
+  let id = from(req.query?.id);
+  let itag = Number(from(req.query?.itag) || "18") || 18;
   try {
+    const url = new URL(req.url || "/api/youtube/file", "http://localhost");
+    id = id || url.searchParams.get("id") || "";
+    itag = Number(from(req.query?.itag) || url.searchParams.get("itag") || String(itag)) || 18;
     sanitizeVideoId(id);
     const out = await proxyYoutubeFile(id, itag, header(req, "range") || header(req, "Range"));
     await sendNodeResponse(out, res);
   } catch (error) {
     const raw = (error as Error).message;
-    res.status(raw === "BAD_VIDEO_ID" ? 400 : 502).json({ error: raw === "BAD_VIDEO_ID" ? raw : "Kein Stream." });
+    try {
+      res.status(raw === "BAD_VIDEO_ID" ? 400 : 502).json({ error: raw === "BAD_VIDEO_ID" ? raw : "Kein Stream." });
+    } catch {
+      res.status(502).end("Kein Stream.");
+    }
   }
 }

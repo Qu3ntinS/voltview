@@ -9,6 +9,7 @@ import {
   sanitizeVideoId,
   youtubeFileUrl,
   youtubeMediaHost,
+  youtubeOfficialEmbed,
 } from "./youtubePlayback";
 
 describe("youtube playback", () => {
@@ -84,6 +85,7 @@ describe("youtube playback", () => {
     expect(list[0]?.url).toContain("latest_version");
     expect(youtubeFileUrl("jNQXAC9IVRw", 18)).toBe("/api/youtube/file?id=jNQXAC9IVRw&itag=18");
     expect(youtubeMediaHost("invidious.tiekoetter.com")).toBe(true);
+    expect(youtubeMediaHost("eu-de1.companion.invidious.tiekoetter.com")).toBe(true);
     expect(youtubeMediaHost("rr2.sn-abc.googlevideo.com")).toBe(true);
     expect(youtubeMediaHost("evil.test")).toBe(false);
   });
@@ -92,5 +94,9 @@ describe("youtube playback", () => {
     const list = embedCandidates("jNQXAC9IVRw");
     expect(list[0]).toContain("invidious.tiekoetter.com/embed/jNQXAC9IVRw");
     expect(list.every((url) => !/youtube\.com|youtube-nocookie|nerdvpn/.test(url))).toBe(true);
+  });
+
+  test("builds a phone YouTube embed when HTML5 streams fail", () => {
+    expect(youtubeOfficialEmbed("jNQXAC9IVRw")).toContain("youtube-nocookie.com/embed/jNQXAC9IVRw");
   });
 });

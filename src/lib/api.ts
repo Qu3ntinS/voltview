@@ -257,3 +257,31 @@ export function plexStreamUrl(settings: Settings, id: string, format: "hls" | "m
 export function plexFileUrl(settings: Settings, id: string) {
   return `/api/plex?op=file&id=${encodeURIComponent(id)}&${plexAuthQuery(settings)}`;
 }
+
+/** Hit the Plex server from the phone/Tesla when Remote Access works, without Vercel. */
+export function plexClientFileUrl(settings: Settings, id: string) {
+  const server = (settings.plexServerUri || "").replace(/\/$/, "");
+  if (!server || !id) return "";
+  try {
+    const dest = new URL(`${server}/video/:/transcode/universal/start.mp4`);
+    dest.searchParams.set("path", `/library/metadata/${id}`);
+    dest.searchParams.set("mediaIndex", "0");
+    dest.searchParams.set("partIndex", "0");
+    dest.searchParams.set("protocol", "http");
+    dest.searchParams.set("fastSeek", "1");
+    dest.searchParams.set("directPlay", "0");
+    dest.searchParams.set("directStream", "1");
+    dest.searchParams.set("hasMDE", "1");
+    dest.searchParams.set("session", `${settings.plexClientId || "voltview"}-${id}`);
+    dest.searchParams.set("X-Plex-Platform", "Chrome");
+    dest.searchParams.set("X-Plex-Client-Identifier", settings.plexClientId || "voltview-web");
+    dest.searchParams.set("X-Plex-Product", "VoltView");
+    dest.searchParams.set("X-Plex-Token", settings.plexServerToken || settings.plexToken);
+    dest.searchParams.set("videoQuality", "60");
+    dest.searchParams.set("maxVideoBitrate", "3000");
+    dest.searchParams.set("videoResolution", "1280x720");
+    return dest.toString();
+  } catch {
+    return "";
+  }
+}

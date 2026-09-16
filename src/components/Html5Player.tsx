@@ -117,6 +117,7 @@ export function Html5Player({
   eyebrow,
   backTo,
   failText = "Kein Stream.",
+  fallbackEmbed,
   hlsHeaders,
   onSnapshot,
 }: {
@@ -126,6 +127,7 @@ export function Html5Player({
   eyebrow: string;
   backTo: string;
   failText?: string;
+  fallbackEmbed?: string;
   hlsHeaders?: Record<string, string>;
   onSnapshot?: (snap: { positionSec: number; durationSec: number; playing: boolean }) => void;
 }) {
@@ -137,6 +139,7 @@ export function Html5Player({
   const [loading, setLoading] = useState(true);
   const [buffering, setBuffering] = useState(false);
   const [quality, setQuality] = useState("Auto");
+  const [embed, setEmbed] = useState("");
 
   const sourceKey = sources.map((item) => `${item.kind}:${item.url}`).join("|");
   const headerKey = JSON.stringify(hlsHeaders || {});
@@ -154,6 +157,7 @@ export function Html5Player({
     let index = 0;
 
     setError("");
+    setEmbed("");
     setLoading(true);
     setBuffering(false);
     setPlaying(false);
@@ -181,6 +185,11 @@ export function Html5Player({
       cleanupMedia();
       setBuffering(false);
       setLoading(false);
+      if (fallbackEmbed) {
+        setError("");
+        setEmbed(fallbackEmbed);
+        return;
+      }
       setError(failText);
     }
 
@@ -295,7 +304,7 @@ export function Html5Player({
       node.removeEventListener("playing", onPlaying);
       cleanupMedia();
     };
-  }, [failText, headerKey, sourceKey]);
+  }, [failText, fallbackEmbed, headerKey, sourceKey]);
 
   const canSeek = !loading && !error && duration > 0;
 
@@ -306,6 +315,7 @@ export function Html5Player({
       duration={duration}
       quality={quality}
       seekable={canSeek}
+      embed={Boolean(embed)}
       backTo={backTo}
       eyebrow={eyebrow}
       title={title || eyebrow}
@@ -343,6 +353,15 @@ export function Html5Player({
           onSnapshot?.(snap);
         }}
       />
+      {embed ? (
+        <iframe
+          className="player-embed"
+          src={embed}
+          title={title || eyebrow}
+          allow="autoplay; fullscreen; encrypted-media"
+          allowFullScreen
+        />
+      ) : null}
       {loading || buffering ? (
         <PlayerLoading title={title} subtitle={buffering ? "Puffert…" : "Laden…"} />
       ) : null}

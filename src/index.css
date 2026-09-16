@@ -472,7 +472,8 @@ textarea:focus {
   }
 }
 
-.player-video {
+.player-video,
+.player-embed {
   position: absolute;
   top: 0;
   left: 0;
@@ -480,8 +481,20 @@ textarea:focus {
   width: 100%;
   height: 100%;
   max-width: none;
+  border: 0;
   background: #000;
   object-fit: contain;
+}
+
+.player-embed {
+  z-index: 1;
+}
+
+.player-stage.is-embed .player-tap,
+.player-stage.is-embed .player-center,
+.player-stage.is-embed .player-shade,
+.player-stage.is-embed .player-dock {
+  display: none;
 }
 
 .player-video::-webkit-media-controls,

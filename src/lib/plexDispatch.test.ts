@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { plexAuthQuery } from "./api";
+import { plexAuthQuery, plexClientFileUrl } from "./api";
 import { plexPlaybackUris, plexRoutePath, plexStartUrl } from "./plexDispatch";
 
 describe("plexRoutePath", () => {
@@ -72,5 +72,26 @@ describe("plexAuthQuery", () => {
     });
     expect(query).toContain("plexServerId=sid");
     expect(query).toContain("plexServerName=Home");
+  });
+
+  test("builds a direct Plex start.mp4 URL for the phone", () => {
+    const url = plexClientFileUrl(
+      {
+        youtubeApiKey: "",
+        youtubeRegion: "DE",
+        youtubeClientId: "",
+        youtubeAccessToken: "",
+        plexToken: "tok",
+        plexClientId: "cid",
+        plexServerUri: "https://abc.plex.direct:32400",
+        plexServerToken: "stok",
+        plexServerName: "Home",
+        plexServerId: "sid",
+      },
+      "42",
+    );
+    expect(url.startsWith("https://abc.plex.direct:32400/video/:/transcode/universal/start.mp4")).toBe(true);
+    expect(url).toContain("path=%2Flibrary%2Fmetadata%2F42");
+    expect(url).toContain("X-Plex-Token=stok");
   });
 });

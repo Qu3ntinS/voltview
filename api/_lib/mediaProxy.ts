@@ -148,7 +148,10 @@ export async function proxyMedia(url: string, opts: ProxyMediaOpts = {}): Promis
     if (opts.retryUnranged && !opts.omitRange && !isPlayableMedia(res)) {
       res = await fetchOnce(false);
     }
-    if (res.url && !isAllowedMediaUrl(res.url, opts.allowHost)) return null;
+    if (res.url && !isAllowedMediaUrl(res.url, opts.allowHost)) {
+      await res.body?.cancel().catch(() => undefined);
+      return null;
+    }
     const type = res.headers.get("content-type") || "";
     if (!res.ok && res.status !== 206) return null;
     if (!looksLikeMedia(type, res.status)) return null;
