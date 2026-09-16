@@ -30,6 +30,8 @@ describe("VoltView API", () => {
     expect((await section.json()).error).toBe("NO_PLEX_TOKEN");
     const stream = await app.handle(new Request("http://localhost/api/plex?op=stream&id=9&format=mp4"));
     expect(stream.status).toBe(400);
+    const file = await app.handle(new Request("http://localhost/api/plex?op=file&id=9"));
+    expect(file.status).toBe(400);
   });
 
   test("youtube stream rejects bad ids", async () => {
@@ -39,7 +41,7 @@ describe("VoltView API", () => {
     expect(body.error).toBe("BAD_VIDEO_ID");
   });
 
-  test("youtube file redirect rejects bad ids", async () => {
+  test("youtube file proxy rejects bad ids", async () => {
     const res = await app.handle(new Request("http://localhost/api/youtube/file?id=nope"));
     expect(res.status).toBe(400);
   });

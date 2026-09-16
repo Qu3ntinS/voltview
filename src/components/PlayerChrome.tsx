@@ -1,6 +1,8 @@
 import { Maximize2, Pause, Play } from "lucide-react";
-import type { CSSProperties, ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { teslaFullscreen } from "../lib/tesla";
+
+const IDLE_MS = 2400;
 
 function clock(seconds: number) {
   const safe = Math.max(0, Math.floor(seconds || 0));
@@ -20,6 +22,7 @@ export function PlayerChrome({
   onSeek,
   quality,
   seekable = true,
+  embed = false,
 }: {
   children: ReactNode;
   playing: boolean;
@@ -29,20 +32,54 @@ export function PlayerChrome({
   onSeek: (seconds: number) => void;
   quality?: string;
   seekable?: boolean;
+  embed?: boolean;
 }) {
   const max = duration > 0 && Number.isFinite(duration) ? duration : 1;
   const progress = duration > 0 ? Math.min(100, (current / duration) * 100) : 0;
   const canSeek = seekable && duration > 0 && Number.isFinite(duration);
+  const [idle, setIdle] = useState(false);
+  const lastAt = useRef(0);
+  const timer = useRef(0);
+
+  const bump = useCallback(() => {
+    lastAt.current = Date.now();
+    setIdle(false);
+  }, []);
+
+  useEffect(() => {
+    bump();
+    window.clearInterval(timer.current);
+    if (!playing) {
+      setIdle(false);
+      return;
+    }
+    timer.current = window.setInterval(() => {
+      if (Date.now() - lastAt.current >= IDLE_MS) setIdle(true);
+    }, 250);
+    return () => window.clearInterval(timer.current);
+  }, [bump, playing]);
+
+  function onTap() {
+    if (playing && idle) {
+      bump();
+      return;
+    }
+    onToggle();
+    bump();
+  }
 
   return (
     <div
-      className="player-stage"
+      className={`player-stage${playing ? " is-playing" : ""}${idle && playing ? " is-idle" : ""}${embed ? " is-embed" : ""}`}
       style={{ "--player-progress": `${progress}%` } as CSSProperties}
     >
       {children}
-      <button type="button" className="player-tap" aria-label={playing ? "Pause" : "Play"} onClick={onToggle} />
+      <button type="button" className="player-tap" aria-label={playing ? "Pause" : "Play"} onClick={onTap} />
       <div className="player-shade" />
-      <div className="player-dock">
+      <div
+        className="player-dock"
+        onPointerDown={bump}
+      >
         <input
           type="range"
           min={0}
@@ -50,7 +87,10 @@ export function PlayerChrome({
           step={0.25}
           value={canSeek ? Math.min(current, duration) : 0}
           disabled={!canSeek}
-          onChange={(e) => onSeek(Number(e.target.value))}
+          onChange={(e) => {
+            onSeek(Number(e.target.value));
+            bump();
+          }}
           className="player-seek"
           aria-label="Position"
         />

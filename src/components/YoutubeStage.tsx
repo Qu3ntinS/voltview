@@ -1,84 +1,8 @@
-import { useEffect, useRef, useState } from "react";
-import { PlayerChrome } from "./PlayerChrome";
-import { PlayerLoading } from "./PlayerLoading";
-import {
-  friendlyPlaybackError,
-  playbackCandidates,
-  youtubeFileUrl,
-  type PlaybackSource,
-} from "../lib/youtubePlayback";
-import { canUseNativeHls, connectionDownlinkMbps, localPlaybackOverride, mediaDuration } from "../lib/playerMedia";
+import { useMemo } from "react";
+import { Html5Player } from "./Html5Player";
+import { embedCandidates, friendlyPlaybackError, playbackCandidates, youtubeFileUrl } from "../lib/youtubePlayback";
+import { localPlaybackOverride } from "../lib/playerMedia";
 import { isTeslaBrowser } from "../lib/tesla";
-
-type HlsLike = {
-  destroy: () => void;
-  levels: Array<{ height?: number }>;
-  on: (event: string, handler: (event: string, data: { fatal?: boolean; level?: number }) => void) => void;
-};
-
-const MAX_FILE_ATTEMPTS = 8;
-
-function attemptMs(source: PlaybackSource) {
-  return source.kind === "hls" ? 8000 : 20000;
-}
-
-async function attachSource(
-  video: HTMLVideoElement,
-  source: PlaybackSource,
-  onQuality: (label: string) => void,
-  onFatal: () => void,
-): Promise<HlsLike | null> {
-  if (source.kind === "hls") {
-    if (canUseNativeHls(video)) {
-      video.src = source.url;
-      return null;
-    }
-    const { default: Hls } = await import("hls.js");
-    if (!Hls.isSupported()) throw new Error("HLS_UNSUPPORTED");
-    const downlink = connectionDownlinkMbps();
-    const player = new Hls({
-      enableWorker: false,
-      lowLatencyMode: false,
-      backBufferLength: 60,
-      maxBufferLength: 40,
-      capLevelToPlayerSize: true,
-      startLevel: -1,
-      abrEwmaDefaultEstimate: downlink > 0 ? Math.round(downlink * 1_000_000) : 1_200_000,
-    });
-    player.on(Hls.Events.ERROR, (_event, data) => {
-      if (data.fatal) onFatal();
-    });
-    player.on(Hls.Events.LEVEL_SWITCHED, (_event, data) => {
-      const height = player.levels[data.level]?.height;
-      onQuality(height ? `${height}p · Auto` : "Auto");
-    });
-    player.loadSource(source.url);
-    player.attachMedia(video);
-    return player as unknown as HlsLike;
-  }
-  video.src = source.url;
-  return null;
-}
-
-function teslaCandidates(videoId: string): PlaybackSource[] {
-  return [
-    { url: youtubeFileUrl(videoId, 18), mime: "video/mp4", quality: "360p", kind: "progressive" },
-    { url: youtubeFileUrl(videoId, 22), mime: "video/mp4", quality: "720p", kind: "progressive" },
-    ...playbackCandidates(videoId, { hls: false }),
-  ];
-}
-
-function readMedia(node: HTMLVideoElement) {
-  return {
-    positionSec: node.currentTime || 0,
-    durationSec: mediaDuration(node),
-    playing: !node.paused,
-  };
-}
-
-function stillLoading(node: HTMLVideoElement) {
-  return node.readyState < 1 && node.buffered.length === 0;
-}
 
 export function YoutubeStage({
   videoId,
@@ -89,212 +13,31 @@ export function YoutubeStage({
   title?: string;
   onSnapshot: (snap: { positionSec: number; durationSec: number; playing: boolean }) => void;
 }) {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [playing, setPlaying] = useState(false);
-  const [current, setCurrent] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [buffering, setBuffering] = useState(false);
-  const [quality, setQuality] = useState("Auto");
-
-  useEffect(() => {
-    const media = videoRef.current;
-    if (!media || !videoId) return;
-    const node: HTMLVideoElement = media;
-    let cancelled = false;
-    let ignoreError = false;
-    let ready = false;
-    let hls: HlsLike | null = null;
-    let timer = 0;
-    let index = 0;
+  const tesla = isTeslaBrowser();
+  const sources = useMemo(() => {
     const override = localPlaybackOverride();
-    const tesla = isTeslaBrowser();
-    const candidates = [
-      ...(override ? [override] : []),
-      ...(tesla ? teslaCandidates(videoId) : playbackCandidates(videoId)),
-    ].slice(0, MAX_FILE_ATTEMPTS);
-
-    setError("");
-    setLoading(true);
-    setBuffering(false);
-    setPlaying(false);
-    setCurrent(0);
-    setDuration(0);
-    setQuality("Auto");
-
-    function clearTimer() {
-      window.clearTimeout(timer);
+    if (override) return [override];
+    if (tesla) {
+      return [
+        { url: youtubeFileUrl(videoId, 18), mime: "video/mp4", quality: "360p", kind: "progressive" as const },
+        { url: youtubeFileUrl(videoId, 22), mime: "video/mp4", quality: "720p", kind: "progressive" as const },
+        ...playbackCandidates(videoId, { hls: false }).slice(0, 4),
+      ];
     }
-
-    function cleanupMedia() {
-      hls?.destroy();
-      hls = null;
-      ignoreError = true;
-      node.pause();
-      node.removeAttribute("src");
-      node.load();
-      ignoreError = false;
-    }
-
-    function giveUp() {
-      if (cancelled) return;
-      clearTimer();
-      cleanupMedia();
-      setBuffering(false);
-      setLoading(false);
-      setError(friendlyPlaybackError("NO_STREAM"));
-    }
-
-    async function tryIndex(next: number) {
-      if (cancelled) return;
-      if (next >= candidates.length) {
-        giveUp();
-        return;
-      }
-      index = next;
-      const source = candidates[next];
-      if (!source || !videoRef.current) {
-        giveUp();
-        return;
-      }
-      setQuality(source.quality === "auto" ? "Auto" : source.quality);
-      try {
-        ignoreError = true;
-        hls?.destroy();
-        hls = await attachSource(
-          videoRef.current,
-          source,
-          (label) => {
-            if (!cancelled) setQuality(label);
-          },
-          () => {
-            if (!cancelled && !ready) void tryIndex(index + 1);
-          },
-        );
-        ignoreError = false;
-      } catch {
-        ignoreError = false;
-        void tryIndex(next + 1);
-        return;
-      }
-      if (cancelled) return;
-      clearTimer();
-      timer = window.setTimeout(() => {
-        if (cancelled || ready) return;
-        if (!stillLoading(node)) return;
-        void tryIndex(index + 1);
-      }, attemptMs(source));
-    }
-
-    function onReady() {
-      if (cancelled) return;
-      ready = true;
-      clearTimer();
-      setBuffering(false);
-      setLoading(false);
-      setError("");
-      setDuration(mediaDuration(node));
-      const play = node.play();
-      if (play) play.catch(() => undefined);
-    }
-
-    function onFail() {
-      if (cancelled || ignoreError || ready) return;
-      clearTimer();
-      void tryIndex(index + 1);
-    }
-
-    function onWaiting() {
-      if (!cancelled && ready) setBuffering(true);
-    }
-
-    function onPlaying() {
-      if (!cancelled) {
-        setBuffering(false);
-        setLoading(false);
-        setDuration(mediaDuration(node));
-      }
-    }
-
-    function onMeta() {
-      if (!cancelled) setDuration(mediaDuration(node));
-    }
-
-    node.addEventListener("loadeddata", onReady);
-    node.addEventListener("canplay", onReady);
-    node.addEventListener("loadedmetadata", onMeta);
-    node.addEventListener("durationchange", onMeta);
-    node.addEventListener("progress", onMeta);
-    node.addEventListener("error", onFail);
-    node.addEventListener("waiting", onWaiting);
-    node.addEventListener("playing", onPlaying);
-    void tryIndex(0);
-
-    return () => {
-      cancelled = true;
-      clearTimer();
-      node.removeEventListener("loadeddata", onReady);
-      node.removeEventListener("canplay", onReady);
-      node.removeEventListener("loadedmetadata", onMeta);
-      node.removeEventListener("durationchange", onMeta);
-      node.removeEventListener("progress", onMeta);
-      node.removeEventListener("error", onFail);
-      node.removeEventListener("waiting", onWaiting);
-      node.removeEventListener("playing", onPlaying);
-      cleanupMedia();
-    };
-  }, [videoId]);
-
-  const canSeek = !loading && !error && duration > 0;
+    return [
+      ...playbackCandidates(videoId).slice(0, 4),
+      { url: youtubeFileUrl(videoId, 18), mime: "video/mp4", quality: "360p", kind: "progressive" as const },
+    ];
+  }, [tesla, videoId]);
 
   return (
-    <PlayerChrome
-      playing={playing}
-      current={current}
-      duration={duration}
-      quality={quality}
-      seekable={canSeek}
-      onToggle={() => {
-        const video = videoRef.current;
-        if (!video) return;
-        if (video.paused) video.play().catch(() => undefined);
-        else video.pause();
-      }}
-      onSeek={(seconds) => {
-        const video = videoRef.current;
-        if (!video || !canSeek) return;
-        video.currentTime = seconds;
-        setCurrent(seconds);
-      }}
-    >
-      <video
-        ref={videoRef}
-        className="absolute inset-0 z-0 h-full w-full bg-black object-contain"
-        poster={videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : undefined}
-        playsInline
-        autoPlay
-        preload="auto"
-        controls={false}
-        disablePictureInPicture
-        controlsList="nodownload noplaybackrate noremoteplayback"
-        {...{ "webkit-playsinline": "true" }}
-        onPlay={() => setPlaying(true)}
-        onPause={() => setPlaying(false)}
-        onDurationChange={(event) => setDuration(mediaDuration(event.currentTarget))}
-        onTimeUpdate={(event) => {
-          const snap = readMedia(event.currentTarget);
-          setCurrent(snap.positionSec);
-          setDuration(snap.durationSec);
-          onSnapshot(snap);
-        }}
-      />
-      {loading || buffering ? (
-        <PlayerLoading title={title} subtitle={buffering ? "Puffert…" : "Laden…"} />
-      ) : null}
-      {error ? (
-        <p className="absolute inset-x-4 top-4 z-20 rounded-xl bg-black/70 px-3 py-2 text-sm text-volt-2">{error}</p>
-      ) : null}
-    </PlayerChrome>
+    <Html5Player
+      sources={sources}
+      poster={videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : undefined}
+      title={title}
+      failText={friendlyPlaybackError("NO_STREAM")}
+      fallbackEmbed={embedCandidates(videoId)[0]}
+      onSnapshot={onSnapshot}
+    />
   );
 }

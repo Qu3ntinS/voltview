@@ -8,6 +8,7 @@ import {
   preferredProgressiveItags,
   sanitizeVideoId,
   youtubeFileUrl,
+  youtubeMediaHost,
 } from "./youtubePlayback";
 
 describe("youtube playback", () => {
@@ -82,6 +83,9 @@ describe("youtube playback", () => {
     expect(list.every((item) => item.kind === "progressive")).toBe(true);
     expect(list[0]?.url).toContain("latest_version");
     expect(youtubeFileUrl("jNQXAC9IVRw", 18)).toBe("/api/youtube/file?id=jNQXAC9IVRw&itag=18");
+    expect(youtubeMediaHost("invidious.tiekoetter.com")).toBe(true);
+    expect(youtubeMediaHost("rr2.sn-abc.googlevideo.com")).toBe(true);
+    expect(youtubeMediaHost("evil.test")).toBe(false);
   });
 
   test("prefers an iframe-friendly Invidious embed over youtube.com", () => {

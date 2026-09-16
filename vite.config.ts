@@ -1,8 +1,51 @@
 import { copyFileSync, existsSync } from "node:fs";
+import { request as httpRequest } from "node:http";
 import { resolve } from "node:path";
-import { defineConfig } from "vite";
+import type { IncomingMessage, ServerResponse } from "node:http";
+import { defineConfig, type Connect } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
+
+function proxyApi(req: IncomingMessage, res: ServerResponse, next: Connect.NextFunction) {
+  const url = req.url || "";
+  if (!url.startsWith("/api") || url.startsWith("/api/_lib") || /\.tsx?(?:\?|$)/.test(url)) {
+    next();
+    return;
+  }
+  const headers = { ...req.headers, host: "127.0.0.1:3001" };
+  delete headers["connection"];
+  const up = httpRequest(
+    { hostname: "127.0.0.1", port: 3001, path: url, method: req.method, headers },
+    (incoming) => {
+      res.writeHead(incoming.statusCode || 502, incoming.headers);
+      incoming.pipe(res);
+    },
+  );
+  up.on("error", () => {
+    res.statusCode = 502;
+    res.setHeader("content-type", "application/json");
+    res.end(JSON.stringify({ error: "API offline" }));
+  });
+  req.pipe(up);
+}
+
+function bunApiProxy() {
+  return {
+    name: "bun-api-proxy",
+    configureServer: {
+      order: "pre" as const,
+      handler(server: { middlewares: { use: (fn: Connect.NextHandleFunction) => void } }) {
+        server.middlewares.use(proxyApi);
+      },
+    },
+    configurePreviewServer: {
+      order: "pre" as const,
+      handler(server: { middlewares: { use: (fn: Connect.NextHandleFunction) => void } }) {
+        server.middlewares.use(proxyApi);
+      },
+    },
+  };
+}
 
 const staticMode = process.env.VITE_STATIC === "1";
 const base = process.env.VITE_BASE || (staticMode ? "/voltview/" : "/");
@@ -18,6 +61,7 @@ if (process.env.VITE_YOUTUBE_CLIENT_ID) {
 export default defineConfig({
   base,
   plugins: [
+    bunApiProxy(),
     react(),
     tailwindcss(),
     {

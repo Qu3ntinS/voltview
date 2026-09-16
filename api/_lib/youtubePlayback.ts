@@ -1,3 +1,5 @@
+import { proxyMedia } from "./mediaProxy";
+
 export type PlaybackSource = {
   url: string;
   mime: string;
@@ -60,6 +62,18 @@ const INVIDIOUS = [
   "https://invidious.protokolla.fi",
   "https://inv.tux.pizza",
 ];
+
+export function youtubeMediaHost(host: string) {
+  const name = host.toLowerCase();
+  if (name.endsWith(".googlevideo.com")) return true;
+  return INVIDIOUS.some((base) => {
+    try {
+      return new URL(base).hostname.toLowerCase() === name;
+    } catch {
+      return false;
+    }
+  });
+}
 
 /** Embed hosts that allow being framed and actually serve a player (not youtube.com). */
 const EMBED_HOSTS = [
@@ -319,28 +333,60 @@ export function embedCandidates(rawId: string): string[] {
 }
 
 export async function firstLiveCandidate(candidates: PlaybackSource[]): Promise<PlaybackSource | null> {
-  for (const candidate of candidates.slice(0, 6)) {
-    try {
-      const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), 4000);
-      const res = await fetch(candidate.url, {
-        method: "GET",
-        redirect: "manual",
-        headers: { Range: "bytes=0-0", accept: "*/*" },
-        signal: ctrl.signal,
+  const slice = candidates.slice(0, 4);
+  const result = await Promise.race([
+    (async () => {
+      const pending = slice.map(async (candidate) => {
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), 3500);
+        try {
+          const res = await fetch(candidate.url, {
+            method: "GET",
+            redirect: "follow",
+            headers: { Range: "bytes=0-1", accept: "*/*" },
+            signal: ctrl.signal,
+          });
+          const type = res.headers.get("content-type") || "";
+          if (res.status === 206) return candidate;
+          if (res.ok && /video|mpegurl|octet-stream|mp4/i.test(type)) return candidate;
+          return null;
+        } catch {
+          return null;
+        } finally {
+          clearTimeout(timer);
+        }
       });
-      clearTimeout(timer);
-      if (res.status >= 300 && res.status < 400) {
-        const loc = res.headers.get("location") || "";
-        if (/latest_version|companion|googlevideo|videoplayback/i.test(loc)) return candidate;
-      }
-      const type = res.headers.get("content-type") || "";
-      if (res.ok && /video|mpegurl|octet-stream/i.test(type)) return candidate;
-    } catch {
-      /* next */
-    }
+      const rows = await Promise.all(pending);
+      return rows.find((item): item is PlaybackSource => Boolean(item)) || null;
+    })(),
+    new Promise<null>((resolve) => setTimeout(() => resolve(null), 4000)),
+  ]);
+  return result;
+}
+
+export async function proxyYoutubeFile(id: string, itag: number, range?: string | null) {
+  const videoId = sanitizeVideoId(id);
+  const all = playbackCandidates(videoId, { hls: false });
+  const preferred = all.filter((item) => item.url.includes(`itag=${itag}`));
+  const ordered: PlaybackSource[] = [];
+  const seen = new Set<string>();
+  for (const item of [...preferred, ...all]) {
+    if (seen.has(item.url)) continue;
+    seen.add(item.url);
+    ordered.push(item);
   }
-  return null;
+  const deadline = Date.now() + 8500;
+  for (const candidate of ordered.slice(0, 6)) {
+    if (Date.now() > deadline) break;
+    const remain = Math.max(1200, deadline - Date.now());
+    const out = await proxyMedia(candidate.url, {
+      range,
+      timeoutMs: Math.min(remain, 6000),
+      allowHost: youtubeMediaHost,
+    });
+    if (out) return out;
+  }
+  return Response.json({ error: "Kein Stream." }, { status: 502 });
 }
 
 export async function resolveYoutubePlayback(rawId: string): Promise<PlaybackSource> {

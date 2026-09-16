@@ -19,4 +19,5 @@ export const plexRoutes = new Elysia({ prefix: "/api/plex" })
   .all("/search", pass)
   .all("/image", pass)
   .all("/stream/:id", pass)
+  .all("/file/:id", pass)
   .all("/asset", pass);
