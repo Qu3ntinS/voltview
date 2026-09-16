@@ -27,6 +27,7 @@ export function PlayerChrome({
   eyebrow,
   title,
   embed = false,
+  loading = false,
 }: {
   children: ReactNode;
   playing: boolean;
@@ -40,6 +41,7 @@ export function PlayerChrome({
   eyebrow: string;
   title: string;
   embed?: boolean;
+  loading?: boolean;
 }) {
   const max = duration > 0 && Number.isFinite(duration) ? duration : 1;
   const progress = duration > 0 ? Math.min(100, (current / duration) * 100) : 0;
@@ -76,7 +78,7 @@ export function PlayerChrome({
   }
 
   return (
-    <div className={`player-stage${playing ? " is-playing" : ""}${idle && playing && duration > 0 ? " is-idle" : ""}${embed ? " is-embed" : ""}`}>
+    <div className={`player-stage${playing ? " is-playing" : ""}${idle && playing && duration > 0 ? " is-idle" : ""}${embed ? " is-embed" : ""}${loading ? " is-loading" : ""}`}>
       {children}
       <button type="button" className="player-tap" aria-label={playing ? "Pause" : "Play"} onClick={onTap} />
       {playing ? null : (

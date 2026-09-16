@@ -182,6 +182,7 @@ export function Html5Player({
   const [buffering, setBuffering] = useState(false);
   const [quality, setQuality] = useState("Auto");
   const [embed, setEmbed] = useState(startWithEmbed ? fallbackEmbed || "" : "");
+  const [embedLive, setEmbedLive] = useState(false);
 
   const sourceKey = sources.map((item) => `${item.kind}:${item.url}`).join("|");
   const headerKey = JSON.stringify(hlsHeaders || {});
@@ -201,7 +202,8 @@ export function Html5Player({
     if (!list.length && fallbackEmbed) {
       setError("");
       setEmbed(fallbackEmbed);
-      setLoading(false);
+      setEmbedLive(false);
+      setLoading(true);
       setBuffering(false);
       return () => {
         cancelled = true;
@@ -210,6 +212,7 @@ export function Html5Player({
 
     setError("");
     setEmbed("");
+    setEmbedLive(false);
     setLoading(true);
     setBuffering(false);
     setPlaying(false);
@@ -236,12 +239,14 @@ export function Html5Player({
       clearTimer();
       cleanupMedia();
       setBuffering(false);
-      setLoading(false);
       if (fallbackEmbed) {
         setError("");
+        setEmbedLive(false);
         setEmbed(fallbackEmbed);
+        setLoading(true);
         return;
       }
+      setLoading(false);
       setError(failText);
     }
 
@@ -370,20 +375,19 @@ export function Html5Player({
         events: {
           onReady: () => {
             if (dead) return;
-            setLoading(false);
-            setBuffering(false);
             setError("");
             setQuality("Auto");
             try {
               player.playVideo();
             } catch {
-              /* autoplay may be blocked */
+              /* keep our loader until PLAYING — do not reveal YouTube chrome */
             }
           },
           onStateChange: (event: { data: number }) => {
             if (dead) return;
             if (event.data === 1) {
               setPlaying(true);
+              setEmbedLive(true);
               setLoading(false);
               setBuffering(false);
             } else if (event.data === 2 || event.data === 0) {
@@ -434,6 +438,7 @@ export function Html5Player({
       quality={quality}
       seekable={canSeek}
       embed={Boolean(embed)}
+      loading={loading}
       backTo={backTo}
       eyebrow={eyebrow}
       title={title || eyebrow}
@@ -484,15 +489,17 @@ export function Html5Player({
         }}
       />
       {embed ? (
-        <iframe
-          ref={iframeRef}
-          id="volt-yt-embed"
-          className="player-embed"
-          src={embed}
-          title={title || eyebrow}
-          allow="autoplay; fullscreen; encrypted-media"
-          allowFullScreen
-        />
+        <div className={`player-embed-clip${embedLive ? " is-live" : ""}`}>
+          <iframe
+            ref={iframeRef}
+            id="volt-yt-embed"
+            className="player-embed"
+            src={embed}
+            title={title || eyebrow}
+            allow="autoplay; fullscreen; encrypted-media"
+            tabIndex={-1}
+          />
+        </div>
       ) : null}
       {loading || buffering ? (
         <PlayerLoading title={title} subtitle={buffering ? "Puffert…" : "Laden…"} />

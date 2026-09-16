@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Html5Player } from "../components/Html5Player";
+import { PlayerLoading } from "../components/PlayerLoading";
 import { SafetyGate } from "../components/SafetyGate";
 import { Theater } from "../components/Theater";
 import { api, plexClientFileUrl, plexFileUrl, plexImage, plexStreamUrl } from "../lib/api";
@@ -15,6 +16,7 @@ export function WatchPlexPage() {
   const snapRef = useRef({ positionSec: 0, durationSec: 0, playing: true });
   const [title, setTitle] = useState("Plex");
   const [remoteUri, setRemoteUri] = useState("");
+  const [lookedUp, setLookedUp] = useState(!settings.plexToken);
 
   useEffect(() => {
     api
@@ -45,7 +47,15 @@ export function WatchPlexPage() {
   });
 
   useEffect(() => {
-    if (!settings.plexToken) return;
+    if (!settings.plexToken) {
+      setLookedUp(true);
+      return;
+    }
+    let alive = true;
+    const finish = () => {
+      if (alive) setLookedUp(true);
+    };
+    const timer = window.setTimeout(finish, 2500);
     api
       .plexResources(settings)
       .then((data) => {
@@ -57,9 +67,17 @@ export function WatchPlexPage() {
         const remote = rankPlexConnections(match).find(
           (item) => item.uri.startsWith("https") && !isLanPlexHost(item.uri),
         );
-        if (remote?.uri) setRemoteUri(remote.uri);
+        if (remote?.uri && alive) setRemoteUri(remote.uri);
       })
-      .catch(() => undefined);
+      .catch(() => undefined)
+      .finally(() => {
+        window.clearTimeout(timer);
+        finish();
+      });
+    return () => {
+      alive = false;
+      window.clearTimeout(timer);
+    };
   }, [settings]);
 
   const file = plexFileUrl(settings, id);
@@ -98,16 +116,22 @@ export function WatchPlexPage() {
   return (
     <SafetyGate title="Plex" resetKey={id}>
       <Theater>
-        <Html5Player
-          sources={sources}
-          backTo="/plex"
-          eyebrow="Plex"
-          title={title}
-          failText="Stream fehlgeschlagen."
-          onSnapshot={(snap) => {
-            snapRef.current = snap;
-          }}
-        />
+        {lookedUp ? (
+          <Html5Player
+            sources={sources}
+            backTo="/plex"
+            eyebrow="Plex"
+            title={title}
+            failText="Stream fehlgeschlagen."
+            onSnapshot={(snap) => {
+              snapRef.current = snap;
+            }}
+          />
+        ) : (
+          <div className="player-stage">
+            <PlayerLoading title={title} subtitle="Server…" />
+          </div>
+        )}
       </Theater>
     </SafetyGate>
   );

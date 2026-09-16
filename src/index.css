@@ -486,12 +486,42 @@ textarea:focus {
   object-fit: contain;
 }
 
-.player-embed {
+.player-embed-clip {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+  background: #000;
+}
+
+.player-embed-clip iframe {
+  position: absolute;
+  top: -90px;
+  left: -8%;
+  width: 116%;
+  height: calc(100% + 180px);
+  max-width: none;
+  border: 0;
+  opacity: 0;
+  background: #000;
+}
+
+.player-embed-clip.is-live iframe {
+  opacity: 1;
 }
 
 .player-stage.is-embed .player-video {
   visibility: hidden;
+}
+
+.player-stage.is-loading .player-dock,
+.player-stage.is-loading .player-shade,
+.player-stage.is-loading .player-center {
+  display: none;
 }
 
 .player-video::-webkit-media-controls,
