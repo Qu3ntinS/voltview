@@ -1,22 +1,13 @@
-import {
-  Gamepad2,
-  Home,
-  LayoutGrid,
-  Radio,
-  Server,
-  Settings,
-  Youtube,
-} from "lucide-react";
+import { Cast, Home, LayoutGrid, Server, Settings, Youtube } from "lucide-react";
 import { NavLink, Outlet } from "react-router-dom";
 import { TopBar } from "./TopBar";
 
 const links = [
   { to: "/", label: "Home", icon: Home },
-  { to: "/apps", label: "Apps", icon: LayoutGrid },
   { to: "/youtube", label: "YouTube", icon: Youtube },
   { to: "/plex", label: "Plex", icon: Server },
-  { to: "/radio", label: "Radio", icon: Radio },
-  { to: "/games", label: "Games", icon: Gamepad2 },
+  { to: "/apps", label: "Apps", icon: LayoutGrid, soon: true },
+  { to: "/mirror", label: "Mirror", icon: Cast, soon: true },
   { to: "/settings", label: "Setup", icon: Settings },
 ];
 
@@ -39,6 +30,7 @@ export function Shell() {
             >
               <Icon className="tab-icon" />
               {link.label}
+              {link.soon ? <span className="tab-soon">soon</span> : null}
             </NavLink>
           );
         })}
