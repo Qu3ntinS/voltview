@@ -20,7 +20,7 @@ export function PlexLibraryPage() {
   return (
     <div>
       <Link to="/plex" className="mb-4 inline-flex h-12 items-center rounded-2xl bg-white/5 px-4">
-        Zurück zu Plex
+        Zurück
       </Link>
       <h1 className="mb-6 font-display text-4xl font-extrabold">Bibliothek</h1>
       {error ? <p className="text-volt-2">{error}</p> : null}

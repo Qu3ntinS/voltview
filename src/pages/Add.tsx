@@ -28,18 +28,18 @@ export function AddPage() {
   async function push(next: Partial<Settings> = {}) {
     const merged = apply(next);
     if (!room) {
-      setStatus("QR auf dem Tesla scannen — dann landet der Login im Auto.");
+      setStatus("QR scannen.");
       return;
     }
     setBusy(true);
-    setStatus("Sende an Tesla…");
+    setStatus("Senden…");
     try {
       await pair.submit(room, merged);
       setSent(true);
-      setStatus("Liegt auf dem Tesla.");
+      setStatus("Gesendet.");
     } catch (error) {
       setSent(false);
-      setStatus((error as Error).message === "PAIR_NOT_FOUND" ? "Code abgelaufen. QR neu scannen." : "Senden fehlgeschlagen.");
+      setStatus((error as Error).message === "PAIR_NOT_FOUND" ? "Code abgelaufen." : "Senden fehlgeschlagen.");
     } finally {
       setBusy(false);
     }
@@ -53,7 +53,7 @@ export function AddPage() {
         .then((data) => {
           if (data.authToken) {
             setPin(null);
-            setStatus("Plex verbunden. Server wählen.");
+            setStatus("Plex verbunden.");
             void push({ plexToken: data.authToken });
           }
         })
@@ -96,38 +96,34 @@ export function AddPage() {
       <header className="add-head">
         <p className="pair-kicker">VoltView · Handy</p>
         <h1>Sync</h1>
-        <p className="muted">Google und Plex hier anmelden. Der Tesla übernimmt den Stand — ohne Tastatur im Auto.</p>
         {room ? (
           <p className="pair-code">{code}</p>
         ) : (
-          <p className="warn">QR auf dem Tesla scannen, sonst kommt der Login nicht zurück.</p>
+          <p className="warn">QR scannen.</p>
         )}
       </header>
 
       <section className="card mb-4">
         <p className="pair-kicker">1 · Google</p>
-        <p className="muted">Abos und Kanäle auf dem Tesla.</p>
         <button type="button" className="btn btn-primary mt-3" onClick={() => void google()}>
-          {form.youtubeAccessToken ? "Google neu verbinden" : "Mit Google anmelden"}
+          {form.youtubeAccessToken ? "Neu" : "Google"}
         </button>
-        {form.youtubeAccessToken ? <p className="ok mt-2">Google verbunden.</p> : null}
+        {form.youtubeAccessToken ? <p className="ok mt-2">Google an</p> : null}
       </section>
 
       <section className="card mb-4">
         <p className="pair-kicker">2 · Plex</p>
-        <p className="muted">Account auf dem Phone, Bibliothek im Auto.</p>
         <button type="button" className="btn mt-3" onClick={() => void startPlex()}>
-          {form.plexToken ? "Plex neu verbinden" : "Plex verbinden"}
+          {form.plexToken ? "Neu" : "Plex"}
         </button>
         {pin ? (
           <div className="mt-3">
-            <p className="muted">Plex öffnen, einloggen, hierher zurück. Der Tesla übernimmt den Account.</p>
             <a className="btn btn-primary mt-2" href={pin.authUrl} target="_blank" rel="noreferrer">
               Plex öffnen
             </a>
           </div>
         ) : null}
-        {servers.length ? <p className="muted mt-4">Server wählen — wird sofort gesendet.</p> : null}
+        {servers.length ? <p className="muted mt-4">Server</p> : null}
         {servers.map((server) => (
           <button
             key={server.clientIdentifier}
@@ -168,7 +164,7 @@ export function AddPage() {
       </label>
 
       <button type="button" className="btn btn-primary" onClick={() => void push()} disabled={!room || busy}>
-        {sent ? "Nochmal senden" : "An Tesla senden"}
+        {sent ? "Erneut" : "Senden"}
       </button>
       {status ? <p className={sent ? "ok" : "warn"}>{status}</p> : null}
 

@@ -67,7 +67,7 @@ export function PlayerChrome({
           </p>
           <button type="button" onClick={() => teslaFullscreen(window.location.href)} className="player-wide">
             <Maximize2 className="h-5 w-5" />
-            Tesla Vollbild
+            Vollbild
           </button>
         </div>
       </div>

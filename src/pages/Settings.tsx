@@ -17,7 +17,7 @@ export function SettingsPage() {
         next.youtubeAccessToken ? "Google" : "",
         next.plexToken || next.plexServerName ? "Plex" : "",
       ].filter(Boolean);
-      setStatus(bits.length ? `${bits.join(" + ")} vom Handy übernommen.` : "Vom Handy übernommen.");
+        setStatus(bits.length ? bits.join(" · ") : "ok");
     },
     [update],
   );
@@ -26,7 +26,6 @@ export function SettingsPage() {
     <div className="mx-auto grid max-w-3xl gap-4">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Setup</h1>
-        <p className="muted mt-1">QR auf dem Tesla, einloggen auf dem Handy. Kein Tippen im Auto.</p>
       </div>
 
       <PairPanel onApply={applyPair} />
@@ -34,17 +33,15 @@ export function SettingsPage() {
       <section className="card">
         <h2 className="text-lg font-semibold">Status</h2>
         <p className="muted mt-2">
-          Google: {settings.youtubeAccessToken ? "verbunden — Abos und Kanäle persönlich" : "offen. QR scannen."}
+          Google: {settings.youtubeAccessToken ? "an" : "aus"}
         </p>
         <p className="muted">
-          Plex: {settings.plexServerName || (settings.plexToken ? "Account da, Server fehlt" : "offen. QR scannen.")}
+          Plex: {settings.plexServerName || (settings.plexToken ? "Server fehlt" : "aus")}
         </p>
         {youtubeOauthClientId(settings) ? (
-          <p className="ok mt-2">Google-Login auf dem Handy ist bereit.</p>
+          <p className="ok mt-2">OAuth an</p>
         ) : (
-          <p className="warn mt-2">
-            Auf Vercel einmal YOUTUBE_CLIENT_ID setzen (OAuth Web-Client, nicht der AIza-Key).
-          </p>
+          <p className="warn mt-2">OAuth aus</p>
         )}
         <div className="row-gap mt-3">
           {settings.youtubeAccessToken ? (
@@ -84,10 +81,7 @@ export function SettingsPage() {
       </section>
 
       <section className="card">
-        <h2 className="text-lg font-semibold">Tesla-Link</h2>
-        <p className="muted mt-2">
-          Diesen YouTube-Redirect als Lesezeichen speichern. Dann darf der Browser HTML5-Video.
-        </p>
+        <h2 className="text-lg font-semibold">Link</h2>
         <p className="mono wrap mt-2">{teslaRedirectUrl(publicSiteUrl())}</p>
       </section>
     </div>

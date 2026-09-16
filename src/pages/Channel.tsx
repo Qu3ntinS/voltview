@@ -39,21 +39,16 @@ export function ChannelPage() {
   return (
     <div>
       <Link to="/youtube" className="mb-4 inline-flex h-12 items-center rounded-2xl bg-white/5 px-4">
-        Zurück zu YouTube
+        Zurück
       </Link>
       <div className="mb-6 flex items-center gap-4">
         {channel?.thumbnail ? (
           <img src={channel.thumbnail} alt="" className="h-16 w-16 rounded-full object-cover" />
         ) : null}
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">{channel?.title || "Kanal"}</h1>
-          {channel?.description ? (
-            <p className="muted mt-1 line-clamp-2 max-w-2xl">{channel.description}</p>
-          ) : null}
-        </div>
+        <h1 className="text-2xl font-bold tracking-tight">{channel?.title || "Kanal"}</h1>
       </div>
       {error ? <p className="mb-4 text-volt-2">{error}</p> : null}
-      {loading ? <p className="text-mist">Lade…</p> : null}
+      {loading ? <p className="text-mist">Laden…</p> : null}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {items.map((video) => (
           <MediaCard

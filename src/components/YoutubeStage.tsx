@@ -272,7 +272,7 @@ export function YoutubeStage({
         }}
       />
       {loading || buffering ? (
-        <PlayerLoading title={title} subtitle={buffering ? "Puffert…" : "Stream wird geladen…"} />
+        <PlayerLoading title={title} subtitle={buffering ? "Puffert…" : "Laden…"} />
       ) : null}
       {error ? (
         <p className="absolute inset-x-4 top-4 z-20 rounded-xl bg-black/70 px-3 py-2 text-sm text-volt-2">{error}</p>

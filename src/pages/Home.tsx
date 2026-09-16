@@ -33,19 +33,14 @@ export function HomePage() {
     <div>
       {needsGoogle ? (
         <section className="card glow-ring mb-4 flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <p className="font-semibold">Google auf dem Handy</p>
-            <p className="muted">QR unter Setup scannen, auf dem Phone anmelden. Dann kommen Abos und Kanäle hierher.</p>
-          </div>
+          <p className="font-semibold">Google</p>
           <Link to="/settings" className="btn btn-primary">
-            QR zeigen
+            QR
           </Link>
         </section>
       ) : null}
 
-      {ytError && ytError === "NO_YOUTUBE_KEY" ? (
-        <p className="muted mb-3">Trends kommen vom Server-Key. Für deine Abos: QR scannen und Google auf dem Handy.</p>
-      ) : ytError ? (
+      {ytError && ytError !== "NO_YOUTUBE_KEY" ? (
         <p className="warn mb-3">{ytError}</p>
       ) : null}
 
@@ -68,12 +63,10 @@ export function HomePage() {
         <Link to="/apps" className="card coming-soon-tile">
           <p className="pair-kicker">Coming soon</p>
           <h2 className="text-lg font-semibold">Apps</h2>
-          <p className="muted mt-1">Netflix, Disney+ und mehr, sobald YouTube und Plex stehen.</p>
         </Link>
         <Link to="/mirror" className="card coming-soon-tile">
           <p className="pair-kicker">Coming soon</p>
           <h2 className="text-lg font-semibold">Screen Mirror</h2>
-          <p className="muted mt-1">Handy-Bildschirm auf den Tesla legen.</p>
         </Link>
       </div>
       {videos.length ? (

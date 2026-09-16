@@ -13,7 +13,6 @@ export function WatchPlexPage() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const snapRef = useRef({ positionSec: 0, durationSec: 0, playing: true });
   const [title, setTitle] = useState("Plex");
-  const [summary, setSummary] = useState("");
   const [error, setError] = useState("");
   const [playing, setPlaying] = useState(true);
   const [current, setCurrent] = useState(0);
@@ -28,7 +27,6 @@ export function WatchPlexPage() {
           ? `${data.item.grandparentTitle} · ${data.item.title}`
           : data.item.title;
         setTitle(nextTitle);
-        setSummary(data.item.summary || "");
         remember({
           kind: "plex",
           id,
@@ -60,7 +58,7 @@ export function WatchPlexPage() {
     } else {
       import("hls.js").then(({ default: Hls }) => {
         if (cancelled || !Hls.isSupported()) {
-          if (!cancelled) setError("Dieser Browser kann HLS nicht abspielen.");
+          if (!cancelled) setError("HLS nicht möglich.");
           return;
         }
         const player = new Hls({
@@ -77,7 +75,7 @@ export function WatchPlexPage() {
         player.loadSource(src);
         player.attachMedia(video);
         player.on(Hls.Events.ERROR, (_event, data) => {
-          if (data.fatal) setError("Plex-Stream fehlgeschlagen. Server erreichbar? Token gültig?");
+          if (data.fatal) setError("Stream fehlgeschlagen.");
         });
         hls = player;
       });
@@ -90,17 +88,12 @@ export function WatchPlexPage() {
   }, [id, settings]);
 
   return (
-    <SafetyGate title="Plex nur im Stand" resetKey={id}>
+    <SafetyGate title="Plex" resetKey={id}>
     <Theater
       backTo="/plex"
-      eyebrow="VoltView Player · eigenes UI · Plex"
+      eyebrow="Plex"
       title={title}
-      sidebar={
-        <div>
-          <p className="text-sm leading-relaxed text-mist">{summary || "Direkter Stream von deinem Plex-Server."}</p>
-          {error ? <p className="mt-4 text-volt-2">{error}</p> : null}
-        </div>
-      }
+      sidebar={error ? <p className="text-volt-2">{error}</p> : null}
     >
       <PlayerChrome
         playing={playing}

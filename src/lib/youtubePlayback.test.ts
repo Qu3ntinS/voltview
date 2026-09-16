@@ -60,9 +60,9 @@ describe("youtube playback", () => {
     expect(canCallInnertube()).toBe(typeof window === "undefined");
   });
 
-  test("maps extractor codes to a Tesla-facing message", () => {
-    expect(friendlyPlaybackError("INVIDIOUS_FAILED")).toContain("YouTube-IFrame");
-    expect(friendlyPlaybackError("LOGIN_REQUIRED")).toContain("Bot-Check");
+  test("maps extractor codes to short errors", () => {
+    expect(friendlyPlaybackError("INVIDIOUS_FAILED")).toBe("Kein Stream.");
+    expect(friendlyPlaybackError("LOGIN_REQUIRED")).toBe("Stream blockiert.");
   });
 
   test("builds adaptive HLS first, then connection-aware mp4", () => {
