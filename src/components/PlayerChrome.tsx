@@ -38,20 +38,26 @@ export function PlayerChrome({
   const progress = duration > 0 ? Math.min(100, (current / duration) * 100) : 0;
   const canSeek = seekable && duration > 0 && Number.isFinite(duration);
   const [idle, setIdle] = useState(false);
-  const dockHold = useRef(false);
+  const lastAt = useRef(0);
+  const lastPos = useRef({ x: 0, y: 0 });
   const timer = useRef(0);
 
   const bump = useCallback(() => {
+    lastAt.current = Date.now();
     setIdle(false);
-    window.clearTimeout(timer.current);
-    if (playing && !dockHold.current) {
-      timer.current = window.setTimeout(() => setIdle(true), IDLE_MS);
-    }
-  }, [playing]);
+  }, []);
 
   useEffect(() => {
     bump();
-    return () => window.clearTimeout(timer.current);
+    window.clearInterval(timer.current);
+    if (!playing) {
+      setIdle(false);
+      return;
+    }
+    timer.current = window.setInterval(() => {
+      if (Date.now() - lastAt.current >= IDLE_MS) setIdle(true);
+    }, 250);
+    return () => window.clearInterval(timer.current);
   }, [bump, playing]);
 
   function onTap() {
@@ -63,26 +69,26 @@ export function PlayerChrome({
     bump();
   }
 
+  function onMove(event: { clientX: number; clientY: number }) {
+    const dx = Math.abs(event.clientX - lastPos.current.x);
+    const dy = Math.abs(event.clientY - lastPos.current.y);
+    lastPos.current = { x: event.clientX, y: event.clientY };
+    if (dx < 14 && dy < 14) return;
+    bump();
+  }
+
   return (
     <div
       className={`player-stage${playing ? " is-playing" : ""}${idle && playing ? " is-idle" : ""}${embed ? " is-embed" : ""}`}
       style={{ "--player-progress": `${progress}%` } as CSSProperties}
-      onMouseMove={bump}
-      onTouchStart={bump}
+      onMouseMove={onMove}
+      onPointerDown={bump}
     >
       {children}
       <button type="button" className="player-tap" aria-label={playing ? "Pause" : "Play"} onClick={onTap} />
       <div className="player-shade" />
       <div
         className="player-dock"
-        onMouseEnter={() => {
-          dockHold.current = true;
-          bump();
-        }}
-        onMouseLeave={() => {
-          dockHold.current = false;
-          bump();
-        }}
         onPointerDown={bump}
       >
         <input

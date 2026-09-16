@@ -50,8 +50,8 @@ export function WatchPlexPage() {
       tesla
         ? [{ url: file, mime: "video/mp4", quality: "Auto", kind: "progressive" as const }]
         : [
-            { url: hls, mime: "application/vnd.apple.mpegurl", quality: "Auto", kind: "hls" as const },
             { url: file, mime: "video/mp4", quality: "Auto", kind: "progressive" as const },
+            { url: hls, mime: "application/vnd.apple.mpegurl", quality: "Auto", kind: "hls" as const },
           ],
     [file, hls, tesla],
   );

@@ -18,10 +18,6 @@ type HlsLike = {
 
 const ATTEMPT_MS = 10000;
 
-function stillLoading(node: HTMLVideoElement) {
-  return node.readyState < 2 && node.buffered.length === 0;
-}
-
 function readMedia(node: HTMLVideoElement) {
   return {
     positionSec: node.currentTime || 0,
@@ -191,7 +187,6 @@ export function Html5Player({
       clearTimer();
       timer = window.setTimeout(() => {
         if (cancelled || ready) return;
-        if (!stillLoading(node)) return;
         void tryIndex(index + 1);
       }, ATTEMPT_MS);
     }
