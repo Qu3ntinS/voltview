@@ -50,10 +50,10 @@ export function isAllowedMediaUrl(raw: string, allowHost?: (host: string) => boo
 }
 
 function looksLikeMedia(type: string, status: number) {
-  if (status === 206) return true;
-  if (/json|text\/html|text\/xml|application\/xml/i.test(type) && !/video|mpegurl|octet-stream|mp4/i.test(type)) {
+  if (/json|text\/html|text\/xml|application\/xml|text\/plain/i.test(type) && !/video|mpegurl|octet-stream|mp4/i.test(type)) {
     return false;
   }
+  if (status === 206) return true;
   return /video|mpegurl|octet-stream|mp4|mpeg|binary/i.test(type) || status === 200;
 }
 
@@ -100,6 +100,9 @@ export type ProxyMediaOpts = {
   cap?: boolean;
 };
 
+const BROWSER_UA =
+  "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+
 export async function proxyMedia(url: string, opts: ProxyMediaOpts = {}): Promise<Response | null> {
   if (!isAllowedMediaUrl(url, opts.allowHost)) return null;
   const cap = opts.cap ?? shouldCapMedia();
@@ -111,6 +114,7 @@ export async function proxyMedia(url: string, opts: ProxyMediaOpts = {}): Promis
     const res = await fetch(url, {
       headers: {
         accept: "*/*",
+        "user-agent": BROWSER_UA,
         ...(opts.headers || {}),
         Range: cap ? range : opts.range || range,
       },

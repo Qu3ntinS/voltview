@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Html5Player } from "./Html5Player";
-import { friendlyPlaybackError, playbackCandidates, youtubeFileUrl } from "../lib/youtubePlayback";
+import { embedCandidates, friendlyPlaybackError, playbackCandidates, youtubeFileUrl } from "../lib/youtubePlayback";
 import { localPlaybackOverride } from "../lib/playerMedia";
 import { isTeslaBrowser } from "../lib/tesla";
 
@@ -21,6 +21,7 @@ export function YoutubeStage({
       return [
         { url: youtubeFileUrl(videoId, 18), mime: "video/mp4", quality: "360p", kind: "progressive" as const },
         { url: youtubeFileUrl(videoId, 22), mime: "video/mp4", quality: "720p", kind: "progressive" as const },
+        ...playbackCandidates(videoId, { hls: false }).slice(0, 4),
       ];
     }
     return [
@@ -35,6 +36,7 @@ export function YoutubeStage({
       poster={videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : undefined}
       title={title}
       failText={friendlyPlaybackError("NO_STREAM")}
+      fallbackEmbed={embedCandidates(videoId)[0]}
       onSnapshot={onSnapshot}
     />
   );

@@ -79,6 +79,7 @@ export function Html5Player({
   poster,
   title,
   failText = "Kein Stream.",
+  fallbackEmbed,
   hlsHeaders,
   onSnapshot,
 }: {
@@ -86,6 +87,7 @@ export function Html5Player({
   poster?: string;
   title?: string;
   failText?: string;
+  fallbackEmbed?: string;
   hlsHeaders?: Record<string, string>;
   onSnapshot?: (snap: { positionSec: number; durationSec: number; playing: boolean }) => void;
 }) {
@@ -97,6 +99,7 @@ export function Html5Player({
   const [loading, setLoading] = useState(true);
   const [buffering, setBuffering] = useState(false);
   const [quality, setQuality] = useState("Auto");
+  const [embed, setEmbed] = useState("");
 
   const sourceKey = sources.map((item) => `${item.kind}:${item.url}`).join("|");
   const headerKey = JSON.stringify(hlsHeaders || {});
@@ -114,6 +117,7 @@ export function Html5Player({
     let index = 0;
 
     setError("");
+    setEmbed("");
     setLoading(true);
     setBuffering(false);
     setPlaying(false);
@@ -141,6 +145,11 @@ export function Html5Player({
       cleanupMedia();
       setBuffering(false);
       setLoading(false);
+      if (fallbackEmbed) {
+        setEmbed(fallbackEmbed);
+        setError("");
+        return;
+      }
       setError(failText);
     }
 
@@ -245,9 +254,9 @@ export function Html5Player({
       node.removeEventListener("playing", onPlaying);
       cleanupMedia();
     };
-  }, [failText, headerKey, sourceKey]);
+  }, [failText, fallbackEmbed, headerKey, sourceKey]);
 
-  const canSeek = !loading && !error && duration > 0;
+  const canSeek = !loading && !error && !embed && duration > 0;
 
   return (
     <PlayerChrome
@@ -256,6 +265,7 @@ export function Html5Player({
       duration={duration}
       quality={quality}
       seekable={canSeek}
+      embed={Boolean(embed)}
       onToggle={() => {
         const video = videoRef.current;
         if (!video) return;
@@ -279,7 +289,7 @@ export function Html5Player({
         controls={false}
         disablePictureInPicture
         controlsList="nodownload noplaybackrate noremoteplayback"
-        {...{ "webkit-playsinline": "true" }}
+        {...{ "webkit-playsinline": "true", referrerPolicy: "no-referrer" }}
         onPlay={() => setPlaying(true)}
         onPause={() => setPlaying(false)}
         onDurationChange={(event) => setDuration(mediaDuration(event.currentTarget))}
@@ -290,6 +300,15 @@ export function Html5Player({
           onSnapshot?.(snap);
         }}
       />
+      {embed ? (
+        <iframe
+          className="player-embed"
+          src={embed}
+          title={title || "YouTube"}
+          allow="autoplay; fullscreen"
+          referrerPolicy="no-referrer"
+        />
+      ) : null}
       {loading || buffering ? (
         <PlayerLoading title={title} subtitle={buffering ? "Puffert…" : "Laden…"} />
       ) : null}

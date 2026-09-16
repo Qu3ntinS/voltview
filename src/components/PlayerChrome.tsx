@@ -22,6 +22,7 @@ export function PlayerChrome({
   onSeek,
   quality,
   seekable = true,
+  embed = false,
 }: {
   children: ReactNode;
   playing: boolean;
@@ -31,6 +32,7 @@ export function PlayerChrome({
   onSeek: (seconds: number) => void;
   quality?: string;
   seekable?: boolean;
+  embed?: boolean;
 }) {
   const max = duration > 0 && Number.isFinite(duration) ? duration : 1;
   const progress = duration > 0 ? Math.min(100, (current / duration) * 100) : 0;
@@ -63,7 +65,7 @@ export function PlayerChrome({
 
   return (
     <div
-      className={`player-stage${playing ? " is-playing" : ""}${idle && playing ? " is-idle" : ""}`}
+      className={`player-stage${playing ? " is-playing" : ""}${idle && playing ? " is-idle" : ""}${embed ? " is-embed" : ""}`}
       style={{ "--player-progress": `${progress}%` } as CSSProperties}
       onMouseMove={bump}
       onTouchStart={bump}
