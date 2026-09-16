@@ -1,4 +1,4 @@
-import { isAllowedMediaUrl, proxyMedia } from "./mediaProxy";
+import { isAllowedMediaUrl, playableRange, proxyMedia } from "./mediaProxy";
 import { isLanPlexHost, mapPlexResources, plexCreatePin, plexIdentity, plexListResources, plexMediaHeaders, plexReadPin, PLEX_PRODUCT, rankPlexConnections } from "./plexTv";
 
 type PlexCtx = {
@@ -8,6 +8,7 @@ type PlexCtx = {
   serverToken: string;
   serverId: string;
   serverName: string;
+  uris?: string[];
 };
 
 function header(request: Request, name: string) {
@@ -111,6 +112,7 @@ async function plexServer(ctx: PlexCtx, path: string, params?: Record<string, st
 }
 
 async function plexUris(ctx: PlexCtx) {
+  if (ctx.uris?.length) return ctx.uris;
   const out: string[] = [];
   const add = (raw: string, allowLan = false) => {
     const uri = String(raw || "").replace(/\/$/, "");
@@ -136,6 +138,7 @@ async function plexUris(ctx: PlexCtx) {
     }
   }
   add(ctx.server, true);
+  ctx.uris = out;
   return out;
 }
 
@@ -240,9 +243,9 @@ async function plexFilePart(ctx: PlexCtx, id: string) {
 
 async function proxyPlexDest(ctx: PlexCtx, dest: string, range: string | null, uris: string[]) {
   return proxyMedia(dest, {
-    range,
+    range: playableRange(range),
     headers: plexMediaHeaders(ctx.clientId, ctx.serverToken),
-    timeoutMs: 8000,
+    timeoutMs: 9000,
     allowHost: (host) => {
       if (isAllowedMediaUrl(`https://${host}/`)) return true;
       return (
@@ -267,7 +270,8 @@ async function servePlexFile(ctx: PlexCtx, id: string, range: string | null) {
   } catch {
     /* transcode fallback */
   }
-  if (part.key && /^(mp4|mov|m4v)$/.test(part.container)) {
+  const directMp4 = part.key && (/^(mp4|mov|m4v)$/.test(part.container) || /\.(mp4|m4v|mov)(\?|$)/i.test(part.key));
+  if (directMp4) {
     for (const server of uris) {
       const out = await proxyPlexDest(ctx, `${server}${part.key}`, range, uris);
       if (out) {
@@ -301,7 +305,8 @@ function plexStartUrl(server: string, id: string, ctx: PlexCtx, kind: "hls" | "m
   dest.searchParams.set("autoAdjustQuality", "1");
   dest.searchParams.set("copyts", "1");
   dest.searchParams.set("session", `${ctx.clientId}-${id}`);
-  dest.searchParams.set("X-Plex-Platform", "Html5");
+  dest.searchParams.set("hasMDE", "1");
+  dest.searchParams.set("X-Plex-Platform", "Chrome");
   dest.searchParams.set("X-Plex-Client-Identifier", ctx.clientId);
   dest.searchParams.set("X-Plex-Product", PLEX_PRODUCT);
   dest.searchParams.set("X-Plex-Device", "VoltView");
@@ -309,6 +314,7 @@ function plexStartUrl(server: string, id: string, ctx: PlexCtx, kind: "hls" | "m
   if (kind === "mp4") {
     dest.searchParams.set("videoQuality", "70");
     dest.searchParams.set("maxVideoBitrate", "4000");
+    dest.searchParams.set("videoResolution", "1280x720");
   }
   return dest;
 }

@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { plexAuthQuery } from "./api";
 import { plexRoutePath } from "./plexDispatch";
 
 describe("plexRoutePath", () => {
@@ -30,5 +31,24 @@ describe("plex photo query encoding", () => {
     const path = "/library/metadata/1/thumb/2";
     expect(encodeURI(path)).toBe(path);
     expect(new URLSearchParams({ url: path }).toString()).toContain("%2F");
+  });
+});
+
+describe("plexAuthQuery", () => {
+  test("puts server identity on media URLs", () => {
+    const query = plexAuthQuery({
+      youtubeApiKey: "",
+      youtubeRegion: "DE",
+      youtubeClientId: "",
+      youtubeAccessToken: "",
+      plexToken: "tok",
+      plexClientId: "cid",
+      plexServerUri: "https://abc.plex.direct:32400",
+      plexServerToken: "stok",
+      plexServerName: "Home",
+      plexServerId: "sid",
+    });
+    expect(query).toContain("plexServerId=sid");
+    expect(query).toContain("plexServerName=Home");
   });
 });

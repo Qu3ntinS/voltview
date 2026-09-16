@@ -20,6 +20,14 @@ export function parseByteRange(header: string) {
   };
 }
 
+/** Plex start.mp4 often rejects 1–2 byte probes. Ask for a real media slice. */
+export function playableRange(header?: string | null, chunk = MEDIA_CHUNK, minBytes = 65536): string {
+  const capped = capRange(header, chunk);
+  const { start, end } = parseByteRange(capped);
+  if (end - start + 1 >= minBytes) return capped;
+  return capRange(`bytes=${start}-`, chunk);
+}
+
 export function shouldCapMedia() {
   return Boolean(process.env.VERCEL);
 }

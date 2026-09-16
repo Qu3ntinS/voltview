@@ -3,8 +3,9 @@ import { useParams } from "react-router-dom";
 import { Html5Player } from "../components/Html5Player";
 import { SafetyGate } from "../components/SafetyGate";
 import { Theater } from "../components/Theater";
-import { api, plexFileUrl, plexImage } from "../lib/api";
+import { api, plexFileUrl, plexImage, plexStreamUrl } from "../lib/api";
 import { useSettings } from "../lib/settings";
+import { isTeslaBrowser } from "../lib/tesla";
 import { useWatchSession } from "../lib/useWatchSession";
 
 export function WatchPlexPage() {
@@ -42,10 +43,19 @@ export function WatchPlexPage() {
   });
 
   const file = plexFileUrl(settings, id);
-  const sources = useMemo(
-    () => [{ url: file, mime: "video/mp4", quality: "Auto", kind: "progressive" as const }],
-    [file],
-  );
+  const sources = useMemo(() => {
+    const progressive = { url: file, mime: "video/mp4", quality: "Auto", kind: "progressive" as const };
+    if (isTeslaBrowser()) return [progressive];
+    return [
+      progressive,
+      {
+        url: plexStreamUrl(settings, id, "hls"),
+        mime: "application/vnd.apple.mpegurl",
+        quality: "Auto",
+        kind: "hls" as const,
+      },
+    ];
+  }, [file, id, settings]);
 
   return (
     <SafetyGate title="Plex" resetKey={id}>

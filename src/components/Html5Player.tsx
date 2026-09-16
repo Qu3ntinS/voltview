@@ -35,6 +35,14 @@ function isSameOrigin(url: string) {
   }
 }
 
+function shouldProbe(url: string) {
+  return isSameOrigin(url) && !/\/api\/plex(?:\?|$)/.test(url);
+}
+
+function attemptMsFor(url: string) {
+  return /\/api\/plex(?:\?|$)/.test(url) ? 8000 : ATTEMPT_MS;
+}
+
 async function sameOriginPlayable(url: string) {
   const ctrl = new AbortController();
   const timer = window.setTimeout(() => ctrl.abort(), 4000);
@@ -187,7 +195,7 @@ export function Html5Player({
       }
       setQuality(source.quality === "auto" ? "Auto" : source.quality || "Auto");
       setLoading(true);
-      if (source.kind === "progressive" && isSameOrigin(source.url)) {
+      if (source.kind === "progressive" && shouldProbe(source.url)) {
         const playable = await sameOriginPlayable(source.url);
         if (cancelled) return;
         if (!playable) {
@@ -220,7 +228,7 @@ export function Html5Player({
       timer = window.setTimeout(() => {
         if (cancelled || ready) return;
         void tryIndex(index + 1);
-      }, ATTEMPT_MS);
+      }, attemptMsFor(source.url));
     }
 
     function onReady() {

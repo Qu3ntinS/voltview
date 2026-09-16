@@ -221,6 +221,8 @@ export function plexAuthQuery(settings: Settings) {
     plexServerToken: settings.plexServerToken || settings.plexToken,
     plexClient: settings.plexClientId,
   });
+  if (settings.plexServerId) params.set("plexServerId", settings.plexServerId);
+  if (settings.plexServerName) params.set("plexServerName", settings.plexServerName);
   return params.toString();
 }
 
@@ -243,6 +245,8 @@ export function plexImage(settings: Settings, path?: string, width = 400) {
     plexServerToken: settings.plexServerToken || settings.plexToken,
     plexClient: settings.plexClientId,
   });
+  if (settings.plexServerId) params.set("plexServerId", settings.plexServerId);
+  if (settings.plexServerName) params.set("plexServerName", settings.plexServerName);
   return `/api/plex?${params.toString()}`;
 }
 
