@@ -6,6 +6,7 @@ function pass({ request }: { request: Request }) {
 }
 
 export const plexRoutes = new Elysia({ prefix: "/api/plex" })
+  .all("/", pass)
   .all("/pin", pass)
   .all("/pin/:id", pass)
   .all("/resources", pass)

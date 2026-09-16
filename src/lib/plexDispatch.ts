@@ -1,1 +1,1 @@
-export { plexDispatch } from "../../api/_lib/plexDispatch";
+export { plexDispatch, plexRoutePath } from "../../api/_lib/plexDispatch";

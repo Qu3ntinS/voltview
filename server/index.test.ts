@@ -24,6 +24,14 @@ describe("VoltView API", () => {
     expect(body.error).toBe("NO_PLEX_TOKEN");
   });
 
+  test("plex query routes hit the same handler on Vercel-style URLs", async () => {
+    const section = await app.handle(new Request("http://localhost/api/plex?op=section&key=1"));
+    expect(section.status).toBe(400);
+    expect((await section.json()).error).toBe("NO_PLEX_TOKEN");
+    const stream = await app.handle(new Request("http://localhost/api/plex?op=stream&id=9"));
+    expect(stream.status).toBe(400);
+  });
+
   test("youtube stream rejects bad ids", async () => {
     const res = await app.handle(new Request("http://localhost/api/youtube/stream?id=nope"));
     expect(res.status).toBe(400);

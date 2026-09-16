@@ -8,6 +8,7 @@ export {
   plexAuthUrl,
   plexCreatePin,
   plexIdentity,
+  plexMediaHeaders,
   plexListResources,
   plexReadPin,
   rankPlexConnections,

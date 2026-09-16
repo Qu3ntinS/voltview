@@ -24,9 +24,9 @@ export type PlexServerInfo = {
   }[];
 };
 
-export function plexIdentity(clientId: string, token?: string) {
+export function plexIdentity(clientId: string, token?: string, accept = "application/json") {
   const headers: Record<string, string> = {
-    Accept: "application/json",
+    Accept: accept,
     "X-Plex-Client-Identifier": clientId || "voltview-web",
     "X-Plex-Product": PLEX_PRODUCT,
     "X-Plex-Version": PLEX_VERSION,
@@ -37,6 +37,10 @@ export function plexIdentity(clientId: string, token?: string) {
   };
   if (token) headers["X-Plex-Token"] = token;
   return headers;
+}
+
+export function plexMediaHeaders(clientId: string, token?: string) {
+  return plexIdentity(clientId, token, "*/*");
 }
 
 export function plexAuthUrl(clientId: string, code: string) {

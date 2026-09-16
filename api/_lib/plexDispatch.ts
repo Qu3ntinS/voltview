@@ -1,4 +1,4 @@
-import { isLanPlexHost, mapPlexResources, plexCreatePin, plexIdentity, plexListResources, plexReadPin, PLEX_PRODUCT, rankPlexConnections } from "./plexTv";
+import { isLanPlexHost, mapPlexResources, plexCreatePin, plexIdentity, plexListResources, plexMediaHeaders, plexReadPin, PLEX_PRODUCT, rankPlexConnections } from "./plexTv";
 
 type PlexCtx = {
   token: string;
@@ -163,13 +163,14 @@ function fail(error: unknown) {
 
 function assetUrl(requestUrl: URL, target: string, ctx: PlexCtx) {
   const params = new URLSearchParams({
+    op: "asset",
     u: target,
     plexToken: ctx.token,
     plexServer: ctx.server,
     plexServerToken: ctx.serverToken,
     plexClient: ctx.clientId,
   });
-  return `${requestUrl.origin}/api/plex/asset?${params.toString()}`;
+  return `${requestUrl.origin}/api/plex?${params.toString()}`;
 }
 
 function rewriteM3U8(body: string, base: URL, requestUrl: URL, ctx: PlexCtx) {
@@ -188,13 +189,47 @@ function rewriteM3U8(body: string, base: URL, requestUrl: URL, ctx: PlexCtx) {
     .join("\n");
 }
 
-function routePath(url: URL) {
-  return url.pathname.replace(/^\/api\/plex/, "") || "/";
+function firstQuery(url: URL, name: string) {
+  const all = url.searchParams.getAll(name).map((value) => String(value || "").trim()).filter(Boolean);
+  return all.join("/");
+}
+
+/** Vercel Vite does not support [...path] catch-alls. Prefer ?op= / ?voltPath=. */
+export function plexRoutePath(url: URL) {
+  const volt = firstQuery(url, "voltPath");
+  if (volt) return `/${volt.replace(/^\/+/, "")}`;
+  const op = firstQuery(url, "op");
+  if (op) {
+    const rest = firstQuery(url, "key") || firstQuery(url, "id");
+    if (rest && /^(section|stream|metadata|children|pin)$/.test(op)) return `/${op}/${rest}`;
+    return `/${op.replace(/^\/+/, "")}`;
+  }
+  const path = url.pathname.replace(/^\/api\/plex/, "") || "/";
+  return path.startsWith("/") ? path : `/${path}`;
+}
+
+function isBinaryOk(res: Response) {
+  const type = res.headers.get("content-type") || "";
+  return res.ok && !type.includes("json") && !type.includes("html") && !type.includes("xml");
+}
+
+async function plexMedia(ctx: PlexCtx, dest: string) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 12000);
+  try {
+    return await fetch(dest, { headers: plexMediaHeaders(ctx.clientId, ctx.serverToken), signal: ctrl.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function plexThumbUrl(server: string, imgPath: string, width: string) {
+  return `${server}/photo/:/transcode?width=${encodeURIComponent(width)}&minSize=1&upscale=1&url=${encodeURI(imgPath)}`;
 }
 
 export async function plexDispatch(request: Request): Promise<Response> {
   const url = new URL(request.url);
-  const path = routePath(url);
+  const path = plexRoutePath(url);
   const method = request.method.toUpperCase();
   const ctx = ctxOf(request, url);
 
@@ -280,60 +315,77 @@ export async function plexDispatch(request: Request): Promise<Response> {
     }
     if (method === "GET" && path === "/image") {
       requirePlexServer(ctx);
-      const uris = await plexUris(ctx);
-      if (uris[0]) ctx.server = uris[0];
       const imgPath = queryOf(url, "path");
       if (!imgPath.startsWith("/")) return json({ error: "Invalid image path" }, 400);
-      const dest = new URL(`${ctx.server}/photo/:/transcode`);
-      dest.searchParams.set("width", queryOf(url, "w") || "400");
-      dest.searchParams.set("url", imgPath);
-      dest.searchParams.set("minSize", "1");
-      dest.searchParams.set("X-Plex-Token", ctx.serverToken);
-      const res = await fetch(dest, { headers: plexIdentity(ctx.clientId, ctx.serverToken) });
-      if (!res.ok) return json({ error: "Image failed" }, 502);
-      return new Response(res.body, {
-        headers: {
-          "content-type": res.headers.get("content-type") || "image/jpeg",
-          "cache-control": "public, max-age=3600",
-        },
-      });
+      const width = queryOf(url, "w") || "400";
+      const uris = await plexUris(ctx);
+      for (const server of uris) {
+        for (const dest of [plexThumbUrl(server, imgPath, width), `${server}${imgPath}`]) {
+          try {
+            const res = await plexMedia(ctx, dest);
+            if (!isBinaryOk(res)) continue;
+            ctx.server = server;
+            return new Response(res.body, {
+              headers: {
+                "content-type": res.headers.get("content-type") || "image/jpeg",
+                "cache-control": "public, max-age=3600",
+              },
+            });
+          } catch {
+            /* next URI */
+          }
+        }
+      }
+      return json({ error: "Image failed" }, 502);
     }
     if (method === "GET" && path.startsWith("/stream/")) {
       requirePlexServer(ctx);
-      const uris = await plexUris(ctx);
-      if (uris[0]) ctx.server = uris[0];
       const id = decodeURIComponent(path.slice("/stream/".length));
       const session = `${ctx.clientId}-${id}`;
-      const dest = new URL(`${ctx.server}/video/:/transcode/universal/start.m3u8`);
-      dest.searchParams.set("path", `/library/metadata/${id}`);
-      dest.searchParams.set("mediaIndex", "0");
-      dest.searchParams.set("partIndex", "0");
-      dest.searchParams.set("protocol", "hls");
-      dest.searchParams.set("fastSeek", "1");
-      dest.searchParams.set("directPlay", "0");
-      dest.searchParams.set("directStream", "1");
-      dest.searchParams.set("subtitleSize", "100");
-      dest.searchParams.set("audioBoost", "100");
-      dest.searchParams.set("autoAdjustQuality", "1");
-      dest.searchParams.set("session", session);
-      dest.searchParams.set("X-Plex-Platform", "Html5");
-      dest.searchParams.set("X-Plex-Client-Identifier", ctx.clientId);
-      dest.searchParams.set("X-Plex-Product", PLEX_PRODUCT);
-      dest.searchParams.set("X-Plex-Device", "VoltView");
-      const res = await fetch(dest, { headers: plexIdentity(ctx.clientId, ctx.serverToken) });
-      const body = await res.text();
-      if (!res.ok) return json({ error: body.slice(0, 200) || "Stream failed" }, 502);
-      return new Response(rewriteM3U8(body, dest, url, ctx), {
-        headers: { "content-type": "application/vnd.apple.mpegurl" },
-      });
+      const uris = await plexUris(ctx);
+      let last = "Stream failed";
+      for (const server of uris) {
+        const dest = new URL(`${server}/video/:/transcode/universal/start.m3u8`);
+        dest.searchParams.set("path", `/library/metadata/${id}`);
+        dest.searchParams.set("mediaIndex", "0");
+        dest.searchParams.set("partIndex", "0");
+        dest.searchParams.set("protocol", "hls");
+        dest.searchParams.set("fastSeek", "1");
+        dest.searchParams.set("directPlay", "0");
+        dest.searchParams.set("directStream", "1");
+        dest.searchParams.set("subtitleSize", "100");
+        dest.searchParams.set("audioBoost", "100");
+        dest.searchParams.set("autoAdjustQuality", "1");
+        dest.searchParams.set("session", session);
+        dest.searchParams.set("X-Plex-Platform", "Html5");
+        dest.searchParams.set("X-Plex-Client-Identifier", ctx.clientId);
+        dest.searchParams.set("X-Plex-Product", PLEX_PRODUCT);
+        dest.searchParams.set("X-Plex-Device", "VoltView");
+        try {
+          const res = await plexMedia(ctx, dest.toString());
+          const body = await res.text();
+          if (!res.ok) {
+            last = body.slice(0, 200) || last;
+            continue;
+          }
+          ctx.server = server;
+          return new Response(rewriteM3U8(body, dest, url, ctx), {
+            headers: { "content-type": "application/vnd.apple.mpegurl" },
+          });
+        } catch (error) {
+          last = (error as Error).message || last;
+        }
+      }
+      return json({ error: last }, 502);
     }
     if (method === "GET" && path === "/asset") {
       requirePlexServer(ctx);
       const uris = await plexUris(ctx);
-      if (uris[0]) ctx.server = uris[0];
       const target = queryOf(url, "u");
-      if (!target || !isAllowedPlexUrl(target, ctx.server)) return json({ error: "Blocked asset host" }, 400);
-      const res = await fetch(target, { headers: plexIdentity(ctx.clientId, ctx.serverToken) });
+      if (!target || !uris.some((server) => isAllowedPlexUrl(target, server) || isAllowedPlexUrl(target, ctx.server))) {
+        return json({ error: "Blocked asset host" }, 400);
+      }
+      const res = await plexMedia(ctx, target);
       const contentType = res.headers.get("content-type") || "";
       if (contentType.includes("mpegurl") || target.includes(".m3u8")) {
         const body = await res.text();
@@ -341,6 +393,7 @@ export async function plexDispatch(request: Request): Promise<Response> {
           headers: { "content-type": "application/vnd.apple.mpegurl" },
         });
       }
+      if (!res.ok) return json({ error: "Asset failed" }, 502);
       return new Response(res.body, {
         headers: { "content-type": contentType || "application/octet-stream" },
       });
