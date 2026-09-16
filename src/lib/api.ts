@@ -8,12 +8,14 @@ export type YoutubeChannel = {
   id: string;
   title: string;
   thumbnail: string;
+  description?: string;
 };
 
 export type YoutubeVideo = {
   id: string;
   title: string;
   channel: string;
+  channelId: string;
   description: string;
   publishedAt: string;
   thumbnail: string;
@@ -73,6 +75,8 @@ function headers(settings: Settings, extra?: Record<string, string>) {
   if (settings.plexClientId) h["x-volt-plex-client"] = settings.plexClientId;
   if (settings.plexServerUri) h["x-volt-plex-server"] = settings.plexServerUri;
   if (settings.plexServerToken) h["x-volt-plex-server-token"] = settings.plexServerToken;
+  if (settings.plexServerId) h["x-volt-plex-server-id"] = settings.plexServerId;
+  if (settings.plexServerName) h["x-volt-plex-server-name"] = settings.plexServerName;
   return h;
 }
 
@@ -121,7 +125,7 @@ export const api = {
       () => youtubeClient.trending(settings, categoryId),
     ),
   youtubeSearch: (settings: Settings, q: string) =>
-    youtubeCall(
+    youtubeCall<{ items: YoutubeVideo[]; channels?: YoutubeChannel[]; error?: string }>(
       `/api/youtube/search?q=${encodeURIComponent(q)}&region=${encodeURIComponent(settings.youtubeRegion)}`,
       settings,
       () => youtubeClient.search(settings, q),
@@ -137,7 +141,7 @@ export const api = {
   youtubeFeed: (settings: Settings) =>
     youtubeCall("/api/youtube/feed", settings, () => youtubeClient.feed(settings)),
   youtubeChannel: (settings: Settings, id: string) =>
-    youtubeCall(
+    youtubeCall<{ items: YoutubeVideo[]; channel?: YoutubeChannel; error?: string }>(
       `/api/youtube/channel?id=${encodeURIComponent(id)}`,
       settings,
       () => youtubeClient.channel(settings, id),
@@ -206,6 +210,7 @@ function defaultLike(): Settings {
     plexServerUri: "",
     plexServerToken: "",
     plexServerName: "",
+    plexServerId: "",
   };
 }
 

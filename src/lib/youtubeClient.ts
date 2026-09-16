@@ -4,6 +4,7 @@ type YoutubeVideo = {
   id: string;
   title: string;
   channel: string;
+  channelId: string;
   description: string;
   publishedAt: string;
   thumbnail: string;
@@ -25,6 +26,7 @@ function mapVideo(item: any): YoutubeVideo {
     id: item.id?.videoId || item.id,
     title: item.snippet?.title || "",
     channel: item.snippet?.channelTitle || "",
+    channelId: item.snippet?.channelId || "",
     description: item.snippet?.description || "",
     publishedAt: item.snippet?.publishedAt || "",
     thumbnail: thumbs.maxres?.url || thumbs.high?.url || thumbs.medium?.url || thumbs.default?.url || "",
@@ -64,18 +66,40 @@ export const youtubeClient = {
     return { items: (data.items || []).map(mapVideo), error: undefined as string | undefined };
   },
   search: async (settings: Settings, q: string) => {
-    const data = await ytGet(
-      "search",
-      {
-        part: "snippet",
-        type: "video",
-        maxResults: "24",
-        q,
-        regionCode: settings.youtubeRegion || "DE",
-      },
-      settings
-    );
-    return { items: (data.items || []).map(mapVideo), error: undefined as string | undefined };
+    const [videoData, channelData] = await Promise.all([
+      ytGet(
+        "search",
+        {
+          part: "snippet",
+          type: "video",
+          maxResults: "20",
+          q,
+          regionCode: settings.youtubeRegion || "DE",
+        },
+        settings
+      ),
+      ytGet(
+        "search",
+        {
+          part: "snippet",
+          type: "channel",
+          maxResults: "8",
+          q,
+          regionCode: settings.youtubeRegion || "DE",
+        },
+        settings
+      ),
+    ]);
+    const channels: YoutubeChannel[] = (channelData.items || []).map((item: any) => ({
+      id: item.id?.channelId || item.snippet?.channelId || "",
+      title: item.snippet?.title || "",
+      thumbnail:
+        item.snippet?.thumbnails?.high?.url ||
+        item.snippet?.thumbnails?.medium?.url ||
+        item.snippet?.thumbnails?.default?.url ||
+        "",
+    }));
+    return { items: (videoData.items || []).map(mapVideo), channels, error: undefined as string | undefined };
   },
   videos: async (settings: Settings, id: string) => {
     const data = await ytGet("videos", { part: "snippet,contentDetails,statistics", id }, settings);
@@ -126,11 +150,30 @@ export const youtubeClient = {
     return { items: videos, error: undefined as string | undefined };
   },
   channel: async (settings: Settings, id: string) => {
-    const data = await ytGet(
-      "search",
-      { part: "snippet", channelId: id, type: "video", order: "date", maxResults: "24" },
-      settings
-    );
-    return { items: (data.items || []).map(mapVideo), error: undefined as string | undefined };
+    const [meta, data] = await Promise.all([
+      ytGet("channels", { part: "snippet", id }, settings).catch(() => ({ items: [] })),
+      ytGet(
+        "search",
+        { part: "snippet", channelId: id, type: "video", order: "date", maxResults: "24" },
+        settings
+      ),
+    ]);
+    const ch = (meta.items || [])[0];
+    return {
+      channel: ch
+        ? {
+            id,
+            title: ch.snippet?.title || "",
+            thumbnail:
+              ch.snippet?.thumbnails?.high?.url ||
+              ch.snippet?.thumbnails?.medium?.url ||
+              ch.snippet?.thumbnails?.default?.url ||
+              "",
+            description: ch.snippet?.description || "",
+          }
+        : { id, title: "", thumbnail: "", description: "" },
+      items: (data.items || []).map(mapVideo),
+      error: undefined as string | undefined,
+    };
   },
 };

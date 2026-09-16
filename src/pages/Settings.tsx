@@ -34,7 +34,7 @@ export function SettingsPage() {
       <section className="card">
         <h2 className="text-lg font-semibold">Status</h2>
         <p className="muted mt-2">
-          Google: {settings.youtubeAccessToken ? "verbunden — Abos und Likes persönlich" : "offen. QR scannen."}
+          Google: {settings.youtubeAccessToken ? "verbunden — Abos und Kanäle persönlich" : "offen. QR scannen."}
         </p>
         <p className="muted">
           Plex: {settings.plexServerName || (settings.plexToken ? "Account da, Server fehlt" : "offen. QR scannen.")}
@@ -62,6 +62,7 @@ export function SettingsPage() {
                   plexServerUri: "",
                   plexServerToken: "",
                   plexServerName: "",
+                  plexServerId: "",
                 })
               }
             >
@@ -85,7 +86,7 @@ export function SettingsPage() {
       <section className="card">
         <h2 className="text-lg font-semibold">Tesla-Link</h2>
         <p className="muted mt-2">
-          Diesen YouTube-Redirect als Lesezeichen speichern — wie Tesla Play. Dann darf der Browser HTML5-Video.
+          Diesen YouTube-Redirect als Lesezeichen speichern. Dann darf der Browser HTML5-Video.
         </p>
         <p className="mono wrap mt-2">{teslaRedirectUrl(publicSiteUrl())}</p>
       </section>

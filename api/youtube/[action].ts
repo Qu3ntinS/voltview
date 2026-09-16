@@ -12,11 +12,22 @@ function mapVideo(item: any) {
     id: item.id?.videoId || item.id,
     title: item.snippet?.title || "",
     channel: item.snippet?.channelTitle || "",
+    channelId: item.snippet?.channelId || "",
     description: item.snippet?.description || "",
     publishedAt: item.snippet?.publishedAt || "",
     thumbnail: thumb || "",
     duration: item.contentDetails?.duration || "",
     views: item.statistics?.viewCount || "",
+  };
+}
+
+function mapChannel(item: any) {
+  const thumbs = item.snippet?.thumbnails || {};
+  return {
+    id: item.id?.channelId || item.snippet?.resourceId?.channelId || item.id || "",
+    title: item.snippet?.title || "",
+    thumbnail: thumbs.high?.url || thumbs.medium?.url || thumbs.default?.url || "",
+    description: item.snippet?.description || "",
   };
 }
 
@@ -75,19 +86,36 @@ export default async function handler(
     }
     if (action === "search" || action === "related") {
       const q = query(req, "q").trim();
-      if (!q) return res.status(200).json({ items: [] });
-      const data = await youtubeGet(
+      if (!q) return res.status(200).json({ items: [], channels: [] });
+      const videoData = await youtubeGet(
         "search",
         {
           part: "snippet",
           type: "video",
-          maxResults: action === "related" ? "16" : "24",
+          maxResults: action === "related" ? "16" : "20",
           q,
           regionCode: query(req, "region") || "DE",
         },
         token,
       );
-      return res.status(200).json({ items: (data.items || []).map(mapVideo) });
+      if (action === "related") {
+        return res.status(200).json({ items: (videoData.items || []).map(mapVideo) });
+      }
+      const channelData = await youtubeGet(
+        "search",
+        {
+          part: "snippet",
+          type: "channel",
+          maxResults: "8",
+          q,
+          regionCode: query(req, "region") || "DE",
+        },
+        token,
+      );
+      return res.status(200).json({
+        items: (videoData.items || []).map(mapVideo),
+        channels: (channelData.items || []).map(mapChannel),
+      });
     }
     if (action === "videos") {
       const id = query(req, "id");
@@ -135,9 +163,27 @@ export default async function handler(
     }
     if (action === "channel") {
       const id = query(req, "id");
-      if (!id) return res.status(200).json({ items: [] });
-      const data = await youtubeGet("search", { part: "snippet", channelId: id, type: "video", order: "date", maxResults: "24" }, token);
-      return res.status(200).json({ items: (data.items || []).map(mapVideo) });
+      if (!id) return res.status(200).json({ items: [], channel: null });
+      const [meta, data] = await Promise.all([
+        youtubeGet("channels", { part: "snippet,statistics", id }, token),
+        youtubeGet("search", { part: "snippet", channelId: id, type: "video", order: "date", maxResults: "24" }, token),
+      ]);
+      const ch = (meta.items || [])[0];
+      return res.status(200).json({
+        channel: ch
+          ? {
+              id,
+              title: ch.snippet?.title || "",
+              thumbnail:
+                ch.snippet?.thumbnails?.high?.url ||
+                ch.snippet?.thumbnails?.medium?.url ||
+                ch.snippet?.thumbnails?.default?.url ||
+                "",
+              description: ch.snippet?.description || "",
+            }
+          : { id, title: "", thumbnail: "", description: "" },
+        items: (data.items || []).map(mapVideo),
+      });
     }
     return res.status(404).json({ error: "Not found" });
   } catch (error) {

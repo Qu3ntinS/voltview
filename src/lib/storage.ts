@@ -8,6 +8,7 @@ export type Settings = {
   plexServerUri: string;
   plexServerToken: string;
   plexServerName: string;
+  plexServerId: string;
 };
 
 export type RecentItem = {
@@ -65,6 +66,7 @@ export const defaultSettings: Settings = {
   plexServerUri: "",
   plexServerToken: "",
   plexServerName: "",
+  plexServerId: "",
 };
 
 export function loadSettings(): Settings {

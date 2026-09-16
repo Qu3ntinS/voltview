@@ -7,6 +7,7 @@ export type PairSettings = {
   plexServerUri?: string;
   plexServerToken?: string;
   plexServerName?: string;
+  plexServerId?: string;
 };
 
 export const PAIR_TTL_MS = 10 * 60 * 1000;
@@ -20,6 +21,7 @@ const SETTING_KEYS = [
   "plexServerUri",
   "plexServerToken",
   "plexServerName",
+  "plexServerId",
 ] as const;
 
 const NTFY = "https://ntfy.sh";

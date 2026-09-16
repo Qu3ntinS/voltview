@@ -5,6 +5,7 @@ import { Shell } from "./components/Shell";
 const HomePage = lazy(() => import("./pages/Home").then((m) => ({ default: m.HomePage })));
 const AppsPage = lazy(() => import("./pages/Apps").then((m) => ({ default: m.AppsPage })));
 const YouTubePage = lazy(() => import("./pages/YouTube").then((m) => ({ default: m.YouTubePage })));
+const ChannelPage = lazy(() => import("./pages/Channel").then((m) => ({ default: m.ChannelPage })));
 const WatchYouTubePage = lazy(() => import("./pages/WatchYouTube").then((m) => ({ default: m.WatchYouTubePage })));
 const PlexPage = lazy(() => import("./pages/Plex").then((m) => ({ default: m.PlexPage })));
 const PlexLibraryPage = lazy(() => import("./pages/PlexLibrary").then((m) => ({ default: m.PlexLibraryPage })));
@@ -32,6 +33,7 @@ export function App() {
           <Route path="/apps" element={<AppsPage />} />
           <Route path="/apps/:id" element={<ServiceLaunchPage />} />
           <Route path="/youtube" element={<YouTubePage />} />
+          <Route path="/youtube/channel/:id" element={<ChannelPage />} />
           <Route path="/watch/yt/:id" element={<WatchYouTubePage />} />
           <Route path="/plex" element={<PlexPage />} />
           <Route path="/plex/library/:key" element={<PlexLibraryPage />} />
