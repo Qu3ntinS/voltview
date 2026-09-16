@@ -8,7 +8,7 @@ import tailwindcss from "@tailwindcss/vite";
 
 function proxyApi(req: IncomingMessage, res: ServerResponse, next: Connect.NextFunction) {
   const url = req.url || "";
-  if (!url.startsWith("/api")) {
+  if (!url.startsWith("/api") || url.startsWith("/api/_lib") || /\.tsx?(?:\?|$)/.test(url)) {
     next();
     return;
   }
