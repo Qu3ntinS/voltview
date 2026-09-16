@@ -52,14 +52,14 @@ const INNERTUBE_CLIENTS = [
 /** Public frontends that still 302 `/latest_version` (Tesla <video> follows this itself). */
 const INVIDIOUS = [
   "https://invidious.tiekoetter.com",
+  "https://invidious.nerdvpn.de",
+  "https://invidious.protokolla.fi",
+  "https://yewtu.be",
   "https://yt.chocolatemoo53.com",
   "https://inv.nadeko.net",
-  "https://invidious.nerdvpn.de",
-  "https://yewtu.be",
   "https://invidious.f5.si",
   "https://invidious.flokinet.to",
   "https://invidious.privacyredirect.com",
-  "https://invidious.protokolla.fi",
   "https://inv.tux.pizza",
 ];
 
@@ -326,6 +326,37 @@ export function playbackCandidates(
 
 export function youtubeFileUrl(videoId: string, itag: number) {
   return `/api/youtube/file?id=${encodeURIComponent(videoId)}&itag=${itag}`;
+}
+
+/**
+ * MP4 URLs the phone/Tesla <video> loads itself.
+ * Non-local first: Invidious 302s to googlevideo bound to THIS device IP.
+ * Vercel /api/youtube/file cannot do that — datacenter IPs get 403/LOGIN_REQUIRED.
+ */
+export function deviceProgressiveCandidates(rawId: string, limit = 8): PlaybackSource[] {
+  const videoId = sanitizeVideoId(rawId);
+  const itags = [
+    { itag: 18, quality: "360p" },
+    { itag: 22, quality: "720p" },
+  ] as const;
+  const out: PlaybackSource[] = [];
+  const seen = new Set<string>();
+  const push = (url: string, quality: string) => {
+    if (seen.has(url)) return;
+    seen.add(url);
+    out.push({ url, mime: "video/mp4", quality, kind: "progressive" });
+  };
+  for (const local of [false, true]) {
+    for (const { itag, quality } of itags) {
+      for (const base of INVIDIOUS) {
+        push(
+          `${base}/latest_version?id=${videoId}&itag=${itag}${local ? "&local=true" : ""}`,
+          local ? `${quality}-proxy` : quality,
+        );
+      }
+    }
+  }
+  return out.slice(0, limit);
 }
 
 /** Third-party HTML5 embeds (not youtube.com / youtube-nocookie). */

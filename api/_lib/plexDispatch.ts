@@ -280,14 +280,18 @@ async function servePlexFile(ctx: PlexCtx, id: string, range: string | null) {
   const list = plexPlaybackUris(uris);
   if (!list.length) throw new Error("NO_PLEX_SERVER");
   const firstChunk = !range || /^bytes=0-/i.test(range);
+  const cloud = Boolean(process.env.VERCEL);
+  // Hobby functions die at ~10s. Remux + metadata + transcode used to stack past that.
+  const remuxMs = cloud ? 4000 : 6000;
+  const transcodeMs = cloud ? 5000 : 6000;
 
-  async function tryStart(mode: "remux" | "transcode") {
+  async function tryStart(mode: "remux" | "transcode", timeoutMs: number) {
     for (const server of list) {
       const dest = plexStartUrl(server, id, ctx, "mp4", mode).toString();
       const out = await proxyPlexDest(ctx, dest, range, uris, {
         omitRange: firstChunk,
         retryUnranged: firstChunk,
-        timeoutMs: 6000,
+        timeoutMs,
       });
       if (out) {
         ctx.server = server;
@@ -297,29 +301,31 @@ async function servePlexFile(ctx: PlexCtx, id: string, range: string | null) {
     return null;
   }
 
-  const remuxed = await tryStart("remux");
+  const remuxed = await tryStart("remux", remuxMs);
   if (remuxed) return remuxed;
 
-  try {
-    const part = await plexFilePart(ctx, id);
-    const directMp4 = part.key && (/^(mp4|mov|m4v)$/.test(part.container) || /\.(mp4|m4v|mov)(\?|$)/i.test(part.key));
-    if (directMp4) {
-      for (const server of list) {
-        const out = await proxyPlexDest(ctx, `${server}${part.key}`, range, uris, {
-          retryUnranged: firstChunk,
-          timeoutMs: 5000,
-        });
-        if (out) {
-          ctx.server = server;
-          return out;
+  if (!cloud) {
+    try {
+      const part = await plexFilePart(ctx, id);
+      const directMp4 = part.key && (/^(mp4|mov|m4v)$/.test(part.container) || /\.(mp4|m4v|mov)(\?|$)/i.test(part.key));
+      if (directMp4) {
+        for (const server of list) {
+          const out = await proxyPlexDest(ctx, `${server}${part.key}`, range, uris, {
+            retryUnranged: firstChunk,
+            timeoutMs: 5000,
+          });
+          if (out) {
+            ctx.server = server;
+            return out;
+          }
         }
       }
+    } catch {
+      /* transcode fallback */
     }
-  } catch {
-    /* transcode fallback */
   }
 
-  const transcoded = await tryStart("transcode");
+  const transcoded = await tryStart("transcode", transcodeMs);
   if (transcoded) return transcoded;
   return json({ error: "Stream fehlgeschlagen." }, 502);
 }

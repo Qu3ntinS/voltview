@@ -2,12 +2,14 @@ import { useEffect, useRef, useState } from "react";
 import { PlayerChrome } from "./PlayerChrome";
 import { PlayerLoading } from "./PlayerLoading";
 import { canUseNativeHls, mediaDuration } from "../lib/playerMedia";
+import { isLanPlexHost } from "../lib/plexTv";
 
 export type Html5Source = {
   url: string;
   kind: "progressive" | "hls";
   quality?: string;
   mime?: string;
+  timeoutMs?: number;
 };
 
 type HlsLike = {
@@ -38,12 +40,16 @@ function isSameOrigin(url: string) {
 function shouldProbe(url: string) {
   if (!isSameOrigin(url)) return false;
   if (/\/api\/plex(?:\?|$)/.test(url)) return false;
+  if (/\/api\/youtube(?:\/|\?|$)/.test(url)) return false;
   if (/\.(mp4|webm)(\?|$)/i.test(url) && !url.includes("/api/")) return false;
   return true;
 }
 
-function attemptMsFor(url: string) {
-  return /\/api\/plex(?:\?|$)/.test(url) ? 0 : ATTEMPT_MS;
+function attemptMsFor(source: Html5Source) {
+  if (typeof source.timeoutMs === "number") return source.timeoutMs;
+  if (/\/api\/plex(?:\?|$)/.test(source.url)) return 0;
+  if (isLanPlexHost(source.url)) return 2500;
+  return ATTEMPT_MS;
 }
 
 async function sameOriginPlayable(url: string) {
@@ -135,11 +141,12 @@ export function Html5Player({
   const [playing, setPlaying] = useState(false);
   const [current, setCurrent] = useState(0);
   const [duration, setDuration] = useState(0);
+  const startWithEmbed = !sources.some((item) => item.url) && Boolean(fallbackEmbed);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!startWithEmbed);
   const [buffering, setBuffering] = useState(false);
   const [quality, setQuality] = useState("Auto");
-  const [embed, setEmbed] = useState("");
+  const [embed, setEmbed] = useState(startWithEmbed ? fallbackEmbed || "" : "");
 
   const sourceKey = sources.map((item) => `${item.kind}:${item.url}`).join("|");
   const headerKey = JSON.stringify(hlsHeaders || {});
@@ -148,13 +155,23 @@ export function Html5Player({
     const media = videoRef.current;
     if (!media) return;
     const node: HTMLVideoElement = media;
-    const list = sources.filter((item) => item.url).slice(0, 6);
+    const list = sources.filter((item) => item.url).slice(0, 12);
     let cancelled = false;
     let ignoreError = false;
     let ready = false;
     let hls: HlsLike | null = null;
     let timer = 0;
     let index = 0;
+
+    if (!list.length && fallbackEmbed) {
+      setError("");
+      setEmbed(fallbackEmbed);
+      setLoading(false);
+      setBuffering(false);
+      return () => {
+        cancelled = true;
+      };
+    }
 
     setError("");
     setEmbed("");
@@ -237,7 +254,7 @@ export function Html5Player({
       }
       if (cancelled) return;
       clearTimer();
-      const wait = attemptMsFor(source.url);
+      const wait = attemptMsFor(source);
       if (wait) {
         timer = window.setTimeout(() => {
           if (cancelled || ready) return;
@@ -342,7 +359,7 @@ export function Html5Player({
         controls={false}
         disablePictureInPicture
         controlsList="nodownload noplaybackrate noremoteplayback"
-        {...{ "webkit-playsinline": "true", referrerPolicy: "no-referrer" }}
+        {...{ "webkit-playsinline": "true" }}
         onPlay={() => setPlaying(true)}
         onPause={() => setPlaying(false)}
         onDurationChange={(event) => setDuration(mediaDuration(event.currentTarget))}

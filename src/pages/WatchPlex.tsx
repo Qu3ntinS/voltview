@@ -47,11 +47,27 @@ export function WatchPlexPage() {
   const direct = plexClientFileUrl(settings, id);
   const sources = useMemo(() => {
     const proxy = { url: file, mime: "video/mp4", quality: "Auto", kind: "progressive" as const };
-    const client = direct ? { url: direct, mime: "video/mp4", quality: "Direkt", kind: "progressive" as const } : null;
     const tesla = isTeslaBrowser();
     const lan = direct ? isLanPlexHost(direct) : true;
-    const out: { url: string; mime: string; quality: string; kind: "progressive" | "hls" }[] = [];
-    if (client && !tesla) out.push(client);
+    const client = direct
+      ? {
+          url: direct,
+          mime: "video/mp4",
+          quality: lan ? "LAN" : "Direkt",
+          kind: "progressive" as const,
+          timeoutMs: lan ? 2500 : 8000,
+        }
+      : null;
+    const out: {
+      url: string;
+      mime: string;
+      quality: string;
+      kind: "progressive" | "hls";
+      timeoutMs?: number;
+    }[] = [];
+    // Phone on LTE cannot reach 192.168 plex.direct — try it briefly, then remote, then Vercel.
+    if (client && !tesla && lan) out.push(client);
+    if (client && !tesla && !lan) out.push(client);
     out.push(proxy);
     if (client && tesla && !lan) out.push(client);
     if (!tesla) {

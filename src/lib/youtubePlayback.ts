@@ -1,5 +1,6 @@
 export {
   canCallInnertube,
+  deviceProgressiveCandidates,
   embedCandidates,
   firstLiveCandidate,
   friendlyPlaybackError,

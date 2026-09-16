@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Html5Player } from "./Html5Player";
-import { friendlyPlaybackError, playbackCandidates, youtubeFileUrl, youtubeOfficialEmbed } from "../lib/youtubePlayback";
+import { deviceProgressiveCandidates, friendlyPlaybackError, youtubeOfficialEmbed } from "../lib/youtubePlayback";
 import { localPlaybackOverride } from "../lib/playerMedia";
 import { isTeslaBrowser } from "../lib/tesla";
 
@@ -17,11 +17,14 @@ export function YoutubeStage({
   const sources = useMemo(() => {
     const override = localPlaybackOverride();
     if (override) return [override];
-    const file18 = { url: youtubeFileUrl(videoId, 18), mime: "video/mp4", quality: "360p", kind: "progressive" as const };
-    const file22 = { url: youtubeFileUrl(videoId, 22), mime: "video/mp4", quality: "720p", kind: "progressive" as const };
-    const direct = playbackCandidates(videoId, { hls: false }).slice(0, 3);
-    if (tesla) return [file18, file22, ...direct];
-    return [file18, ...direct];
+    if (!videoId) return [];
+    // Phone: official embed is the reliable player. Do not burn 20s on Vercel 502s.
+    if (!tesla) return [];
+    // Tesla iframe is audio-only. Load Invidious→googlevideo from the car, not Vercel.
+    return deviceProgressiveCandidates(videoId, 6).map((item) => ({
+      ...item,
+      timeoutMs: 4000,
+    }));
   }, [tesla, videoId]);
 
   return (
