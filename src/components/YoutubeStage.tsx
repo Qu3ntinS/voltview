@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Html5Player } from "./Html5Player";
-import { friendlyPlaybackError, playbackCandidates, youtubeFileUrl } from "../lib/youtubePlayback";
+import { friendlyPlaybackError, playbackCandidates, youtubeFileUrl, youtubeOfficialEmbed } from "../lib/youtubePlayback";
 import { localPlaybackOverride } from "../lib/playerMedia";
 import { isTeslaBrowser } from "../lib/tesla";
 
@@ -17,17 +17,11 @@ export function YoutubeStage({
   const sources = useMemo(() => {
     const override = localPlaybackOverride();
     if (override) return [override];
-    if (tesla) {
-      return [
-        { url: youtubeFileUrl(videoId, 18), mime: "video/mp4", quality: "360p", kind: "progressive" as const },
-        { url: youtubeFileUrl(videoId, 22), mime: "video/mp4", quality: "720p", kind: "progressive" as const },
-        ...playbackCandidates(videoId, { hls: false }).slice(0, 4),
-      ];
-    }
-    return [
-      ...playbackCandidates(videoId).slice(0, 4),
-      { url: youtubeFileUrl(videoId, 18), mime: "video/mp4", quality: "360p", kind: "progressive" as const },
-    ];
+    const file18 = { url: youtubeFileUrl(videoId, 18), mime: "video/mp4", quality: "360p", kind: "progressive" as const };
+    const file22 = { url: youtubeFileUrl(videoId, 22), mime: "video/mp4", quality: "720p", kind: "progressive" as const };
+    const direct = playbackCandidates(videoId, { hls: false }).slice(0, 3);
+    if (tesla) return [file18, file22, ...direct];
+    return [file18, ...direct];
   }, [tesla, videoId]);
 
   return (
@@ -38,6 +32,17 @@ export function YoutubeStage({
       eyebrow="YouTube"
       title={title || "YouTube"}
       failText={friendlyPlaybackError("NO_STREAM")}
+      fallbackEmbed={
+        tesla || !videoId
+          ? undefined
+          : (() => {
+              try {
+                return youtubeOfficialEmbed(videoId);
+              } catch {
+                return undefined;
+              }
+            })()
+      }
       onSnapshot={onSnapshot}
     />
   );

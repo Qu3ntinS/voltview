@@ -66,6 +66,8 @@ const INVIDIOUS = [
 export function youtubeMediaHost(host: string) {
   const name = host.toLowerCase();
   if (name.endsWith(".googlevideo.com")) return true;
+  if (name.includes("invidious") || name.includes("yewtu") || name.includes("piped")) return true;
+  if (name.endsWith("nadeko.net") || name.endsWith("nerdvpn.de")) return true;
   return INVIDIOUS.some((base) => {
     try {
       return new URL(base).hostname.toLowerCase() === name;
@@ -332,6 +334,12 @@ export function embedCandidates(rawId: string): string[] {
   return EMBED_HOSTS.map((base) => `${base}/embed/${videoId}?autoplay=1&quality=medium`);
 }
 
+/** Phone/desktop only. Tesla's official iframe is audio without video. */
+export function youtubeOfficialEmbed(rawId: string) {
+  const videoId = sanitizeVideoId(rawId);
+  return `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&playsinline=1&rel=0&modestbranding=1`;
+}
+
 export async function firstLiveCandidate(candidates: PlaybackSource[]): Promise<PlaybackSource | null> {
   const slice = candidates.slice(0, 4);
   const result = await Promise.race([
@@ -375,13 +383,13 @@ export async function proxyYoutubeFile(id: string, itag: number, range?: string 
     seen.add(item.url);
     ordered.push(item);
   }
-  const deadline = Date.now() + 8500;
-  for (const candidate of ordered.slice(0, 6)) {
+  const deadline = Date.now() + 7500;
+  for (const candidate of ordered.slice(0, 4)) {
     if (Date.now() > deadline) break;
-    const remain = Math.max(1200, deadline - Date.now());
+    const remain = Math.max(1000, deadline - Date.now());
     const out = await proxyMedia(candidate.url, {
       range,
-      timeoutMs: Math.min(remain, 6000),
+      timeoutMs: Math.min(remain, 4500),
       allowHost: youtubeMediaHost,
     });
     if (out) return out;
