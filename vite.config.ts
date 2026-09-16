@@ -82,14 +82,26 @@ export default defineConfig({
     host: true,
     port: 5173,
     proxy: {
-      "/api": "http://127.0.0.1:3001",
+      "/api": {
+        target: "http://127.0.0.1:3001",
+        bypass(req) {
+          const url = req.url || "";
+          if (url.startsWith("/api/_lib") || /\.tsx?(?:\?|$)/.test(url)) return url;
+        },
+      },
     },
   },
   preview: {
     host: true,
     port: 4173,
     proxy: {
-      "/api": "http://127.0.0.1:3001",
+      "/api": {
+        target: "http://127.0.0.1:3001",
+        bypass(req) {
+          const url = req.url || "";
+          if (url.startsWith("/api/_lib") || /\.tsx?(?:\?|$)/.test(url)) return url;
+        },
+      },
     },
   },
   build: {
