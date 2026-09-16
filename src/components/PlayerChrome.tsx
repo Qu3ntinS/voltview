@@ -39,7 +39,6 @@ export function PlayerChrome({
   const canSeek = seekable && duration > 0 && Number.isFinite(duration);
   const [idle, setIdle] = useState(false);
   const lastAt = useRef(0);
-  const lastPos = useRef({ x: 0, y: 0 });
   const timer = useRef(0);
 
   const bump = useCallback(() => {
@@ -69,20 +68,10 @@ export function PlayerChrome({
     bump();
   }
 
-  function onMove(event: { clientX: number; clientY: number }) {
-    const dx = Math.abs(event.clientX - lastPos.current.x);
-    const dy = Math.abs(event.clientY - lastPos.current.y);
-    lastPos.current = { x: event.clientX, y: event.clientY };
-    if (dx < 14 && dy < 14) return;
-    bump();
-  }
-
   return (
     <div
       className={`player-stage${playing ? " is-playing" : ""}${idle && playing ? " is-idle" : ""}${embed ? " is-embed" : ""}`}
       style={{ "--player-progress": `${progress}%` } as CSSProperties}
-      onMouseMove={onMove}
-      onPointerDown={bump}
     >
       {children}
       <button type="button" className="player-tap" aria-label={playing ? "Pause" : "Play"} onClick={onTap} />

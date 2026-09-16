@@ -16,7 +16,7 @@ type HlsLike = {
   on: (event: string, handler: (event: string, data: { fatal?: boolean; level?: number }) => void) => void;
 };
 
-const ATTEMPT_MS = 10000;
+const ATTEMPT_MS = 6000;
 
 function readMedia(node: HTMLVideoElement) {
   return {
@@ -24,6 +24,35 @@ function readMedia(node: HTMLVideoElement) {
     durationSec: mediaDuration(node),
     playing: !node.paused,
   };
+}
+
+function isSameOrigin(url: string) {
+  if (url.startsWith("/")) return true;
+  try {
+    return new URL(url, window.location.href).origin === window.location.origin;
+  } catch {
+    return false;
+  }
+}
+
+async function sameOriginPlayable(url: string) {
+  const ctrl = new AbortController();
+  const timer = window.setTimeout(() => ctrl.abort(), 4000);
+  try {
+    const res = await fetch(url, {
+      method: "GET",
+      headers: { Range: "bytes=0-1", accept: "*/*" },
+      signal: ctrl.signal,
+    });
+    const type = res.headers.get("content-type") || "";
+    if (res.status === 206) return true;
+    if (!res.ok) return false;
+    return /video|mpegurl|octet-stream|mp4/i.test(type);
+  } catch {
+    return false;
+  } finally {
+    window.clearTimeout(timer);
+  }
 }
 
 async function attachSource(
@@ -163,6 +192,14 @@ export function Html5Player({
       }
       setQuality(source.quality === "auto" ? "Auto" : source.quality || "Auto");
       setLoading(true);
+      if (source.kind === "progressive" && isSameOrigin(source.url)) {
+        const playable = await sameOriginPlayable(source.url);
+        if (cancelled) return;
+        if (!playable) {
+          void tryIndex(next + 1);
+          return;
+        }
+      }
       try {
         ignoreError = true;
         hls?.destroy();

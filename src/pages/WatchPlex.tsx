@@ -3,8 +3,7 @@ import { useParams } from "react-router-dom";
 import { Html5Player } from "../components/Html5Player";
 import { SafetyGate } from "../components/SafetyGate";
 import { Theater } from "../components/Theater";
-import { api, plexFileUrl, plexImage, plexStreamUrl } from "../lib/api";
-import { isTeslaBrowser } from "../lib/tesla";
+import { api, plexFileUrl, plexImage } from "../lib/api";
 import { useSettings } from "../lib/settings";
 import { useWatchSession } from "../lib/useWatchSession";
 
@@ -42,27 +41,10 @@ export function WatchPlexPage() {
     getSnapshot: () => snapRef.current,
   });
 
-  const tesla = isTeslaBrowser();
   const file = plexFileUrl(settings, id);
-  const hls = plexStreamUrl(settings, id, "hls");
   const sources = useMemo(
-    () =>
-      tesla
-        ? [{ url: file, mime: "video/mp4", quality: "Auto", kind: "progressive" as const }]
-        : [
-            { url: file, mime: "video/mp4", quality: "Auto", kind: "progressive" as const },
-            { url: hls, mime: "application/vnd.apple.mpegurl", quality: "Auto", kind: "hls" as const },
-          ],
-    [file, hls, tesla],
-  );
-  const hlsHeaders = useMemo(
-    () => ({
-      "x-volt-plex-token": settings.plexToken,
-      "x-volt-plex-server": settings.plexServerUri,
-      "x-volt-plex-server-token": settings.plexServerToken || settings.plexToken,
-      "x-volt-plex-client": settings.plexClientId,
-    }),
-    [settings.plexClientId, settings.plexServerToken, settings.plexServerUri, settings.plexToken],
+    () => [{ url: file, mime: "video/mp4", quality: "Auto", kind: "progressive" as const }],
+    [file],
   );
 
   return (
@@ -72,7 +54,6 @@ export function WatchPlexPage() {
           sources={sources}
           title={title}
           failText="Stream fehlgeschlagen."
-          hlsHeaders={hlsHeaders}
           onSnapshot={(snap) => {
             snapRef.current = snap;
           }}
