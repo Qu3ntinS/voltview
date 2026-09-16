@@ -1,6 +1,6 @@
 export function PlayerLoading({
   title,
-  subtitle = "Stream wird geladen…",
+  subtitle = "Laden…",
 }: {
   title?: string;
   subtitle?: string;

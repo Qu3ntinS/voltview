@@ -67,28 +67,25 @@ export function WatchYouTubePage() {
   );
 
   return (
-    <SafetyGate title="YouTube nur im Stand" resetKey={id}>
+    <SafetyGate title="YouTube" resetKey={id}>
     <Theater
       backTo="/youtube"
-      eyebrow="VoltView Player · eigenes UI · YouTube"
+      eyebrow="YouTube"
       title={video?.title || "YouTube"}
       sidebar={
         <div>
           {video?.channelId ? (
             <Link to={`/youtube/channel/${video.channelId}`} className="mb-3 inline-block text-sm text-volt-2">
               {video.channel}
-              {video.views ? ` · ${formatViews(video.views)} Aufrufe` : ""}
+              {video.views ? ` · ${formatViews(video.views)}` : ""}
             </Link>
           ) : (
             <p className="mb-3 text-sm text-mist">
               {video?.channel}
-              {video?.views ? ` · ${formatViews(video.views)} Aufrufe` : ""}
+              {video?.views ? ` · ${formatViews(video.views)}` : ""}
             </p>
           )}
-          {video?.description ? (
-            <p className="mb-5 line-clamp-6 text-sm leading-relaxed text-mist">{video.description}</p>
-          ) : null}
-          <h2 className="mb-3 font-display text-xl font-bold">Weitersehen</h2>
+          <h2 className="mb-3 text-lg font-semibold">Weiter</h2>
           <div className="grid gap-3">
             {related
               .filter((item) => item.id !== id)

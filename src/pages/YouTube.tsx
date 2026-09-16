@@ -92,7 +92,7 @@ export function YouTubePage() {
   async function signIn() {
     setLoginError("");
     if (isTeslaBrowser()) {
-      setLoginError("Im Tesla den QR unter Setup scannen und auf dem Handy bei Google anmelden.");
+      setLoginError("Setup");
       return;
     }
     try {
@@ -116,7 +116,7 @@ export function YouTubePage() {
             </button>
           ) : isTeslaBrowser() ? (
             <Link to="/settings" className="btn btn-primary">
-              QR · Handy
+              QR
             </Link>
           ) : (
             <button type="button" onClick={signIn} className="btn btn-primary">
@@ -137,25 +137,9 @@ export function YouTubePage() {
         </div>
       </div>
       {loginError ? <p className="mb-4 text-volt-2">{loginError}</p> : null}
-      {!settings.youtubeAccessToken ? (
-        <div className="card mb-5">
-          <p className="muted">
-            Abos und Kanäle: QR unter Setup, Google auf dem Handy. Trends laufen über den Server-Key — der bleibt geheim.
-          </p>
-          {isTeslaBrowser() ? (
-            <Link to="/settings" className="btn mt-3 btn-primary">
-              QR zeigen
-            </Link>
-          ) : (
-            <button type="button" onClick={signIn} className="btn mt-3">
-              Google
-            </button>
-          )}
-        </div>
-      ) : null}
 
       {feed.length ? (
-        <Row title="Neu aus deinen Abos">
+        <Row title="Abos">
           {feed.map((video) => (
             <MediaCard
               key={`feed-${video.id}`}
@@ -169,7 +153,7 @@ export function YouTubePage() {
         </Row>
       ) : null}
       {subs.length ? (
-        <Row title="Deine Kanäle">
+        <Row title="Kanäle">
           {subs.map((channel) => (
             <Link
               key={channel.id}
@@ -218,14 +202,10 @@ export function YouTubePage() {
           </button>
         ))}
       </div>
-      {error ? (
-        <div className="mb-6 rounded-2xl border border-volt/30 bg-volt/10 p-5 text-volt-2">
-          {error === "NO_YOUTUBE_KEY"
-            ? "Trends kommen vom Server. Für deine Liste: QR scannen und auf dem Handy bei Google anmelden."
-            : error}
-        </div>
+      {error && error !== "NO_YOUTUBE_KEY" ? (
+        <div className="mb-6 rounded-2xl border border-volt/30 bg-volt/10 p-5 text-volt-2">{error}</div>
       ) : null}
-      {loading ? <p className="text-mist">Lade…</p> : null}
+      {loading ? <p className="text-mist">Laden…</p> : null}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {items.map((video) => (
           <MediaCard

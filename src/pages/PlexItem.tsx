@@ -27,7 +27,7 @@ export function PlexItemPage() {
   }, [id, remember, settings]);
 
   if (!item) {
-    return <p className="text-mist">Lade Plex-Titel…</p>;
+    return <p className="text-mist">Laden…</p>;
   }
 
   return (
@@ -43,7 +43,6 @@ export function PlexItemPage() {
           <p className="text-xs uppercase tracking-[0.28em] text-volt-2">{item.type}</p>
           <h1 className="mt-2 font-display text-4xl font-extrabold">{item.title}</h1>
           <p className="mt-3 text-mist">{item.year}</p>
-          <p className="mt-4 max-w-3xl text-mist">{item.summary}</p>
           {item.type === "movie" || item.type === "episode" ? (
             <Link
               to={`/watch/plex/${item.id}`}

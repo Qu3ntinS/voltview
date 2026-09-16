@@ -25,7 +25,7 @@ export function PairPanel({
       })
       .catch(() => {
         if (stop) return;
-        setError("Live-Sync offline. Handy-Setup geht, Link danach im Tesla öffnen.");
+        setError("Sync offline.");
         setUrl(addLandingUrl());
       });
     return () => {
@@ -52,11 +52,10 @@ export function PairPanel({
   if (compact) {
     return (
       <div className="pair-inline">
-        {url ? <QrCode value={url} label="QR zum Einrichten mit dem Handy" /> : <div className="qr-box qr-box-wait" />}
+        {url ? <QrCode value={url} label="QR" /> : <div className="qr-box qr-box-wait" />}
         <div>
           <p className="pair-kicker">Handy</p>
-          <p className="pair-title">{done ? "Übernommen" : "QR scannen"}</p>
-          <p className="muted">{done ? "Login liegt auf diesem Tesla." : "Setup und Anmeldung auf dem Phone."}</p>
+          <p className="pair-title">{done ? "Übernommen" : "QR"}</p>
           {id ? <p className="pair-code">{id.length <= 8 ? id : id.slice(0, 8)}</p> : null}
         </div>
       </div>
@@ -66,14 +65,10 @@ export function PairPanel({
   return (
     <section className="card pair-card">
       <div className="pair-grid">
-        {url ? <QrCode value={url} label="QR zum Einrichten mit dem Handy" /> : <div className="qr-box qr-box-wait" />}
+        {url ? <QrCode value={url} label="QR" /> : <div className="qr-box qr-box-wait" />}
         <div>
           <p className="pair-kicker">VoltView</p>
-          <h2>Mit dem Handy einrichten</h2>
-          <p className="muted">
-            QR auf dem Tesla scannen. Google und Plex tippst du auf dem Phone — der Stand kommt zurück hierher.
-            Den YouTube-API-Key hält nur der Server.
-          </p>
+          <h2>QR</h2>
           {id && !id.includes("-") ? <p className="pair-code">{id}</p> : null}
           {url ? (
             <p className="mono muted wrap">
@@ -81,7 +76,7 @@ export function PairPanel({
             </p>
           ) : null}
           {error ? <p className="warn">{error}</p> : null}
-          {done ? <p className="ok">Vom Handy übernommen.</p> : <p className="muted">Wartet aufs Phone…</p>}
+          {done ? <p className="ok">Übernommen</p> : <p className="muted">Wartet…</p>}
         </div>
       </div>
     </section>

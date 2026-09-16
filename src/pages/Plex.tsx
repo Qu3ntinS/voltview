@@ -42,19 +42,13 @@ export function PlexPage() {
 
   if (!settings.plexToken) {
     return (
-      <EmptyPlex
-        title="Plex auf dem Handy"
-        body="QR unter Setup scannen, auf dem Phone bei Plex anmelden. Der Tesla übernimmt Account und Server."
-      />
+      <EmptyPlex title="Plex" body="QR · Setup" />
     );
   }
 
   if (!settings.plexServerUri) {
     return (
-      <EmptyPlex
-        title="Server wählen"
-        body="Account ist da, aber noch kein Server ausgewählt."
-      />
+      <EmptyPlex title="Server" body="Kein Server gewählt." />
     );
   }
 
@@ -66,13 +60,10 @@ export function PlexPage() {
         <h1 className="text-2xl font-bold tracking-tight">Plex</h1>
         {settings.plexServerName ? <p className="muted">{settings.plexServerName}</p> : null}
       </div>
-      {loading ? <p className="mb-4 text-mist">Lade Bibliotheken…</p> : null}
+      {loading ? <p className="mb-4 text-mist">Laden…</p> : null}
       {error ? <p className="mb-4 text-volt-2">{error}</p> : null}
       {empty ? (
-        <p className="mb-4 muted">
-          {settings.plexServerName || "Server"} ist verbunden, aber Vercel erreicht keine Bibliothek. Auf dem Handy den
-          Server nochmal antippen — VoltView nimmt die öffentliche Plex-Adresse, nicht das Heimnetz.
-        </p>
+        <p className="mb-4 muted">Keine Bibliotheken.</p>
       ) : null}
       <div className="mb-8 flex flex-wrap gap-2">
         {libraries.map((lib) => (

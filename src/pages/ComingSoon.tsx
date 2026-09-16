@@ -1,17 +1,10 @@
 import { ComingSoon } from "../components/ComingSoon";
 
-const copy: Record<string, { title: string; body: string }> = {
-  apps: {
-    title: "Apps",
-    body: "Netflix, Disney+ und die anderen Streaming-Apps kommen, sobald YouTube und Plex stehen.",
-  },
-  mirror: {
-    title: "Screen Mirror",
-    body: "Handy-Bildschirm auf den Tesla legen — folgt als Nächstes.",
-  },
-};
+const titles = {
+  apps: "Apps",
+  mirror: "Screen Mirror",
+} as const;
 
-export function ComingSoonPage({ feature }: { feature: "apps" | "mirror" }) {
-  const item = copy[feature];
-  return <ComingSoon title={item.title} body={item.body} />;
+export function ComingSoonPage({ feature }: { feature: keyof typeof titles }) {
+  return <ComingSoon title={titles[feature]} />;
 }
