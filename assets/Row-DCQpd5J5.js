@@ -1,0 +1,1 @@
+import{j as e}from"./index-Q-zju6tC.js";function o({title:s,action:a,children:t}){return e.jsxs("section",{className:"mb-5",children:[e.jsxs("div",{className:"mb-2 flex items-end justify-between gap-4",children:[e.jsx("h2",{className:"text-lg font-semibold",children:s}),a]}),e.jsx("div",{className:"media-row flex gap-4 overflow-x-auto pb-2",children:t})]})}export{o as R};

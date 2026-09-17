@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /settings
+Disallow: /watch/
+Disallow: /search
+Disallow: /voltview/settings
+Disallow: /voltview/watch/
+Disallow: /voltview/search
+
+Sitemap: https://qu3ntins.github.io/voltview/sitemap.xml

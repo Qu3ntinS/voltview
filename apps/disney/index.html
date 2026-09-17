@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#05030a" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="VoltView" />
+    <meta name="application-name" content="VoltView" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <meta name="format-detection" content="telephone=no" />
+    <script>
+      (function () {
+        var ua = navigator.userAgent || "";
+        if (!/Tesla|QtCarBrowser/i.test(ua)) return;
+        if (/(?:^|[?&])tesla=1(?:&|$)/.test(location.search)) return;
+        var isWatch = /\/watch\//.test(location.pathname || "");
+        if (!isWatch) {
+          if (/youtube\.com/i.test(document.referrer || "")) return;
+          try {
+            if (sessionStorage.getItem("voltview.teslaUnlock") === "1") return;
+          } catch (e) {}
+        }
+        var hash = location.hash || "";
+        var base = hash ? location.href.slice(0, location.href.length - hash.length) : location.href;
+        base += (location.search ? "&" : "?") + "tesla=1";
+        location.replace("https://www.youtube.com/redirect?q=" + encodeURIComponent(base + hash));
+      })();
+    </script>
+    <title>Disney+ · VoltView</title>
+    <meta name="description" content="Disney+ in VoltView öffnen: Disney, Marvel, Star." />
+    <meta name="robots" content="index,follow,max-image-preview:large" />
+    <meta name="googlebot" content="index,follow" />
+    <meta name="author" content="VoltView" />
+    <meta
+      name="keywords"
+      content="VoltView, Tesla Theater, Tesla Browser, YouTube, Plex, Netflix, Disney+, Prime Video"
+    />
+    <link rel="canonical" href="https://qu3ntins.github.io/voltview/apps/disney" />
+    <link rel="alternate" hrefLang="de" href="https://qu3ntins.github.io/voltview/" />
+    <link rel="alternate" hrefLang="x-default" href="https://qu3ntins.github.io/voltview/" />
+    <link rel="manifest" href="/voltview/manifest.webmanifest" />
+    <link rel="icon" href="/voltview/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/voltview/apple-touch-icon.png" sizes="180x180" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="de_DE" />
+    <meta property="og:site_name" content="VoltView" />
+    <meta property="og:title" content="Disney+ · VoltView" />
+    <meta property="og:description" content="Disney+ in VoltView öffnen: Disney, Marvel, Star." />
+    <meta property="og:url" content="https://qu3ntins.github.io/voltview/apps/disney" />
+    <meta property="og:image" content="https://qu3ntins.github.io/voltview/og.png" />
+    <meta property="og:image:alt" content="VoltView" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Disney+ · VoltView" />
+    <meta name="twitter:description" content="Disney+ in VoltView öffnen: Disney, Marvel, Star." />
+    <meta name="twitter:image" content="https://qu3ntins.github.io/voltview/og.png" />
+    <meta name="twitter:image:alt" content="VoltView" />
+    <script type="application/ld+json" id="voltview-jsonld">
+      {"@context":"https://schema.org","@graph":[{"@type":"WebSite","@id":"https://qu3ntins.github.io/voltview/#website","name":"VoltView","url":"https://qu3ntins.github.io/voltview/","description":"YouTube, Plex, Radio und offizielle Apps wie Netflix und Disney+ im Tesla-Browser.","inLanguage":"de","publisher":{"@id":"https://qu3ntins.github.io/voltview/#app"},"potentialAction":{"@type":"SearchAction","target":"https://qu3ntins.github.io/voltview/search?q={search_term_string}","query-input":"required name=search_term_string"}},{"@type":"WebApplication","@id":"https://qu3ntins.github.io/voltview/#app","name":"VoltView","url":"https://qu3ntins.github.io/voltview/","applicationCategory":"MultimediaApplication","operatingSystem":"Web, Tesla Browser","description":"YouTube, Plex, Radio und offizielle Apps wie Netflix und Disney+ im Tesla-Browser.","inLanguage":"de","image":"https://qu3ntins.github.io/voltview/og.png","screenshot":"https://qu3ntins.github.io/voltview/og.png","featureList":["YouTube","Offizielle Streaming-Apps","Plex","Radio","QR-Setup vom Handy"],"offers":{"@type":"Offer","price":"0","priceCurrency":"EUR"}},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://qu3ntins.github.io/voltview/"},{"@type":"ListItem","position":2,"name":"Apps","item":"https://qu3ntins.github.io/voltview/apps"},{"@type":"ListItem","position":3,"name":"Disney+","item":"https://qu3ntins.github.io/voltview/apps/disney"}]}]}
+    </script>
+    <script type="module" crossorigin src="/voltview/assets/index-Q-zju6tC.js"></script>
+    <link rel="stylesheet" crossorigin href="/voltview/assets/index-ucSt-yP7.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
