@@ -90,6 +90,7 @@ export function WatchYouTubePage() {
   const theater = (
     <Theater
       sidebar={
+        mode === "notice" ? undefined : (
         <div>
           {video?.channelId ? (
             <Link to={`/youtube/channel/${video.channelId}`} className="mb-3 inline-block text-sm text-volt-2">
@@ -118,6 +119,7 @@ export function WatchYouTubePage() {
               ))}
           </div>
         </div>
+        )
       }
     >
       {stage}
