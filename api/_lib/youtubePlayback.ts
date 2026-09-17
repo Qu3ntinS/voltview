@@ -359,7 +359,7 @@ export function deviceProgressiveCandidates(rawId: string, limit = 8): PlaybackS
   return out.slice(0, limit);
 }
 
-/** Third-party HTML5 embeds (not youtube.com / youtube-nocookie). Unused in the player. */
+/** Third-party HTML5 embeds (not youtube.com / youtube-nocookie). */
 export function embedCandidates(rawId: string): string[] {
   const videoId = sanitizeVideoId(rawId);
   return EMBED_HOSTS.map((base) => `${base}/embed/${videoId}?autoplay=1&quality=medium`);
