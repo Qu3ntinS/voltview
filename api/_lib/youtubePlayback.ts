@@ -359,28 +359,10 @@ export function deviceProgressiveCandidates(rawId: string, limit = 8): PlaybackS
   return out.slice(0, limit);
 }
 
-/** Third-party HTML5 embeds (not youtube.com / youtube-nocookie). */
+/** Third-party HTML5 embeds (not youtube.com / youtube-nocookie). Unused in the player. */
 export function embedCandidates(rawId: string): string[] {
   const videoId = sanitizeVideoId(rawId);
   return EMBED_HOSTS.map((base) => `${base}/embed/${videoId}?autoplay=1&quality=medium`);
-}
-
-/** Phone/desktop only. Tesla's official iframe is audio without video. */
-export function youtubeOfficialEmbed(rawId: string, origin = "") {
-  const videoId = sanitizeVideoId(rawId);
-  const params = new URLSearchParams({
-    autoplay: "1",
-    playsinline: "1",
-    rel: "0",
-    modestbranding: "1",
-    controls: "0",
-    enablejsapi: "1",
-    fs: "0",
-    iv_load_policy: "3",
-    disablekb: "1",
-  });
-  if (origin) params.set("origin", origin);
-  return `https://www.youtube-nocookie.com/embed/${videoId}?${params.toString()}`;
 }
 
 export async function firstLiveCandidate(candidates: PlaybackSource[]): Promise<PlaybackSource | null> {

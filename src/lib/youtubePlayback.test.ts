@@ -10,7 +10,6 @@ import {
   sanitizeVideoId,
   youtubeFileUrl,
   youtubeMediaHost,
-  youtubeOfficialEmbed,
 } from "./youtubePlayback";
 
 describe("youtube playback", () => {
@@ -95,14 +94,6 @@ describe("youtube playback", () => {
     const list = embedCandidates("jNQXAC9IVRw");
     expect(list[0]).toContain("invidious.tiekoetter.com/embed/jNQXAC9IVRw");
     expect(list.every((url) => !/youtube\.com|youtube-nocookie|nerdvpn/.test(url))).toBe(true);
-  });
-
-  test("builds a phone YouTube embed when HTML5 streams fail", () => {
-    const url = youtubeOfficialEmbed("jNQXAC9IVRw", "https://voltview-red.vercel.app");
-    expect(url).toContain("youtube-nocookie.com/embed/jNQXAC9IVRw");
-    expect(url).toContain("controls=0");
-    expect(url).toContain("enablejsapi=1");
-    expect(url).toContain("origin=https%3A%2F%2Fvoltview-red.vercel.app");
   });
 
   test("gives the device Invidious MP4s that 302 to googlevideo on its own IP", () => {

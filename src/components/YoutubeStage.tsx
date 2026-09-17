@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Html5Player } from "./Html5Player";
-import { deviceProgressiveCandidates, friendlyPlaybackError, youtubeOfficialEmbed } from "../lib/youtubePlayback";
+import { deviceProgressiveCandidates, friendlyPlaybackError } from "../lib/youtubePlayback";
 import { localPlaybackOverride } from "../lib/playerMedia";
 import { isTeslaBrowser } from "../lib/tesla";
 
@@ -18,14 +18,11 @@ export function YoutubeStage({
     const override = localPlaybackOverride();
     if (override) return [override];
     if (!videoId) return [];
-    const limit = tesla ? 6 : 3;
-    return deviceProgressiveCandidates(videoId, limit).map((item) => ({
+    return deviceProgressiveCandidates(videoId, tesla ? 8 : 6).map((item) => ({
       ...item,
-      timeoutMs: tesla ? 4000 : 3500,
+      timeoutMs: 4000,
     }));
   }, [tesla, videoId]);
-
-  const origin = typeof window === "undefined" ? "" : window.location.origin;
 
   return (
     <Html5Player
@@ -35,17 +32,6 @@ export function YoutubeStage({
       eyebrow="YouTube"
       title={title || "YouTube"}
       failText={friendlyPlaybackError("NO_STREAM")}
-      fallbackEmbed={
-        tesla || !videoId
-          ? undefined
-          : (() => {
-              try {
-                return youtubeOfficialEmbed(videoId, origin);
-              } catch {
-                return undefined;
-              }
-            })()
-      }
       onSnapshot={onSnapshot}
     />
   );

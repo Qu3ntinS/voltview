@@ -20,39 +20,6 @@ type HlsLike = {
 
 const ATTEMPT_MS = 6000;
 
-type YtPlayer = {
-  playVideo: () => void;
-  pauseVideo: () => void;
-  seekTo: (seconds: number, allowSeekAhead: boolean) => void;
-  getCurrentTime: () => number;
-  getDuration: () => number;
-  getPlayerState: () => number;
-  destroy: () => void;
-};
-
-function isYoutubeEmbed(url: string) {
-  return /youtube(?:-nocookie)?\.com\/embed\//i.test(url);
-}
-
-function loadYoutubeApi() {
-  if (typeof window === "undefined") return Promise.resolve();
-  if ((window as Window & { YT?: { Player?: unknown } }).YT?.Player) return Promise.resolve();
-  return new Promise<void>((resolve) => {
-    const host = window as Window & { YT?: { Player?: unknown }; onYouTubeIframeAPIReady?: () => void };
-    const prev = host.onYouTubeIframeAPIReady;
-    host.onYouTubeIframeAPIReady = () => {
-      prev?.();
-      resolve();
-    };
-    if (!document.querySelector("script[data-volt-yt-api]")) {
-      const script = document.createElement("script");
-      script.src = "https://www.youtube.com/iframe_api";
-      script.dataset.voltYtApi = "1";
-      document.head.appendChild(script);
-    }
-  });
-}
-
 function readMedia(node: HTMLVideoElement) {
   return {
     positionSec: node.currentTime || 0,
@@ -156,7 +123,6 @@ export function Html5Player({
   eyebrow,
   backTo,
   failText = "Kein Stream.",
-  fallbackEmbed,
   hlsHeaders,
   onSnapshot,
 }: {
@@ -166,23 +132,17 @@ export function Html5Player({
   eyebrow: string;
   backTo: string;
   failText?: string;
-  fallbackEmbed?: string;
   hlsHeaders?: Record<string, string>;
   onSnapshot?: (snap: { positionSec: number; durationSec: number; playing: boolean }) => void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-  const ytRef = useRef<YtPlayer | null>(null);
   const [playing, setPlaying] = useState(false);
   const [current, setCurrent] = useState(0);
   const [duration, setDuration] = useState(0);
-  const startWithEmbed = !sources.some((item) => item.url) && Boolean(fallbackEmbed);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(!startWithEmbed);
+  const [loading, setLoading] = useState(true);
   const [buffering, setBuffering] = useState(false);
   const [quality, setQuality] = useState("Auto");
-  const [embed, setEmbed] = useState(startWithEmbed ? fallbackEmbed || "" : "");
-  const [embedLive, setEmbedLive] = useState(false);
 
   const sourceKey = sources.map((item) => `${item.kind}:${item.url}`).join("|");
   const headerKey = JSON.stringify(hlsHeaders || {});
@@ -199,20 +159,7 @@ export function Html5Player({
     let timer = 0;
     let index = 0;
 
-    if (!list.length && fallbackEmbed) {
-      setError("");
-      setEmbed(fallbackEmbed);
-      setEmbedLive(false);
-      setLoading(true);
-      setBuffering(false);
-      return () => {
-        cancelled = true;
-      };
-    }
-
     setError("");
-    setEmbed("");
-    setEmbedLive(false);
     setLoading(true);
     setBuffering(false);
     setPlaying(false);
@@ -239,13 +186,6 @@ export function Html5Player({
       clearTimer();
       cleanupMedia();
       setBuffering(false);
-      if (fallbackEmbed) {
-        setError("");
-        setEmbedLive(false);
-        setEmbed(fallbackEmbed);
-        setLoading(true);
-        return;
-      }
       setLoading(false);
       setError(failText);
     }
@@ -361,72 +301,7 @@ export function Html5Player({
       node.removeEventListener("playing", onPlaying);
       cleanupMedia();
     };
-  }, [failText, fallbackEmbed, headerKey, sourceKey]);
-
-  useEffect(() => {
-    if (!embed || !isYoutubeEmbed(embed) || !iframeRef.current) return;
-    let dead = false;
-    let poll = 0;
-    const node = iframeRef.current;
-    void loadYoutubeApi().then(() => {
-      const YT = (window as Window & { YT?: { Player: new (el: HTMLElement, opts: unknown) => YtPlayer } }).YT;
-      if (dead || !YT?.Player) return;
-      const player = new YT.Player(node, {
-        events: {
-          onReady: () => {
-            if (dead) return;
-            setError("");
-            setQuality("Auto");
-            try {
-              player.playVideo();
-            } catch {
-              /* keep our loader until PLAYING — do not reveal YouTube chrome */
-            }
-          },
-          onStateChange: (event: { data: number }) => {
-            if (dead) return;
-            if (event.data === 1) {
-              setPlaying(true);
-              setEmbedLive(true);
-              setLoading(false);
-              setBuffering(false);
-            } else if (event.data === 2 || event.data === 0) {
-              setPlaying(false);
-              setBuffering(false);
-            } else if (event.data === 3) {
-              setBuffering(true);
-            }
-          },
-        },
-      });
-      ytRef.current = player;
-      poll = window.setInterval(() => {
-        try {
-          const positionSec = player.getCurrentTime() || 0;
-          const durationSec = player.getDuration() || 0;
-          setCurrent(positionSec);
-          if (durationSec > 0) setDuration(durationSec);
-          onSnapshot?.({
-            positionSec,
-            durationSec,
-            playing: player.getPlayerState() === 1,
-          });
-        } catch {
-          /* player not ready */
-        }
-      }, 400);
-    });
-    return () => {
-      dead = true;
-      window.clearInterval(poll);
-      try {
-        ytRef.current?.destroy();
-      } catch {
-        /* ignore */
-      }
-      ytRef.current = null;
-    };
-  }, [embed, onSnapshot]);
+  }, [failText, headerKey, sourceKey]);
 
   const canSeek = !loading && !error && duration > 0;
 
@@ -437,30 +312,17 @@ export function Html5Player({
       duration={duration}
       quality={quality}
       seekable={canSeek}
-      embed={Boolean(embed)}
       loading={loading}
       backTo={backTo}
       eyebrow={eyebrow}
       title={title || eyebrow}
       onToggle={() => {
-        const yt = ytRef.current;
-        if (yt) {
-          if (playing) yt.pauseVideo();
-          else yt.playVideo();
-          return;
-        }
         const video = videoRef.current;
         if (!video) return;
         if (video.paused) video.play().catch(() => undefined);
         else video.pause();
       }}
       onSeek={(seconds) => {
-        const yt = ytRef.current;
-        if (yt) {
-          yt.seekTo(seconds, true);
-          setCurrent(seconds);
-          return;
-        }
         const video = videoRef.current;
         if (!video || !canSeek) return;
         video.currentTime = seconds;
@@ -488,19 +350,6 @@ export function Html5Player({
           onSnapshot?.(snap);
         }}
       />
-      {embed ? (
-        <div className={`player-embed-clip${embedLive ? " is-live" : ""}`}>
-          <iframe
-            ref={iframeRef}
-            id="volt-yt-embed"
-            className="player-embed"
-            src={embed}
-            title={title || eyebrow}
-            allow="autoplay; fullscreen; encrypted-media"
-            tabIndex={-1}
-          />
-        </div>
-      ) : null}
       {loading || buffering ? (
         <PlayerLoading title={title} subtitle={buffering ? "Puffert…" : "Laden…"} />
       ) : null}

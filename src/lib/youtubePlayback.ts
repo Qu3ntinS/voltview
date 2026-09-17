@@ -12,6 +12,5 @@ export {
   sanitizeVideoId,
   youtubeFileUrl,
   youtubeMediaHost,
-  youtubeOfficialEmbed,
 } from "../../api/_lib/youtubePlayback";
 export type { PlaybackSource } from "../../api/_lib/youtubePlayback";
