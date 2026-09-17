@@ -647,6 +647,43 @@ textarea:focus {
   padding: 8px 20px 18px;
 }
 
+.player-notice {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 20;
+  max-width: 82%;
+  transform: translate(-50%, -50%);
+  border-radius: 16px;
+  background: rgba(5, 3, 10, 0.9);
+  padding: 18px 20px;
+  text-align: center;
+  font-size: 1.15rem;
+  font-weight: 650;
+  color: #f4f0ff;
+}
+
+.player-notice span {
+  display: block;
+  margin-top: 8px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #9b92b3;
+}
+
+.player-stage.is-notice .player-video {
+  object-fit: cover;
+  opacity: 0.35;
+}
+
+.player-stage.is-notice .player-top {
+  z-index: 21;
+}
+
+.player-stage.is-notice .player-notice {
+  top: 58%;
+}
+
 .player-error {
   position: absolute;
   left: 50%;

@@ -16,10 +16,13 @@
         var ua = navigator.userAgent || "";
         if (!/Tesla|QtCarBrowser/i.test(ua)) return;
         if (/(?:^|[?&])tesla=1(?:&|$)/.test(location.search)) return;
-        if (/youtube\.com/i.test(document.referrer || "")) return;
-        try {
-          if (sessionStorage.getItem("voltview.teslaUnlock") === "1") return;
-        } catch (e) {}
+        var isWatch = /\/watch\//.test(location.pathname || "");
+        if (!isWatch) {
+          if (/youtube\.com/i.test(document.referrer || "")) return;
+          try {
+            if (sessionStorage.getItem("voltview.teslaUnlock") === "1") return;
+          } catch (e) {}
+        }
         var hash = location.hash || "";
         var base = hash ? location.href.slice(0, location.href.length - hash.length) : location.href;
         base += (location.search ? "&" : "?") + "tesla=1";
