@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import {
   canCallInnertube,
+  deviceProgressiveCandidates,
   embedCandidates,
   friendlyPlaybackError,
   pickPlayback,
@@ -9,7 +10,6 @@ import {
   sanitizeVideoId,
   youtubeFileUrl,
   youtubeMediaHost,
-  youtubeOfficialEmbed,
 } from "./youtubePlayback";
 
 describe("youtube playback", () => {
@@ -96,7 +96,13 @@ describe("youtube playback", () => {
     expect(list.every((url) => !/youtube\.com|youtube-nocookie|nerdvpn/.test(url))).toBe(true);
   });
 
-  test("builds a phone YouTube embed when HTML5 streams fail", () => {
-    expect(youtubeOfficialEmbed("jNQXAC9IVRw")).toContain("youtube-nocookie.com/embed/jNQXAC9IVRw");
+  test("gives the device Invidious MP4s that 302 to googlevideo on its own IP", () => {
+    const list = deviceProgressiveCandidates("jNQXAC9IVRw", 4);
+    expect(list.length).toBe(4);
+    expect(list.every((item) => item.kind === "progressive")).toBe(true);
+    expect(list.every((item) => item.url.includes("latest_version"))).toBe(true);
+    expect(list[0]?.url).toContain("itag=18");
+    expect(list[0]?.url.includes("local=true")).toBe(false);
+    expect(list.some((item) => item.url.includes("invidious.tiekoetter.com"))).toBe(true);
   });
 });

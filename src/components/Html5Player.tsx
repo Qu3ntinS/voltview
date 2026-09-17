@@ -2,12 +2,14 @@ import { useEffect, useRef, useState } from "react";
 import { PlayerChrome } from "./PlayerChrome";
 import { PlayerLoading } from "./PlayerLoading";
 import { canUseNativeHls, mediaDuration } from "../lib/playerMedia";
+import { isLanPlexHost } from "../lib/plexTv";
 
 export type Html5Source = {
   url: string;
   kind: "progressive" | "hls";
   quality?: string;
   mime?: string;
+  timeoutMs?: number;
 };
 
 type HlsLike = {
@@ -38,12 +40,16 @@ function isSameOrigin(url: string) {
 function shouldProbe(url: string) {
   if (!isSameOrigin(url)) return false;
   if (/\/api\/plex(?:\?|$)/.test(url)) return false;
+  if (/\/api\/youtube(?:\/|\?|$)/.test(url)) return false;
   if (/\.(mp4|webm)(\?|$)/i.test(url) && !url.includes("/api/")) return false;
   return true;
 }
 
-function attemptMsFor(url: string) {
-  return /\/api\/plex(?:\?|$)/.test(url) ? 0 : ATTEMPT_MS;
+function attemptMsFor(source: Html5Source) {
+  if (typeof source.timeoutMs === "number") return source.timeoutMs;
+  if (/\/api\/plex(?:\?|$)/.test(source.url)) return 0;
+  if (isLanPlexHost(source.url)) return 2500;
+  return ATTEMPT_MS;
 }
 
 async function sameOriginPlayable(url: string) {
@@ -117,7 +123,6 @@ export function Html5Player({
   eyebrow,
   backTo,
   failText = "Kein Stream.",
-  fallbackEmbed,
   hlsHeaders,
   onSnapshot,
 }: {
@@ -127,7 +132,6 @@ export function Html5Player({
   eyebrow: string;
   backTo: string;
   failText?: string;
-  fallbackEmbed?: string;
   hlsHeaders?: Record<string, string>;
   onSnapshot?: (snap: { positionSec: number; durationSec: number; playing: boolean }) => void;
 }) {
@@ -139,7 +143,6 @@ export function Html5Player({
   const [loading, setLoading] = useState(true);
   const [buffering, setBuffering] = useState(false);
   const [quality, setQuality] = useState("Auto");
-  const [embed, setEmbed] = useState("");
 
   const sourceKey = sources.map((item) => `${item.kind}:${item.url}`).join("|");
   const headerKey = JSON.stringify(hlsHeaders || {});
@@ -148,7 +151,7 @@ export function Html5Player({
     const media = videoRef.current;
     if (!media) return;
     const node: HTMLVideoElement = media;
-    const list = sources.filter((item) => item.url).slice(0, 6);
+    const list = sources.filter((item) => item.url).slice(0, 12);
     let cancelled = false;
     let ignoreError = false;
     let ready = false;
@@ -157,7 +160,6 @@ export function Html5Player({
     let index = 0;
 
     setError("");
-    setEmbed("");
     setLoading(true);
     setBuffering(false);
     setPlaying(false);
@@ -185,11 +187,6 @@ export function Html5Player({
       cleanupMedia();
       setBuffering(false);
       setLoading(false);
-      if (fallbackEmbed) {
-        setError("");
-        setEmbed(fallbackEmbed);
-        return;
-      }
       setError(failText);
     }
 
@@ -237,7 +234,7 @@ export function Html5Player({
       }
       if (cancelled) return;
       clearTimer();
-      const wait = attemptMsFor(source.url);
+      const wait = attemptMsFor(source);
       if (wait) {
         timer = window.setTimeout(() => {
           if (cancelled || ready) return;
@@ -304,7 +301,7 @@ export function Html5Player({
       node.removeEventListener("playing", onPlaying);
       cleanupMedia();
     };
-  }, [failText, fallbackEmbed, headerKey, sourceKey]);
+  }, [failText, headerKey, sourceKey]);
 
   const canSeek = !loading && !error && duration > 0;
 
@@ -315,7 +312,7 @@ export function Html5Player({
       duration={duration}
       quality={quality}
       seekable={canSeek}
-      embed={Boolean(embed)}
+      loading={loading}
       backTo={backTo}
       eyebrow={eyebrow}
       title={title || eyebrow}
@@ -342,7 +339,7 @@ export function Html5Player({
         controls={false}
         disablePictureInPicture
         controlsList="nodownload noplaybackrate noremoteplayback"
-        {...{ "webkit-playsinline": "true", referrerPolicy: "no-referrer" }}
+        {...{ "webkit-playsinline": "true" }}
         onPlay={() => setPlaying(true)}
         onPause={() => setPlaying(false)}
         onDurationChange={(event) => setDuration(mediaDuration(event.currentTarget))}
@@ -353,15 +350,6 @@ export function Html5Player({
           onSnapshot?.(snap);
         }}
       />
-      {embed ? (
-        <iframe
-          className="player-embed"
-          src={embed}
-          title={title || eyebrow}
-          allow="autoplay; fullscreen; encrypted-media"
-          allowFullScreen
-        />
-      ) : null}
       {loading || buffering ? (
         <PlayerLoading title={title} subtitle={buffering ? "Puffert…" : "Laden…"} />
       ) : null}

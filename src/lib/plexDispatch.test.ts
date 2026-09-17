@@ -53,6 +53,7 @@ describe("plex playback URIs", () => {
     expect(start.searchParams.get("directStream")).toBe("1");
     expect(start.searchParams.get("protocol")).toBe("http");
     expect(start.searchParams.get("X-Plex-Client-Profile-Extra") || "").toContain("container=mp4");
+    expect(plexPlaybackUris(["https://192-168-1-9.abc.plex.direct:32400"], true)).toEqual([]);
   });
 });
 

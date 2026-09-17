@@ -259,8 +259,8 @@ export function plexFileUrl(settings: Settings, id: string) {
 }
 
 /** Hit the Plex server from the phone/Tesla when Remote Access works, without Vercel. */
-export function plexClientFileUrl(settings: Settings, id: string) {
-  const server = (settings.plexServerUri || "").replace(/\/$/, "");
+export function plexClientFileUrl(settings: Settings, id: string, serverUri = settings.plexServerUri) {
+  const server = (serverUri || "").replace(/\/$/, "");
   if (!server || !id) return "";
   try {
     const dest = new URL(`${server}/video/:/transcode/universal/start.mp4`);

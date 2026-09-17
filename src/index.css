@@ -472,8 +472,7 @@ textarea:focus {
   }
 }
 
-.player-video,
-.player-embed {
+.player-video {
   position: absolute;
   top: 0;
   left: 0;
@@ -486,14 +485,9 @@ textarea:focus {
   object-fit: contain;
 }
 
-.player-embed {
-  z-index: 1;
-}
-
-.player-stage.is-embed .player-tap,
-.player-stage.is-embed .player-center,
-.player-stage.is-embed .player-shade,
-.player-stage.is-embed .player-dock {
+.player-stage.is-loading .player-dock,
+.player-stage.is-loading .player-shade,
+.player-stage.is-loading .player-center {
   display: none;
 }
 
