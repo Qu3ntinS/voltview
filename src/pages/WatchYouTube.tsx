@@ -1,12 +1,15 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { MediaCard } from "../components/MediaCard";
+import { PlayerLoading } from "../components/PlayerLoading";
 import { SafetyGate } from "../components/SafetyGate";
+import { TeslaOnlyPlayback } from "../components/TeslaOnlyPlayback";
 import { Theater } from "../components/Theater";
 import { YoutubeStage } from "../components/YoutubeStage";
 import { api, type YoutubeVideo } from "../lib/api";
 import { formatViews } from "../lib/format";
 import { useSettings } from "../lib/settings";
+import { ensureTeslaWatchUnlock, teslaPlaybackMode } from "../lib/tesla";
 import { useWatchSession } from "../lib/useWatchSession";
 
 export function WatchYouTubePage() {
@@ -15,6 +18,12 @@ export function WatchYouTubePage() {
   const [video, setVideo] = useState<YoutubeVideo | null>(null);
   const [related, setRelated] = useState<YoutubeVideo[]>([]);
   const snapRef = useRef({ positionSec: 0, durationSec: 0, playing: true });
+
+  const mode = teslaPlaybackMode();
+
+  useLayoutEffect(() => {
+    if (mode === "hop") ensureTeslaWatchUnlock();
+  }, [id, mode]);
 
   useEffect(() => {
     if (!id) return;
@@ -66,10 +75,22 @@ export function WatchYouTubePage() {
     []
   );
 
-  return (
-    <SafetyGate title="YouTube" resetKey={id}>
+  const poster = video?.thumbnail || (id ? `https://i.ytimg.com/vi/${id}/hqdefault.jpg` : undefined);
+  const stage =
+    mode === "notice" ? (
+      <TeslaOnlyPlayback backTo="/youtube" eyebrow="YouTube" title={video?.title || "YouTube"} poster={poster} />
+    ) : mode === "hop" ? (
+      <div className="player-stage">
+        <PlayerLoading title={video?.title || "YouTube"} subtitle="Tesla…" />
+      </div>
+    ) : (
+      <YoutubeStage videoId={id} title={video?.title} onSnapshot={onSnapshot} />
+    );
+
+  const theater = (
     <Theater
       sidebar={
+        mode === "notice" ? undefined : (
         <div>
           {video?.channelId ? (
             <Link to={`/youtube/channel/${video.channelId}`} className="mb-3 inline-block text-sm text-volt-2">
@@ -98,10 +119,17 @@ export function WatchYouTubePage() {
               ))}
           </div>
         </div>
+        )
       }
     >
-      <YoutubeStage videoId={id} title={video?.title} onSnapshot={onSnapshot} />
+      {stage}
     </Theater>
+  );
+
+  if (mode === "notice") return theater;
+  return (
+    <SafetyGate title="YouTube" resetKey={id}>
+      {theater}
     </SafetyGate>
   );
 }

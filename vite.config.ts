@@ -80,6 +80,7 @@ export default defineConfig({
   ],
   server: {
     host: true,
+    allowedHosts: true,
     port: 5173,
     proxy: {
       "/api": {
@@ -93,6 +94,7 @@ export default defineConfig({
   },
   preview: {
     host: true,
+    allowedHosts: true,
     port: 4173,
     proxy: {
       "/api": {

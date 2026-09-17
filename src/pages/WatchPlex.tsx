@@ -1,13 +1,14 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Html5Player } from "../components/Html5Player";
 import { PlayerLoading } from "../components/PlayerLoading";
 import { SafetyGate } from "../components/SafetyGate";
+import { TeslaOnlyPlayback } from "../components/TeslaOnlyPlayback";
 import { Theater } from "../components/Theater";
 import { api, plexClientFileUrl, plexFileUrl, plexImage, plexStreamUrl } from "../lib/api";
 import { isLanPlexHost, rankPlexConnections } from "../lib/plexTv";
 import { useSettings } from "../lib/settings";
-import { isTeslaBrowser } from "../lib/tesla";
+import { ensureTeslaWatchUnlock, isTeslaBrowser, teslaPlaybackMode } from "../lib/tesla";
 import { useWatchSession } from "../lib/useWatchSession";
 
 export function WatchPlexPage() {
@@ -15,8 +16,15 @@ export function WatchPlexPage() {
   const { settings, remember } = useSettings();
   const snapRef = useRef({ positionSec: 0, durationSec: 0, playing: true });
   const [title, setTitle] = useState("Plex");
+  const [poster, setPoster] = useState("");
   const [remoteUri, setRemoteUri] = useState("");
   const [lookedUp, setLookedUp] = useState(!settings.plexToken);
+
+  const mode = teslaPlaybackMode();
+
+  useLayoutEffect(() => {
+    if (mode === "hop") ensureTeslaWatchUnlock();
+  }, [id, mode]);
 
   useEffect(() => {
     api
@@ -27,6 +35,7 @@ export function WatchPlexPage() {
           ? `${data.item.grandparentTitle} · ${data.item.title}`
           : data.item.title;
         setTitle(nextTitle);
+        setPoster(plexImage(settings, data.item.thumb));
         remember({
           kind: "plex",
           id,
@@ -113,26 +122,35 @@ export function WatchPlexPage() {
     return out;
   }, [file, id, remote, settings, stored]);
 
+  const stage =
+    mode === "notice" ? (
+      <TeslaOnlyPlayback backTo="/plex" eyebrow="Plex" title={title} poster={poster || undefined} />
+    ) : mode === "hop" ? (
+      <div className="player-stage">
+        <PlayerLoading title={title} subtitle="Tesla…" />
+      </div>
+    ) : lookedUp ? (
+      <Html5Player
+        sources={sources}
+        backTo="/plex"
+        eyebrow="Plex"
+        title={title}
+        failText="Stream fehlgeschlagen."
+        onSnapshot={(snap) => {
+          snapRef.current = snap;
+        }}
+      />
+    ) : (
+      <div className="player-stage">
+        <PlayerLoading title={title} subtitle="Server…" />
+      </div>
+    );
+
+  const theater = <Theater>{stage}</Theater>;
+  if (mode === "notice") return theater;
   return (
     <SafetyGate title="Plex" resetKey={id}>
-      <Theater>
-        {lookedUp ? (
-          <Html5Player
-            sources={sources}
-            backTo="/plex"
-            eyebrow="Plex"
-            title={title}
-            failText="Stream fehlgeschlagen."
-            onSnapshot={(snap) => {
-              snapRef.current = snap;
-            }}
-          />
-        ) : (
-          <div className="player-stage">
-            <PlayerLoading title={title} subtitle="Server…" />
-          </div>
-        )}
-      </Theater>
+      {theater}
     </SafetyGate>
   );
 }
